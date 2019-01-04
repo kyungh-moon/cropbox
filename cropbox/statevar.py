@@ -45,3 +45,13 @@ class parameter(statevar):
         name = self._compute.__name__
         default = self._compute(obj)
         return obj.config.get(name, default)
+
+class drive(statevar):
+    def __init__(self, f):
+        super().__init__(trackcls=Track)
+        self.__call__(f)
+
+    def compute(self, obj):
+        name = self._compute.__name__
+        d = self._compute(obj) # i.e. return df.loc[t]
+        return d[name]

@@ -3,7 +3,7 @@ from . import context
 from cropbox.system import System
 from cropbox.context import Context
 from cropbox.stage import Stage
-from cropbox.statevar import derive, accumulate, difference, signal, parameter
+from cropbox.statevar import derive, accumulate, difference, signal, parameter, drive
 from cropbox.time import Clock
 
 class Leaf(System):
@@ -64,6 +64,10 @@ class Leaf(System):
     @signal
     def aaa(self):
         return self.a
+
+    @drive
+    def temperature(self):
+        return {'temperature': self.time*10}
 
 import configparser
 def test_system():
