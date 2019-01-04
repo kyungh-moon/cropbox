@@ -73,7 +73,7 @@ import configparser
 def test_system():
     config = configparser.ConfigParser()
     config['Leaf'] = {'elongation_rate': 2.0}
-    c = Context(Clock(t=1, dt=1), config)
+    c = Context(Clock(t=0, dt=1), config)
     c.branch(Leaf)
     c.branch(Stage)
     c.tick()
