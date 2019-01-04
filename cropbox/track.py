@@ -6,11 +6,14 @@ class Track:
 
     def reset(self, t):
         self.timer = Timer(t)
-        self._value = 0
+        self._value = None
 
     def update(self, t, v):
         dt = self.timer.update(t)
-        if dt > 0:
+        if self._value is None:
+            self._value = 0
+            self.store(v, dt)
+        elif dt > 0:
             self.store(v, dt)
         return self.value
 
