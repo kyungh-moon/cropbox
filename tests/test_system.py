@@ -30,6 +30,14 @@ class Leaf(System):
         print("f")
         return self.e + 1
 
+    @accumulate(time='slow_time')
+    def fd(self):
+        return self.e + 1
+
+    @property
+    def slow_time(self):
+        return 0.5 * self.time
+
     @derive
     def a(self):
         print("a")
