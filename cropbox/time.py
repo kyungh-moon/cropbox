@@ -17,11 +17,7 @@ class Timer:
     def _interval(self, t):
         if t == self.t:
             return 0
-        try:
-            d = t - self.t
-        except TypeError:
-            #TODO: better return None?
-            return 0
+        d = t - self.t
         try:
             return d.total_seconds() / (24*60*60) # per day
         except AttributeError:

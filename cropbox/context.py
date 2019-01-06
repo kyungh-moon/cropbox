@@ -25,8 +25,8 @@ class Clock(System):
 class Context(Clock):
     def __init__(self, config):
         super().__init__()
-        self.config = config
         self.context = self
+        self.config = config
         self._pending = []
 
     def option(self, k, v=None, vtype=float):
