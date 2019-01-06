@@ -72,8 +72,9 @@ class Leaf(System):
 import configparser
 def test_system():
     config = configparser.ConfigParser()
+    config['Clock'] = {'start': 0, 'interval': 1}
     config['Leaf'] = {'elongation_rate': 2.0}
-    c = Clock(start=0, interval=1)
+    c = Clock(config)
     k = Context(c, config)
     k.branch(Leaf)
     k.branch(Stage)

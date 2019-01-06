@@ -40,7 +40,7 @@ class System(Trackable):
 
     @property
     def config(self):
-        return self.context.config[self.__class__.__name__]
+        return self.context.config
 
     @property
     def neighbors(self):
