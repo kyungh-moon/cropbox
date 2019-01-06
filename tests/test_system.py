@@ -1,10 +1,10 @@
 from . import context
 
 from cropbox.system import System
+from cropbox.clock import Clock
 from cropbox.context import Context
 from cropbox.stage import Stage
 from cropbox.statevar import derive, accumulate, difference, signal, parameter, drive
-from cropbox.time import Clock
 
 class Leaf(System):
     @parameter
@@ -73,15 +73,21 @@ import configparser
 def test_system():
     config = configparser.ConfigParser()
     config['Leaf'] = {'elongation_rate': 2.0}
-    c = Context(Clock(t=0, dt=1), config)
-    c.branch(Leaf)
-    c.branch(Stage)
-    c.tick()
-    l = c.children[0]
+    c = Clock(start=0, interval=1)
+    k = Context(c, config)
+    k.branch(Leaf)
+    k.branch(Stage)
+    print(c)
+    c.update()
+    print(c)
+    l = k.children[0]
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
-    c.tick()
+    c.update()
+    print(c)
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
-    c.tick()
+    c.update()
+    print(c)
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
-    c.tick()
+    c.update()
+    print(c)
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))

@@ -1,19 +1,3 @@
-class Clock:
-    def __init__(self, t, dt):
-        self.t = t
-        self.dt = dt
-
-    def tick(self):
-        self.t += self.dt
-
-    @property
-    def time(self):
-        return self.t
-
-    @property
-    def interval(self):
-        return self.dt
-
 class Timer:
     def __init__(self, t):
         self.reset(t)

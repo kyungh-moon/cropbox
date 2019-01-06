@@ -49,3 +49,8 @@ class System(Trackable):
 
     def branch(self, systemcls):
         self.context.queue(lambda: systemcls(self))
+
+    def update(self, recursive=False):
+        super().update()
+        if recursive:
+            [s.update() for s in self.children]

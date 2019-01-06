@@ -1,7 +1,8 @@
 from .time import Timer
 
 class Track:
-    def __init__(self, t):
+    def __init__(self, t, v):
+        self._initial_value = v
         self.reset(t)
 
     def reset(self, t):
@@ -10,8 +11,9 @@ class Track:
 
     def update(self, t, v):
         dt = self.timer.update(t)
+        #TODO check recursion loop?
         if self._value is None:
-            self._value = 0
+            self._value = self._initial_value
             self.store(v, dt)
         elif dt > 0:
             self.store(v, dt)

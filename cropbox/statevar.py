@@ -1,9 +1,9 @@
 from .track import Track, Accumulate, Difference, Signal
 
 class statevar:
-    def __init__(self, f=None, *, trackcls, time='time'):
-        self._trackcls = trackcls
-        self._time = time
+    def __init__(self, f=None, *, trackcls, time='time', init='', **kwargs):
+        self._setup = lambda o: trackcls(self.time(o), getattr(o, init, 0), **kwargs)
+        self.time = lambda o: getattr(o, time)
         if f is not None:
             self.__call__(f)
 
@@ -15,14 +15,11 @@ class statevar:
     def __get__(self, obj, objtype):
         return self.update(obj)
 
-    def time(self, obj):
-        return getattr(obj, self._time)
-
     def compute(self, obj):
         return self._compute(obj)
 
     def setup(self, obj):
-        obj.__dict__[self.__name__] = self._trackcls(self.time(obj))
+        obj.__dict__[self.__name__] = self._setup(obj)
 
     def update(self, obj):
         # support custom timestamp (i.e. elongation age instead of calendar time)
