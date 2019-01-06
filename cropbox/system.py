@@ -1,4 +1,5 @@
 from .statevar import statevar
+import functools
 
 class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
@@ -34,13 +35,9 @@ class System(Trackable):
             self.context = parent.context
         self.setup()
 
-    @property
-    def time(self):
-        return self.context.clock.time
-
-    @property
-    def config(self):
-        return self.context.config
+    def get(self, name, *args):
+        #HACK: support nested reference, i.e. 'context.time'
+        return functools.reduce(lambda o, n: getattr(o, n, *args), [self] + name.split('.'))
 
     @property
     def neighbors(self):

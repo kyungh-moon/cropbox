@@ -1,7 +1,6 @@
 from . import context
 
 from cropbox.system import System
-from cropbox.clock import Clock
 from cropbox.context import Context
 from cropbox.stage import Stage
 from cropbox.statevar import derive, accumulate, difference, signal, parameter, drive
@@ -36,7 +35,7 @@ class Leaf(System):
 
     @property
     def slow_time(self):
-        return 0.5 * self.time
+        return 0.5 * self.context.time
 
     @derive
     def a(self):
@@ -67,28 +66,27 @@ class Leaf(System):
 
     @drive
     def temperature(self):
-        return {'temperature': self.time*10}
+        return {'temperature': self.context.time*10}
 
 import configparser
 def test_system():
     config = configparser.ConfigParser()
     config['Clock'] = {'start': 0, 'interval': 1}
     config['Leaf'] = {'elongation_rate': 2.0}
-    c = Clock(config)
-    k = Context(c, config)
-    k.branch(Leaf)
-    k.branch(Stage)
-    print(c)
+    c = Context(config)
+    c.branch(Leaf)
+    c.branch(Stage)
+    print(f't = {c.time}')
     c.update()
-    print(c)
-    l = k.children[0]
+    print(f't = {c.time}')
+    l = c.children[0]
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
     c.update()
-    print(c)
+    print(f't = {c.time}')
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
     c.update()
-    print(c)
+    print(f't = {c.time}')
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
     c.update()
-    print(c)
+    print(f't = {c.time}')
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))

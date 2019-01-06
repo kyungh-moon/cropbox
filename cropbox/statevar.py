@@ -1,7 +1,7 @@
 from .track import Track, Accumulate, Difference, Signal
 
 class statevar:
-    def __init__(self, f=None, *, track, time='time', init=''):
+    def __init__(self, f=None, *, track, time='context.time', init=''):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
@@ -17,14 +17,14 @@ class statevar:
         return self.update(obj)
 
     def time(self, obj):
-        return getattr(obj, self._time_var)
+        return obj.get(self._time_var)
 
     def compute(self, obj):
         return self._compute(obj)
 
     def setup(self, obj):
         t = self.time(obj)
-        v = getattr(obj, self._init_var, 0)
+        v = obj.get(self._init_var, 0)
         obj.__dict__[self.__name__] = self._track_cls(t, v)
 
     def update(self, obj):
@@ -39,6 +39,8 @@ def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
 def difference(f=None, **kwargs): return statevar(f, track=Difference, **kwargs)
 def signal(f=None, **kwargs): return statevar(f, track=Signal, **kwargs)
 
+#TODO: use @proxy <: @var replacing @property, also make @state <: @var
+
 class parameter(statevar):
     def __init__(self, f=None, *, type=float):
         self._type = type
@@ -49,11 +51,9 @@ class parameter(statevar):
         return 0
 
     def compute(self, obj):
-        section = obj.__class__.__name__
-        key = self._compute.__name__
+        k = self._compute.__name__
         v = self._compute(obj)
-        v = obj.config.get(section, key, fallback=v)
-        return self._type(v)
+        return obj.context.option(k, v, self._type)
 
 class drive(statevar):
     def __init__(self, f):
