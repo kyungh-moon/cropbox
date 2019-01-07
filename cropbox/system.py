@@ -36,6 +36,9 @@ class System(Trackable):
         self.setup()
 
     def get(self, name, *args):
+        # support direct specification of value, i.e. 0
+        if not isinstance(name, str):
+            return name
         #HACK: support nested reference, i.e. 'context.time'
         return functools.reduce(lambda o, n: getattr(o, n, *args), [self] + name.split('.'))
 
