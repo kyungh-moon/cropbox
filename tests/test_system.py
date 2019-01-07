@@ -3,7 +3,7 @@ from . import context
 from cropbox.system import System
 from cropbox.context import Context
 from cropbox.stage import Stage
-from cropbox.statevar import derive, accumulate, difference, signal, parameter, drive
+from cropbox.statevar import derive, accumulate, difference, signal, parameter, drive, optimize
 
 class Leaf(System):
     @parameter
@@ -67,6 +67,18 @@ class Leaf(System):
     @drive
     def temperature(self):
         return {'temperature': self.context.time*10}
+
+    @derive
+    def aa(self):
+        return self.ci**2
+
+    @derive
+    def bb(self):
+        return 2*self.ci + 1
+
+    @optimize(lower=0, upper=10)
+    def ci(self):
+        return self.aa - self.bb
 
 import configparser
 def test_system():

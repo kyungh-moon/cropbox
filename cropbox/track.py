@@ -9,13 +9,13 @@ class Track:
         self.timer = Timer(t)
         self._value = None
 
-    def update(self, t, v):
+    def update(self, t, v, force=False):
         dt = self.timer.update(t)
         #TODO check recursion loop?
         if self._value is None:
             self._value = self._initial_value
-            self.store(v, dt)
-        elif dt > 0:
+            force = True
+        if force or dt > 0:
             self.store(v, dt)
         return self.value
 

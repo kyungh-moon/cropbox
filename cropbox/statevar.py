@@ -1,5 +1,9 @@
 from .track import Track, Accumulate, Difference, Signal
 
+#HACK: to implement @optimize, need better way of controlling this
+#TODO: probably need a full dependency graph between variables to push updates downwards
+FORCE_UPDATE = False
+
 class statevar:
     def __init__(self, f=None, *, track, time='context.time', init=''):
         self._track_cls = track
@@ -64,3 +68,28 @@ class drive(statevar):
         name = self._compute.__name__
         d = self._compute(obj) # i.e. return df.loc[t]
         return d[name]
+
+import scipy.optimize
+
+class optimize(statevar):
+    def __init__(self, f=None, *, lower, upper):
+        self._lower_var = lower
+        self._upper_var = upper
+        super().__init__(f, track=Track)
+
+    def compute(self, obj):
+        tr = getattr(obj, self.__name__)
+        global FORCE_UPDATE
+        if FORCE_UPDATE:
+            #HACK: prevent recursion loop already in computation tree
+            return tr._value
+        def loss(x):
+            tr._value = x
+            return self._compute(obj)
+        l = obj.get(self._lower_var)
+        u = obj.get(self._upper_var)
+        FORCE_UPDATE = True
+        v = scipy.optimize.brentq(loss, l, u)
+        FORCE_UPDATE = False
+        tr._value == v
+        return v
