@@ -1,5 +1,6 @@
 from .statevar import statevar
 import functools
+import networkx as nx
 
 class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
@@ -25,6 +26,27 @@ class Trackable(metaclass=TrackableMeta):
 
     def update(self):
         [s.update(self) for s in self._statevar_objs]
+
+    _stack = []
+    _graph = nx.DiGraph()
+    _force_update = False
+
+    def _push(cls, var):
+        try:
+            s = cls._stack[-1]
+            cls._graph.add_edge(s.__name__, var.__name__)
+        except:
+            pass
+        cls._stack.append(var)
+
+    def _pop(cls):
+        cls._stack.pop()
+
+    def _is_stacked(cls, var):
+        return len([v for v in cls._stack if v is var]) > 1
+
+    def force_update(cls, flag):
+        cls._force_update = flag
 
 class System(Trackable):
     def __init__(self, parent):

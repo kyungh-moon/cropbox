@@ -2,7 +2,7 @@ from .track import Track, Accumulate, Difference, Signal
 
 #HACK: to implement @optimize, need better way of controlling this
 #TODO: probably need a full dependency graph between variables to push updates downwards
-FORCE_UPDATE = False
+#FORCE_UPDATE = False
 
 class statevar:
     def __init__(self, f=None, *, track, time='context.time', init=''):
@@ -36,7 +36,11 @@ class statevar:
         t = self.time(obj)
         # lazy evaluation preventing redundant computation
         r = lambda: self.compute(obj)
-        return getattr(obj, self.__name__).update(t, r, force=FORCE_UPDATE)
+        #TODO: implement context manager, i.e. "with self.stack:"
+        obj._push(self)
+        v = getattr(obj, self.__name__).update(t, r, force=obj._force_update)
+        obj._pop()
+        return v
 
 def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
 def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
@@ -79,17 +83,16 @@ class optimize(statevar):
 
     def compute(self, obj):
         tr = getattr(obj, self.__name__)
-        global FORCE_UPDATE
-        if FORCE_UPDATE:
-            #HACK: prevent recursion loop already in computation tree
+        #HACK: prevent recursion loop already in computation tree
+        if obj._is_stacked(self):
             return tr._value
         def loss(x):
             tr._value = x
             return self._compute(obj)
         l = obj.get(self._lower_var)
         u = obj.get(self._upper_var)
-        FORCE_UPDATE = True
+        obj.force_update(True)
         v = scipy.optimize.brentq(loss, l, u)
-        FORCE_UPDATE = False
+        obj.force_update(False)
         tr._value == v
         return v

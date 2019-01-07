@@ -81,6 +81,8 @@ class Leaf(System):
         return self.aa - self.bb
 
 import configparser
+import networkx as nx
+import matplotlib.pyplot as plt
 def test_system():
     config = configparser.ConfigParser()
     config['Clock'] = {'start': 0, 'interval': 1}
@@ -92,6 +94,9 @@ def test_system():
     c.update()
     print(f't = {c.time}')
     l = c.children[0]
+    plt.figure(figsize=(12,12))
+    nx.draw_circular(l._graph, with_labels=True)
+    plt.savefig('graph.png')
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
     c.update()
     print(f't = {c.time}')
