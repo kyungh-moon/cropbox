@@ -25,14 +25,14 @@ class statevar:
     def setup(self, obj):
         t = self.time(obj)
         v = obj.get(self._init_var, 0)
-        obj.__dict__[self.__name__] = self._track_cls(t, v)
+        setattr(obj, self.__name__, self._track_cls(t, v))
 
     def update(self, obj):
         # support custom timestamp (i.e. elongation age instead of calendar time)
         t = self.time(obj)
         # lazy evaluation preventing redundant computation
         r = lambda: self.compute(obj)
-        return obj.__dict__[self.__name__].update(t, r)
+        return getattr(obj, self.__name__).update(t, r, force=FORCE_UPDATE)
 
 def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
 def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
