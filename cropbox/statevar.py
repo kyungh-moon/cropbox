@@ -4,7 +4,40 @@ from .track import Track, Accumulate, Difference, Signal
 #TODO: probably need a full dependency graph between variables to push updates downwards
 #FORCE_UPDATE = False
 
+import networkx as nx
+
+class Trace:
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.stack = []
+        self.graph = nx.DiGraph()
+
+    def __call__(self, var):
+        self._var = var
+        return self
+
+    def __enter__(self):
+        v = self._var
+        del self._var
+        try:
+            s = self.stack[-1]
+            self.graph.add_edge(s.__name__, v.__name__)
+        except:
+            pass
+        self.stack.append(v)
+        return self
+
+    def __exit__(self, *excs):
+        self.stack.pop()
+
+    def is_stacked(self, var):
+        return len([v for v in self.stack if v is var]) > 1
+
 class statevar:
+    trace = Trace()
+
     def __init__(self, f=None, *, track, time='context.time', init=''):
         self._track_cls = track
         self._time_var = time
@@ -32,15 +65,15 @@ class statevar:
         setattr(obj, self.__name__, self._track_cls(t, v))
 
     def update(self, obj):
+        with self.trace(self):
+            return self._update(obj)
+
+    def _update(self, obj):
         # support custom timestamp (i.e. elongation age instead of calendar time)
         t = self.time(obj)
         # lazy evaluation preventing redundant computation
         r = lambda: self.compute(obj)
-        #TODO: implement context manager, i.e. "with self.stack:"
-        obj._push(self)
-        v = getattr(obj, self.__name__).update(t, r, force=obj._force_update)
-        obj._pop()
-        return v
+        return getattr(obj, self.__name__).update(t, r, force=obj._force_update)
 
 def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
 def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
@@ -84,7 +117,7 @@ class optimize(statevar):
     def compute(self, obj):
         tr = getattr(obj, self.__name__)
         #HACK: prevent recursion loop already in computation tree
-        if obj._is_stacked(self):
+        if self.trace.is_stacked(self):
             return tr._value
         def loss(x):
             tr._value = x

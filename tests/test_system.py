@@ -3,7 +3,7 @@ from . import context
 from cropbox.system import System
 from cropbox.context import Context
 from cropbox.stage import Stage
-from cropbox.statevar import derive, accumulate, difference, signal, parameter, drive, optimize
+from cropbox.statevar import statevar, derive, accumulate, difference, signal, parameter, drive, optimize
 
 class Leaf(System):
     @parameter
@@ -95,7 +95,9 @@ def test_system():
     print(f't = {c.time}')
     l = c.children[0]
     plt.figure(figsize=(12,12))
-    nx.draw_circular(l._graph, with_labels=True)
+    g = statevar.trace.graph
+    #g.remove_node('_time')
+    nx.draw_circular(g, with_labels=True)
     plt.savefig('graph.png')
     print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
     c.update()
