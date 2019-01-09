@@ -43,8 +43,8 @@ def test_accumulate(instance):
         def b(self):
             return self.a + 1
     s = instance(S)
-    assert s.a == 1 and s.b == 2
     c = s.context
+    assert s.a == 1 and s.b == 2
     c.update()
     assert s.a == 1 and s.b == 4
     c.update()
@@ -61,8 +61,8 @@ def test_accumulate_with_cross_reference(instance):
         def b(self):
             return self.a + 1
     s = instance(S)
-    assert s.a == 1 and s.b == 1
     c = s.context
+    assert s.a == 1 and s.b == 1
     c.update()
     assert s.a == 3 and s.b == 3
     c.update()
@@ -82,8 +82,8 @@ def test_accumulate_with_time(instance):
         def t(self):
             return 0.5 * self.context.time
     s = instance(S)
-    assert s.a == 1 and s.b == 1
     c = s.context
+    assert s.a == 1 and s.b == 1
     c.update()
     assert s.a == 1 and s.b == 2
     c.update()
@@ -141,8 +141,8 @@ def test_difference(instance):
         def b(self):
             return self.a + 1
     s = instance(S)
-    assert s.a == 1 and s.b == 2
     c = s.context
+    assert s.a == 1 and s.b == 2
     c.update()
     assert s.a == 1 and s.b == 2
     c.update()
@@ -165,9 +165,9 @@ def test_signal(instance):
         def d(self):
             return self.b
     s = instance(S)
+    c = s.context
     assert s.a == 1 and s.b == 2
     assert s.c == 0 and s.d == 2
-    c = s.context
     c.update()
     assert s.a == 1 and s.b == 4
     assert s.c == 0 and s.d == 4
@@ -181,8 +181,8 @@ def test_parameter(instance):
         def a(self):
             return 1
     s = instance(S)
-    assert s.a == 1
     c = s.context
+    assert s.a == 1
     c.update()
     assert s.a == 1
 
@@ -192,8 +192,8 @@ def test_parameter_with_config(instance):
         def a(self):
             return 1
     s = instance(S, {'S': {'a': 2}})
-    assert s.a == 2
     c = s.context
+    assert s.a == 2
     c.update()
     assert s.a == 2
 
@@ -203,8 +203,8 @@ def test_drive_with_dict(instance):
         def a(self):
             return {'a': self.context.time * 10}
     s = instance(S)
-    assert s.a == 10
     c = s.context
+    assert s.a == 10
     c.update()
     assert s.a == 20
     c.update()
