@@ -39,7 +39,7 @@ class Trace:
 class statevar:
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=''):
+    def __init__(self, f=None, *, track, time='context.time', init=0):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
@@ -62,7 +62,7 @@ class statevar:
 
     def setup(self, obj):
         t = self.time(obj)
-        v = obj.get(self._init_var, 0)
+        v = obj.get(self._init_var)
         setattr(obj, self.__name__, self._track_cls(t, v))
 
     def update(self, obj):
