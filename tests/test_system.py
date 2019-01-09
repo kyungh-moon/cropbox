@@ -91,6 +91,47 @@ def test_accumulate_with_time(instance):
     c.update()
     assert s.a == 1 and s.b == 4
 
+def test_accumulate_transport(instance):
+    class S(System):
+        @accumulate(init=10)
+        def a(self):
+            return -max(self.a - self.b, 0)
+        @accumulate
+        def b(self):
+            return max(self.a - self.b, 0) - max(self.b - self.c, 0)
+        @accumulate
+        def c(self):
+            return max(self.b - self.c, 0)
+    s = instance(S)
+    c = s.context
+    assert s.a == 0 and s.b == 10 and s.c == 0
+    c.update()
+    assert s.a == 0 and s.b == 0 and s.c == 10
+    c.update()
+    assert s.a == 0 and s.b == 0 and s.c == 10
+
+def test_accumulate_distribute(instance):
+    class S(System):
+        @drive
+        def s(self):
+            return {'s': (self.context.time + 1) * 100}
+        @accumulate
+        def d1(self):
+            return self.s * 0.2
+        @accumulate
+        def d2(self):
+            return self.s * 0.3
+        @accumulate
+        def d3(self):
+            return self.s * 0.5
+    s = instance(S)
+    c = s.context
+    assert s.s == 200 and s.d1 == 20 and s.d2 == 30 and s.d3 == 50
+    c.update()
+    assert s.s == 300 and s.d1 == 60 and s.d2 == 90 and s.d3 == 150
+    c.update()
+    assert s.s == 400 and s.d1 == 120 and s.d2 == 180 and s.d3 == 300
+
 def test_difference(instance):
     class S(System):
         @derive
