@@ -22,6 +22,7 @@ class Trackable(metaclass=TrackableMeta):
 
     def setup(self):
         [s.setup(self) for s in self._statevar_objs]
+        self.update()
 
     def update(self):
         [s.update(self) for s in self._statevar_objs]

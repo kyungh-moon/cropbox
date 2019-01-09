@@ -24,10 +24,10 @@ class Clock(System):
 
 class Context(Clock):
     def __init__(self, config):
-        super().__init__()
         self.context = self
         self.config = config
         self._pending = []
+        super().__init__()
 
     def option(self, obj, k, v=None, vtype=float):
         #HACK: populate base classes down to System (not inclusive) for section names
