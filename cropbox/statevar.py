@@ -94,7 +94,7 @@ class parameter(statevar):
     def compute(self, obj):
         k = self._compute.__name__
         v = self._compute(obj)
-        return obj.context.option(k, v, self._type)
+        return obj.context.option(obj, k, v, self._type)
 
 class drive(statevar):
     def __init__(self, f):

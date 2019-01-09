@@ -29,13 +29,13 @@ class Context(Clock):
         self.config = config
         self._pending = []
 
-    def option(self, k, v=None, vtype=float):
-        #HACK: try section names for base classes up to System (not inclusive)
-        S = [c.__name__ for c in self.__class__.mro()]
-        S = S[:S.index('System')]
+    def option(self, obj, k, v=None, vtype=float):
+        #HACK: populate base classes down to System (not inclusive) for section names
+        S = [c for c in obj.__class__.mro()]
+        S = S[:S.index(System)]
         for s in S:
             try:
-                v = self.config[s][k]
+                v = self.config[s.__name__][k]
             except KeyError:
                 pass
         return vtype(v)
