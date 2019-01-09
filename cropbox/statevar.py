@@ -23,6 +23,7 @@ class Trace:
         del self._var
         try:
             s = self.stack[-1]
+            #FIXME: graph should be reset for every update
             self.graph.add_edge(s.__name__, v.__name__)
         except:
             pass
