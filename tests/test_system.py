@@ -156,7 +156,7 @@ def test_parameter_with_config(instance):
     c.update()
     assert s.a == 2
 
-def test_drive(instance):
+def test_drive_with_dict(instance):
     class S(System):
         @drive
         def a(self):
@@ -168,6 +168,23 @@ def test_drive(instance):
     assert s.a == 20
     c.update()
     assert s.a == 30
+
+def test_drive_with_dataframe(instance):
+    import pandas as pd
+    class S(System):
+        @property
+        def df(self):
+            return pd.DataFrame({'a': [0, 10, 20, 30]}, [0, 1, 2, 3])
+        @drive
+        def a(self):
+            return self.df.loc[self.context.time]
+    s = instance(S)
+    c = s.context
+    assert c.time == 1 and s.a == 10
+    c.update()
+    assert c.time == 2 and s.a == 20
+    c.update()
+    assert c.time == 3 and s.a == 30
 
 def test_optimize(instance):
     class S(System):
