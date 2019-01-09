@@ -2,4 +2,5 @@ init:
 	pip install -r requirements.txt
 
 test:
-	pytest -s tests
+	pytest --pdb -s tests
+	#pytest --pdbcls pudb.debugger:Debugger --pdb --capture=no -s tests

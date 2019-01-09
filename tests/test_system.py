@@ -5,107 +5,199 @@ from cropbox.context import Context
 from cropbox.stage import Stage
 from cropbox.statevar import statevar, derive, accumulate, difference, signal, parameter, drive, optimize
 
-class Leaf(System):
-    @parameter
-    def elongation_rate(self):
-        return 1.0
+import pytest
 
-    @accumulate
-    def d(self):
-        print("d")
-        return self.a + 1
+@pytest.fixture
+def instance():
+    def _instance(systemcls, config_dict=None):
+        import configparser
+        config = configparser.ConfigParser()
+        if config_dict is not None:
+            config.read_dict(config_dict)
+        c = Context(config)
+        c.branch(systemcls)
+        c.update()
+        return c.children[0]
+    return _instance
 
-    @difference
-    def di(self):
-        return self.a + 1
+def test_derive(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @derive
+        def b(self):
+            return 2
+        @derive
+        def c(self):
+            return self.a + self.b
+    s = instance(S)
+    assert s.a == 1 and s.b == 2 and s.c == 3
 
-    @accumulate
-    def e(self):
-        print("e")
-        return self.f + 1
-
-    @accumulate
-    def f(self):
-        print("f")
-        return self.e + 1
-
-    @accumulate(time='slow_time')
-    def fd(self):
-        return self.e + 1
-
-    @property
-    def slow_time(self):
-        return 0.5 * self.context.time
-
-    @derive
-    def a(self):
-        print("a")
-        return 1
-
-    @derive
-    def b(self):
-        print("b")
-        return 2
-
-    @derive
-    def c(self):
-        print("c")
-        return self.a + self.b
-
-    @signal
-    def aa(self):
-        return self.a
-
-    @signal
-    def dd(self):
-        return self.d
-
-    @signal
-    def aaa(self):
-        return self.a
-
-    @drive
-    def temperature(self):
-        return {'temperature': self.context.time*10}
-
-    @derive
-    def aa(self):
-        return self.ci**2
-
-    @derive
-    def bb(self):
-        return 2*self.ci + 1
-
-    @optimize(lower=0, upper=10)
-    def ci(self):
-        return self.aa - self.bb
-
-import configparser
-import networkx as nx
-import matplotlib.pyplot as plt
-def test_system():
-    config = configparser.ConfigParser()
-    config['Clock'] = {'start': 0, 'interval': 1}
-    config['Leaf'] = {'elongation_rate': 2.0}
-    c = Context(config)
-    c.branch(Leaf)
-    c.branch(Stage)
-    print(f't = {c.time}')
+def test_accumulate(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @accumulate
+        def b(self):
+            return self.a + 1
+    s = instance(S)
+    assert s.a == 1 and s.b == 0
+    c = s.context
     c.update()
-    print(f't = {c.time}')
-    l = c.children[0]
-    plt.figure(figsize=(12,12))
+    assert s.a == 1 and s.b == 2
+    c.update()
+    assert s.a == 1 and s.b == 4
+    c.update()
+    assert s.a == 1 and s.b == 6
+
+def test_accumulate_with_cross_reference(instance):
+    class S(System):
+        @accumulate
+        def a(self):
+            return self.b + 1
+        @accumulate
+        def b(self):
+            return self.a + 1
+    s = instance(S)
+    assert s.a == 0 and s.b == 0
+    c = s.context
+    c.update()
+    assert s.a == 1 and s.b == 1
+    c.update()
+    assert s.a == 3 and s.b == 3
+    c.update()
+    assert s.a == 7 and s.b == 7
+
+def test_accumulate_with_time(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @accumulate(time='t')
+        def b(self):
+            return self.a + 1
+        @property
+        def t(self):
+            return 0.5 * self.context.time
+    s = instance(S)
+    assert s.a == 1 and s.b == 0
+    c = s.context
+    c.update()
+    assert s.a == 1 and s.b == 1
+    c.update()
+    assert s.a == 1 and s.b == 2
+    c.update()
+    assert s.a == 1 and s.b == 3
+
+def test_difference(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @difference
+        def b(self):
+            return self.a + 1
+    s = instance(S)
+    assert s.a == 1 and s.b == 0
+    c = s.context
+    c.update()
+    assert s.a == 1 and s.b == 2
+    c.update()
+    assert s.a == 1 and s.b == 2
+    c.update()
+    assert s.a == 1 and s.b == 2
+
+def test_signal(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @accumulate
+        def b(self):
+            return self.a + 1
+        @signal
+        def c(self):
+            return self.a
+        @signal
+        def d(self):
+            return self.b
+    s = instance(S)
+    assert s.a == 1 and s.b == 0
+    assert s.c == 1 and s.d == 0
+    c = s.context
+    c.update()
+    assert s.a == 1 and s.b == 2
+    assert s.c == 0 and s.d == 2
+    c.update()
+    assert s.a == 1 and s.b == 4
+    assert s.c == 0 and s.d == 4
+
+def test_parameter(instance):
+    class S(System):
+        @parameter
+        def a(self):
+            return 1
+    s = instance(S)
+    assert s.a == 1
+    c = s.context
+    c.update()
+    assert s.a == 1
+
+def test_parameter_with_config(instance):
+    class S(System):
+        @parameter
+        def a(self):
+            return 1
+    s = instance(S, {'S': {'a': 2}})
+    assert s.a == 2
+    c = s.context
+    c.update()
+    assert s.a == 2
+
+def test_drive(instance):
+    class S(System):
+        @drive
+        def a(self):
+            return {'a': self.context.time * 10}
+    s = instance(S)
+    assert s.a == 10
+    c = s.context
+    c.update()
+    assert s.a == 20
+    c.update()
+    assert s.a == 30
+
+def test_optimize(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 2*self.x
+        @derive
+        def b(self):
+            return self.x + 1
+        @optimize(lower=0, upper=2)
+        def x(self):
+            return self.a - self.b
+    s = instance(S)
+    assert s.x == 1
+    assert s.a == s.b == 2
+
+def test_plot(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @accumulate
+        def b(self):
+            return self.a
+    #FIXME: graph should be automatically reset
+    statevar.trace.reset()
+    s = instance(S)
     g = statevar.trace.graph
-    #g.remove_node('_time')
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=(12, 12))
+    import networkx as nx
     nx.draw_circular(g, with_labels=True)
     plt.savefig('graph.png')
-    print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
-    c.update()
-    print(f't = {c.time}')
-    print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
-    c.update()
-    print(f't = {c.time}')
-    print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
-    c.update()
-    print(f't = {c.time}')
-    print(' '.join([f"{k}={getattr(l, k)}" for k in l._statevar_names]))
