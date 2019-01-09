@@ -43,14 +43,14 @@ def test_accumulate(instance):
         def b(self):
             return self.a + 1
     s = instance(S)
-    assert s.a == 1 and s.b == 0
-    c = s.context
-    c.update()
     assert s.a == 1 and s.b == 2
+    c = s.context
     c.update()
     assert s.a == 1 and s.b == 4
     c.update()
     assert s.a == 1 and s.b == 6
+    c.update()
+    assert s.a == 1 and s.b == 8
 
 def test_accumulate_with_cross_reference(instance):
     class S(System):
@@ -61,14 +61,14 @@ def test_accumulate_with_cross_reference(instance):
         def b(self):
             return self.a + 1
     s = instance(S)
-    assert s.a == 0 and s.b == 0
-    c = s.context
-    c.update()
     assert s.a == 1 and s.b == 1
+    c = s.context
     c.update()
     assert s.a == 3 and s.b == 3
     c.update()
     assert s.a == 7 and s.b == 7
+    c.update()
+    assert s.a == 15 and s.b == 15
 
 def test_accumulate_with_time(instance):
     class S(System):
@@ -82,14 +82,14 @@ def test_accumulate_with_time(instance):
         def t(self):
             return 0.5 * self.context.time
     s = instance(S)
-    assert s.a == 1 and s.b == 0
-    c = s.context
-    c.update()
     assert s.a == 1 and s.b == 1
+    c = s.context
     c.update()
     assert s.a == 1 and s.b == 2
     c.update()
     assert s.a == 1 and s.b == 3
+    c.update()
+    assert s.a == 1 and s.b == 4
 
 def test_difference(instance):
     class S(System):
@@ -100,7 +100,7 @@ def test_difference(instance):
         def b(self):
             return self.a + 1
     s = instance(S)
-    assert s.a == 1 and s.b == 0
+    assert s.a == 1 and s.b == 2
     c = s.context
     c.update()
     assert s.a == 1 and s.b == 2
@@ -124,15 +124,15 @@ def test_signal(instance):
         def d(self):
             return self.b
     s = instance(S)
-    assert s.a == 1 and s.b == 0
-    assert s.c == 1 and s.d == 0
-    c = s.context
-    c.update()
     assert s.a == 1 and s.b == 2
     assert s.c == 0 and s.d == 2
+    c = s.context
     c.update()
     assert s.a == 1 and s.b == 4
     assert s.c == 0 and s.d == 4
+    c.update()
+    assert s.a == 1 and s.b == 6
+    assert s.c == 0 and s.d == 6
 
 def test_parameter(instance):
     class S(System):
@@ -183,6 +183,28 @@ def test_optimize(instance):
     s = instance(S)
     assert s.x == 1
     assert s.a == s.b == 2
+
+def test_clock(instance):
+    class S(System):
+        pass
+    s = instance(S)
+    c = s.context
+    assert c.time == 1
+    c.update()
+    assert c.time == 2
+    c.update()
+    assert c.time == 3
+
+def test_clock_with_config(instance):
+    class S(System):
+        pass
+    s = instance(S, {'Clock': {'start': 5, 'interval': 10}})
+    c = s.context
+    assert c.time == 15
+    c.update()
+    assert c.time == 25
+    c.update()
+    assert c.time == 35
 
 def test_plot(instance):
     class S(System):
