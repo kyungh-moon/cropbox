@@ -1,4 +1,4 @@
-from . import context
+#from . import context
 
 from cropbox.system import System
 from cropbox.context import Context
@@ -50,26 +50,17 @@ quadratic_solve_upper = lambda a, b, c: quadratic_solve(a, b, c, lower=False)
 
 class C4(System):
     #TODO: more robust interface to connect Systems (i.e. type check, automatic prop defines)
-    @property
-    def photosynthetic_leaf(self):
-        return self.parent
-
-    @derive
-    def leaf_n_content(self):
-        return self.photosynthetic_leaf.nitrogen
-
-    @derive
-    def leaf_temperature(self):
-        return self.photosynthetic_leaf.temperature
+    def __init__(self, parent, leaf):
+        super().__init__(parent, leaf=leaf)
 
     @derive
     def co2_mesophyll(self):
-        Cm = self.photosynthetic_leaf.co2_mesophyll
+        Cm = self.leaf.co2_mesophyll
         return np.clip(Cm, 0, Cm)
 
     @derive
     def light(self):
-        I2 = self.photosynthetic_leaf.light
+        I2 = self.leaf.light
         return np.clip(I2, 0, I2)
 
     ##############
@@ -168,12 +159,12 @@ class C4(System):
 
     @derive
     def dark_respiration(self):
-        return self.Rd25 * temperature_dependence_rate(self.Ear, self.leaf_temperature)
+        return self.Rd25 * temperature_dependence_rate(self.Ear, self.leaf.temperature)
 
     @derive
     def maximum_electron_transport_rate(self):
-        T = self.leaf_temperature
-        N = self.leaf_n_content
+        T = self.leaf.temperature
+        N = self.leaf.nitrogen
 
         R = 8.314
 
@@ -194,7 +185,7 @@ class C4(System):
     @derive
     def enzyme_limited_photosynthesis_rate(self):
         Cm = self.co2_mesophyll
-        T_leaf = self.leaf_temperature
+        T_leaf = self.leaf.temperature
 
         O = 210 # gas units are mbar
         Om = O # mesophyll O2 partial pressure
@@ -204,10 +195,10 @@ class C4(System):
         Ko = self.Ko25 * temperature_dependence_rate(self.Eao, T_leaf)
         Km = Kc * (1 + Om / Ko) # effective M-M constant for Kc in the presence of O2
 
-        Vpmax = self.Vpm25 * nitrogen_limited_rate(self.leaf_n_content) * temperature_dependence_rate(self.EaVp, T_leaf)
-        Vcmax = self.Vcm25 * nitrogen_limited_rate(self.leaf_n_content) * temperature_dependence_rate(self.EaVc, T_leaf)
+        Vpmax = self.Vpm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVp, T_leaf)
+        Vcmax = self.Vcm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVc, T_leaf)
 
-        #print(f'[N] lfNContent = {self.leaf_n_content}, rate = {nitrogen_limited_rate(self.leaf_n_content)}')
+        #print(f'[N] lfNContent = {self.leaf.nitrogen}, rate = {nitrogen_limited_rate(self.leaf.nitrogen)}')
         #print(f'[T] Tleaf = {T_leaf}, rate = {temperature_dependence_rate(1, T_leaf)}')
         #print(f'Vpmax = {Vpmax}, Vcmax = {Vcmax}')
 
@@ -241,7 +232,7 @@ class C4(System):
     def transport_limited_photosynthesis_rate(self):
         I2 = self.light
         Cm = self.co2_mesophyll
-        T_leaf = self.leaf_temperature
+        T_leaf = self.leaf.temperature
 
         # sharpness of transition from light limitation to light saturation
 #         theta = 0.5
@@ -333,14 +324,8 @@ class VaporPressure:
 
 
 class Stomata(System):
-    @property
-    def photosynthetic_leaf(self):
-        return self.parent
-
-    #TODO: use @drive? @derive?
-    @derive
-    def leaf_width(self):
-        return self.photosynthetic_leaf.width
+    def __init__(self, parent, leaf):
+        super().__init__(parent, leaf=leaf)
 
     # in P. J. Sellers, et al.Science 275, 502 (1997)
     # g0 is b, of which the value for c4 plant is 0.04
@@ -355,7 +340,6 @@ class Stomata(System):
     def g0(self): return 0.017
     @parameter
     def g1(self): return 4.53
-
 
     # calibrated above for our switchgrass dataset
     # @parameter
@@ -383,38 +367,6 @@ class Stomata(System):
     #FIXME initial value never used
     #self.leafp_effect = 1 # At first assume there is not drought stress, so assign 1 to leafpEffect. Yang 8/20/06
 
-    ###########
-    # Drivers #
-    ###########
-
-    #TODO: devise succinct automatic way to declare driving variables from other System
-
-    @derive
-    def LWP(self):
-        return self.photosynthetic_leaf.water
-
-    @derive
-    def CO2(self):
-        return self.photosynthetic_leaf.CO2
-
-    @derive
-    def A_net(self):
-        return self.photosynthetic_leaf.A_net
-
-    @derive
-    def RH(self):
-        return self.photosynthetic_leaf.RH
-
-    @derive
-    def wind(self):
-        return self.photosynthetic_leaf.wind
-
-    @derive
-    def T_leaf(self):
-        return self.photosynthetic_leaf.temperature
-
-    #####
-
     @derive
     # def update_boundary_layer(self, wind):
     def boundary_layer_conductance(self):
@@ -426,11 +378,11 @@ class Stomata(System):
         ratio = (sr + 1)**2 / (sr**2 + 1)
 
         # characteristic dimension of a leaf, leaf width in m
-        d = self.leaf_width * 0.72
+        d = self.leaf.width * 0.72
 
         #return 1.42 # total BLC (both sides) for LI6400 leaf chamber
-        gb = 1.4 * 0.147 * (max(0.1, self.wind) / d)**0.5 * ratio
-        gb = (1.4 * 1.1 * 6.62 * (wind / d)**0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
+        gb = 1.4 * 0.147 * (max(0.1, self.leaf.weather.wind) / d)**0.5 * ratio
+        #gb = (1.4 * 1.1 * 6.62 * (wind / d)**0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
         # 6.62 is for laminar forced convection of air over flat plates on projected area basis
         # when all conversion is done for each surface it becomes close to 0.147 as given in Norman and Campbell
@@ -440,19 +392,18 @@ class Stomata(System):
 
     # stomatal conductance for water vapor in mol m-2 s-1
     #FIXME T_leaf not used
-    @derive
+    @derive(init='g0')
     # def update_stomata(self, LWP, CO2, A_net, RH, T_leaf):
     def stomatal_conductance(self):
         # params
         g0 = self.g0
         g1 = self.g1
-        gb = self.gb
+        gb = self.boundary_layer_conductance
 
-        LWP = self.LWP
-        CO2 = self.CO2
-        A_net = self.A_net
-        RH = self.RH
-        T_leaf = self.T_leaf
+        CO2 = self.leaf.weather.CO2
+        A_net = self.leaf.A_net
+        RH = self.leaf.weather.RH
+        T_leaf = self.leaf.temperature
 
         #FIXME proper use of gamma
         #gamma = 10.0 # for C4 maize
@@ -484,6 +435,7 @@ class Stomata(System):
         # this below is an example of how you can write temporary data to a debug window. It can be copied and
         # pasted into excel for plotting. Dennis See above where the CString object is created.
         #print(f"gs = {gs} LWP = {LWP} Ds = {Ds} T_leaf = {T_leaf} Cs = {Cs} A_net = {A_net} hs = {hs} RH = {RH}")
+        breakpoint()
         return gs
 
     @derive
@@ -498,7 +450,8 @@ class Stomata(System):
         # hand-picked
         sf = 2.3
         phyf = -2.0
-        m = (1 + np.exp(sf * phyf)) / (1 + np.exp(sf * (phyf - self.LWP)))
+        LWP = self.leaf.soil.WP_leaf
+        m = (1 + np.exp(sf * phyf)) / (1 + np.exp(sf * (phyf - LWP)))
         #print(f'[LWP] pressure = {LWP}, effect = {m}')
         return m
 
@@ -506,6 +459,7 @@ class Stomata(System):
     def total_conductance_h2o(self):
         gs = self.stomatal_conductance
         gb = self.boundary_layer_conductance
+        breakpoint()
         return gs * gb / (gs + gb)
 
     @derive
@@ -523,11 +477,10 @@ class Stomata(System):
 
 class PhotosyntheticLeaf(System):
     def setup(self):
-        self.stomata = Stomata(self)
+        self.stomata = Stomata(self, leaf=self)
         #TODO support modular interface
-        self.photosynthesis = C4(self) # for maize
-        #self.photosynthesis = C3(self) # for garlic
-        super().setup()
+        self.photosynthesis = C4(self, leaf=self) # for maize
+        #self.photosynthesis = C3(self, leaf=self) # for garlic
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width
@@ -540,50 +493,15 @@ class PhotosyntheticLeaf(System):
     # static properties
 
     @parameter
-    def water(self):
-        return 0
-
-    @parameter
     def nitrogen(self):
         return 2.0
 
     # geometry
     @parameter
     def width(self):
-        return 0 / 100 # meters
+        return 10 / 100 # meters
 
-    # weather
-    # @parameter
-    # def weather(self):
-    #     retrun weather...
-
-    #TODO: come up with a good way to handle multiple variables from one source (i.e. weather)
-
-    @parameter
-    def P_air(self):
-        return 100
-
-    @parameter
-    def PFD(self):
-        return 1500
-
-    @parameter
-    def T_air(self):
-        return 25
-
-    @parameter
-    def CO2(self):
-        return 400
-
-    @parameter
-    def RH(self):
-        return 0.6
-
-    @parameter
-    def wind(self):
-        return 2.0
-
-    # soil
+    # soil?
     @parameter
     def ET_supply(self):
         return 0
@@ -654,11 +572,11 @@ class PhotosyntheticLeaf(System):
         epsilon = 0.97
         sbc = 5.6697e-8
 
-        T_air = self.T_air
+        T_air = self.weather.T_air
         Tk = T_air + 273.15
-        RH = self.RH
-        PFD = self.PFD
-        P_air = self.P_air
+        RH = self.weather.RH
+        PFD = self.weather.PFD
+        P_air = self.weather.P_air
         Jw = self.ET_supply
 
         gha = self.stomata.boundary_layer_conductance * (0.135 / 0.147) # heat conductance, gha = 1.4*.135*sqrt(u/d), u is the wind speed in m/s} Mol m-2 s-1 ?
@@ -693,19 +611,19 @@ class PhotosyntheticLeaf(System):
     @derive
     def ET(self):
         gv = self.stomata.total_conductance_h2o
-        ea = VaporPressure.ambient(self.T_air, self.RH)
+        ea = VaporPressure.ambient(self.weather.T_air, self.weather.RH)
         es_leaf = VaporPressure.saturation(self.temperature)
-        ET = gv * ((es_leaf - ea) / self.P_air) / (1 - (es_leaf + ea) / self.P_air)
+        ET = gv * ((es_leaf - ea) / self.P_air) / (1 - (es_leaf + ea) / self.weather.P_air)
         return max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
 
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 class GasExchange(System):
     def setup(self):
-        #TODO: make System.__init__() accept a list of System references? i.e. Weather / Soil
-        #TODO: link Weather / Soil variables to PhotosyntheticLeaf
-        self.leaf = PhotosyntheticLeaf(self)
-        super().setup()
+        #TODO: use externally initialized Weather / Soil
+        self.weather = w = Weather(self)
+        self.soil = s = Soil(self)
+        self.leaf = PhotosyntheticLeaf(self, weather=w, soil=s)
 
     @derive
     def A_gross(self):
@@ -733,30 +651,41 @@ class GasExchange(System):
         return self.leaf.stomata.gs
 
 
-#TODO: make Weather/ Soil an instance of System?
+#TODO: use improved @drive
+#TODO: implement @unit
+class Weather(System):
+    @parameter
+    def PFD(self): return 1500 # umol m-2 s-1
 
-class Weather:
-    def __init__(self):
-        self.reset()
+    @parameter
+    def CO2(self): return 400 # ppm
 
-    def reset(self):
-        self.PFD = None # umol m-2 s-1
-        self.CO2 = None # ppm
-        self.RH = None # 0~1
-        self.T_air = None # C
-        self.wind = None # meters s-1
-        self.P_air = None # kPa
+    @parameter
+    def RH(self): return 0.6 # 0~1
+
+    @parameter
+    def T_air(self): return 25 # C
+
+    @parameter
+    def wind(self): return 2.0 # meters s-1
+
+    @parameter
+    def P_air(self): return 100 # kPa
 
     def __str__(self):
         return f'PFD = {self.PFD}, CO2 = {self.CO2}, RH = {self.RH}, T_air = {self.T_air}, wind = {self.wind}, P_air = {self.P_air}'
 
 
-class Soil:
-    def __init__(self):
-        self.reset()
-
-    def reset(self):
-        self.WP_leaf = None
+class Soil(System):
+    @parameter
+    def WP_leaf(self): return 0
 
     def __str__(self):
         return f'WP_leaf = {self.WP_leaf}'
+
+
+import configparser
+config = configparser.ConfigParser()
+c = Context(config)
+c.branch(GasExchange)
+c.update()
