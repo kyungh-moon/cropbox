@@ -31,11 +31,15 @@ class Trace:
         #TODO: check dupliate?
         self.graph.add_node(o.__class__.__name__, type='Class', group='')
         self.graph.add_node(v.__name__, type=v.__class__.__name__, group=o.__class__.__name__)
+        s = len(self.stack)*' '
         self.stack.append(v)
+        print(f'{s} > {v.__name__}')
         return self
 
     def __exit__(self, *excs):
-        self.stack.pop()
+        v = self.stack.pop()
+        s = len(self.stack)*' '
+        print(f'{s} < {v.__name__}')
 
     def is_stacked(self, var):
         return len([v for v in self.stack if v is var]) > 1
@@ -65,16 +69,22 @@ class statevar:
     def compute(self, obj):
         return self._compute(obj)
 
-    def setup(self, obj):
+    def init(self, obj):
+        if self.__name__ == 'total_conductance_h2o':
+            breakpoint()
         t = self.time(obj)
         v = obj.get(self._init_var)
         setattr(obj, self._name, self._track_cls(t, v))
 
     def update(self, obj):
+        if self.__name__ == 'total_conductance_h2o':
+            breakpoint()
         with self.trace(self, obj):
             return self._update(obj)
 
     def _update(self, obj):
+        if self.__name__ == 'total_conductance_h2o':
+            breakpoint()
         # support custom timestamp (i.e. elongation age instead of calendar time)
         t = self.time(obj)
         # lazy evaluation preventing redundant computation
