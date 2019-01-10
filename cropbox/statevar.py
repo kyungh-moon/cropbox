@@ -131,7 +131,28 @@ class optimize(statevar):
         l = obj.get(self._lower_var)
         u = obj.get(self._upper_var)
         obj.force_update(True)
+        #TODO: use optimize.minimize_scalar() instead?
         v = scipy.optimize.brentq(loss, l, u)
+        obj.force_update(False)
+        tr._value == v
+        return v
+
+class optimize2(statevar):
+    def __init__(self, f=None, *, bracket=None):
+        self._bracket_var = bracket
+        super().__init__(f, track=Track)
+
+    def compute(self, obj):
+        tr = getattr(obj, self._name)
+        #HACK: prevent recursion loop already in computation tree
+        if self.trace.is_stacked(self):
+            return tr._value
+        def cost(x):
+            tr._value = x
+            return self._compute(obj)
+        bracket = obj.get(self._bracket_var)
+        obj.force_update(True)
+        v = float(scipy.optimize.minimize_scalar(cost, bracket).x)
         obj.force_update(False)
         tr._value == v
         return v
