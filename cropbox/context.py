@@ -31,7 +31,7 @@ class Context(Clock):
 
     def option(self, obj, k, v=None, vtype=float):
         #HACK: populate base classes down to System (not inclusive) for section names
-        S = [c for c in obj.__class__.mro()]
+        S = obj.__class__.mro()
         S = S[:S.index(System)]
         for s in S:
             try:
