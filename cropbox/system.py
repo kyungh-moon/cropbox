@@ -33,7 +33,7 @@ class Trackable(metaclass=TrackableMeta):
         cls._force_update = flag
 
 class System(Trackable):
-    def __init__(self, parent):
+    def __init__(self, parent, **kwargs):
         self.parent = parent
         self.children = []
         if parent is not None:
@@ -42,6 +42,7 @@ class System(Trackable):
         self.setup()
         #TODO: give trackable update/setup() more explicit names
         #TODO: provide more public setup() hook with no need to call super()
+        [setattr(self, k, v) for k, v in kwargs.items()]
 
     def get(self, name, *args):
         # support direct specification of value, i.e. 0
