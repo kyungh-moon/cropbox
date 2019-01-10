@@ -12,20 +12,11 @@ class TrackableMeta(type):
         return cls
 
 class Trackable(metaclass=TrackableMeta):
-    @property
-    def _statevar_names(self):
-        return self._statevars.keys()
-
-    @property
-    def _statevar_objs(self):
-        return self._statevars.values()
-
-    def setup(self):
-        [s.setup(self) for s in self._statevar_objs]
-        self.update()
+    def __init__(self):
+        [s.init(self) for s in self._statevars.values()]
 
     def update(self):
-        [s.update(self) for s in self._statevar_objs]
+        [s.update(self) for s in self._statevars.values()]
 
     _force_update = False
 
@@ -40,9 +31,8 @@ class System(Trackable):
             parent.children.append(self)
             self.context = parent.context
         self.setup()
-        #TODO: give trackable update/setup() more explicit names
-        #TODO: provide more public setup() hook with no need to call super()
         [setattr(self, k, v) for k, v in kwargs.items()]
+        super().__init__()
 
     def get(self, name, *args):
         # support direct specification of value, i.e. 0
@@ -60,7 +50,7 @@ class System(Trackable):
         self.context.queue(lambda: systemcls(self))
 
     def setup(self):
-        super().setup()
+        pass
 
     def update(self, recursive=False):
         super().update()
