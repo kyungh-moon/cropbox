@@ -44,13 +44,13 @@ def test_accumulate(instance):
             return self.a + 1
     s = instance(S)
     c = s.context
+    assert s.a == 1 and s.b == 0
+    c.update()
     assert s.a == 1 and s.b == 2
     c.update()
     assert s.a == 1 and s.b == 4
     c.update()
     assert s.a == 1 and s.b == 6
-    c.update()
-    assert s.a == 1 and s.b == 8
 
 def test_accumulate_with_cross_reference(instance):
     class S(System):
@@ -62,13 +62,13 @@ def test_accumulate_with_cross_reference(instance):
             return self.a + 1
     s = instance(S)
     c = s.context
+    assert s.a == 0 and s.b == 0
+    c.update()
     assert s.a == 1 and s.b == 1
     c.update()
     assert s.a == 3 and s.b == 3
     c.update()
     assert s.a == 7 and s.b == 7
-    c.update()
-    assert s.a == 15 and s.b == 15
 
 def test_accumulate_with_time(instance):
     class S(System):
@@ -83,13 +83,13 @@ def test_accumulate_with_time(instance):
             return 0.5 * self.context.time
     s = instance(S)
     c = s.context
+    assert s.a == 1 and s.b == 0
+    c.update()
     assert s.a == 1 and s.b == 1
     c.update()
     assert s.a == 1 and s.b == 2
     c.update()
     assert s.a == 1 and s.b == 3
-    c.update()
-    assert s.a == 1 and s.b == 4
 
 def test_accumulate_transport(instance):
     class S(System):
@@ -104,9 +104,9 @@ def test_accumulate_transport(instance):
             return max(self.b - self.c, 0)
     s = instance(S)
     c = s.context
-    assert s.a == 0 and s.b == 10 and s.c == 0
+    assert s.a == 10 and s.b == 0 and s.c == 0
     c.update()
-    assert s.a == 0 and s.b == 0 and s.c == 10
+    assert s.a == 0 and s.b == 10 and s.c == 0
     c.update()
     assert s.a == 0 and s.b == 0 and s.c == 10
 
@@ -114,7 +114,7 @@ def test_accumulate_distribute(instance):
     class S(System):
         @drive
         def s(self):
-            return {'s': (self.context.time + 1) * 100}
+            return {'s': self.context.time * 100}
         @accumulate
         def d1(self):
             return self.s * 0.2
@@ -126,11 +126,11 @@ def test_accumulate_distribute(instance):
             return self.s * 0.5
     s = instance(S)
     c = s.context
+    assert s.s == 100 and s.d1 == 0 and s.d2 == 0 and s.d3 == 0
+    c.update()
     assert s.s == 200 and s.d1 == 20 and s.d2 == 30 and s.d3 == 50
     c.update()
     assert s.s == 300 and s.d1 == 60 and s.d2 == 90 and s.d3 == 150
-    c.update()
-    assert s.s == 400 and s.d1 == 120 and s.d2 == 180 and s.d3 == 300
 
 def test_difference(instance):
     class S(System):
@@ -142,7 +142,7 @@ def test_difference(instance):
             return self.a + 1
     s = instance(S)
     c = s.context
-    assert s.a == 1 and s.b == 2
+    assert s.a == 1 and s.b == 0
     c.update()
     assert s.a == 1 and s.b == 2
     c.update()
@@ -166,14 +166,14 @@ def test_signal(instance):
             return self.b
     s = instance(S)
     c = s.context
+    assert s.a == 1 and s.b == 0
+    assert s.c == 1 and s.d == 0
+    c.update()
     assert s.a == 1 and s.b == 2
     assert s.c == 0 and s.d == 2
     c.update()
     assert s.a == 1 and s.b == 4
     assert s.c == 0 and s.d == 4
-    c.update()
-    assert s.a == 1 and s.b == 6
-    assert s.c == 0 and s.d == 6
 
 def test_parameter(instance):
     class S(System):
@@ -247,22 +247,22 @@ def test_clock(instance):
         pass
     s = instance(S)
     c = s.context
+    assert c.time == 0
+    c.update()
     assert c.time == 1
     c.update()
     assert c.time == 2
-    c.update()
-    assert c.time == 3
 
 def test_clock_with_config(instance):
     class S(System):
         pass
     s = instance(S, {'Clock': {'start': 5, 'interval': 10}})
     c = s.context
+    assert c.time == 5
+    c.update()
     assert c.time == 15
     c.update()
     assert c.time == 25
-    c.update()
-    assert c.time == 35
 
 def test_plot(instance):
     class S(System):

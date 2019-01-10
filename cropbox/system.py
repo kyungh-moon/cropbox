@@ -14,6 +14,8 @@ class TrackableMeta(type):
 class Trackable(metaclass=TrackableMeta):
     def __init__(self):
         [s.init(self) for s in self._statevars.values()]
+        #FIXME: can we avoid this? otherwise, no way to initialize Systems with mutual dependency
+        #self.update()
 
     def update(self):
         [s.update(self) for s in self._statevars.values()]
