@@ -281,3 +281,44 @@ def test_plot(instance):
     import networkx as nx
     nx.draw_circular(g, with_labels=True)
     plt.savefig('graph.png')
+
+def test_cytoscape(instance):
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @accumulate
+        def b(self):
+            return self.a
+    #FIXME: graph should be automatically reset
+    statevar.trace.reset()
+    s = instance(S)
+    g = statevar.trace.graph
+    #import networkx as nx
+    #nx.write_graphml(g, 'cy.graphml')
+    cy = {
+        'elements': {
+            'nodes': [],
+            'edges': [],
+        }
+    }
+    for n in g.nodes():
+        cy['elements']['nodes'].append({
+            'data': {
+                'id': n,
+                'label': n,
+                'type': g.node[n]['type'],
+                'parent': g.node[n]['group'],
+            }
+        })
+    for e in g.edges():
+        cy['elements']['edges'].append({
+            'data': {
+                'id': f'{e[0]}__{e[1]}',
+                'source': e[0],
+                'target': e[1],
+            }
+        })
+    with open('cy.json', 'w') as f:
+        import json
+        f.write(json.dumps(cy))
