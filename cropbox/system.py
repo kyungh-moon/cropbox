@@ -40,6 +40,8 @@ class System(Trackable):
             parent.children.append(self)
             self.context = parent.context
         self.setup()
+        #TODO: give trackable update/setup() more explicit names
+        #TODO: provide more public setup() hook with no need to call super()
 
     def get(self, name, *args):
         # support direct specification of value, i.e. 0
@@ -55,6 +57,9 @@ class System(Trackable):
 
     def branch(self, systemcls):
         self.context.queue(lambda: systemcls(self))
+
+    def setup(self):
+        super().setup()
 
     def update(self, recursive=False):
         super().update()
