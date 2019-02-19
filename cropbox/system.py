@@ -20,10 +20,10 @@ class Trackable(metaclass=TrackableMeta):
     def update(self):
         [s.update(self) for s in self._statevars.values()]
 
-    _force_update = False
-
-    def force_update(cls, flag):
-        cls._force_update = flag
+    # _force_update = False
+    #
+    # def force_update(cls, flag):
+    #     cls._force_update = flag
 
 class System(Trackable):
     def __init__(self, parent, **kwargs):
