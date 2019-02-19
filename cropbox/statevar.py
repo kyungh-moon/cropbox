@@ -13,7 +13,6 @@ class Trace:
     def reset(self):
         self._stack = []
         self.graph = nx.DiGraph()
-        self.force_update(False)
 
     @property
     def stack(self):
@@ -71,8 +70,14 @@ class Trace:
     def is_stacked(self, var):
         return len([v for v in self.stack if v is var]) > 1
 
-    def force_update(self, flag):
-        self._force_update = flag
+    @property
+    def is_update_forced(self):
+        try:
+            x = self._stack[-1]
+        except IndexError:
+            return False
+        else:
+            return True if type(x) is list else False
 
 class statevar:
     trace = Trace()
@@ -118,7 +123,7 @@ class statevar:
         # lazy evaluation preventing redundant computation
         r = lambda: self.compute(obj)
         #HACK: prevent premature initialization?
-        return tr.update(t, r, force=self.trace._force_update)
+        return tr.update(t, r, force=self.trace.is_update_forced)
 
     def __repr__(self):
         return self._name[1:]
@@ -170,12 +175,10 @@ class optimize(statevar):
                 return self._compute(obj)
         l = obj.get(self._lower_var)
         u = obj.get(self._upper_var)
-        self.trace.force_update(True)
         #TODO: use optimize.minimize_scalar() instead?
         v = scipy.optimize.brentq(cost, l, u)
         # trigger update with final value
         cost(v)
-        self.trace.force_update(False)
         return v
 
 class optimize2(statevar):
@@ -191,9 +194,7 @@ class optimize2(statevar):
                 tr._value = x
                 return self._compute(obj)
         bracket = obj.get(self._bracket_var)
-        self.trace.force_update(True)
         v = float(scipy.optimize.minimize_scalar(cost, bracket).x)
         # trigger update with final value
         cost(v)
-        self.trace.force_update(False)
         return v
