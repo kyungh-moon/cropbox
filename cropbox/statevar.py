@@ -96,30 +96,25 @@ class statevar:
         return self._compute(obj)
 
     def init(self, obj):
-        # if self.__name__ in {'total_conductance_h2o', 'temperature_adjustment'}:
-        #     breakpoint()
         t = self.time(obj)
         v = obj.get(self._init_var)
         setattr(obj, self._name, self._track_cls(t, v))
 
     def update(self, obj):
         with self.trace(self, obj):
-            if self._name in {'a, b, x'}:
-                breakpoint()
             return self._update(obj)
 
     def _update(self, obj):
-        # if self.__name__ in {'total_conductance_h2o', 'temperature_adjustment'}:
-        #     breakpoint()
+        #HACK: prevent recursion loop already in computation tree
+        tr = getattr(obj, self._name)
         if self.trace.is_stacked(self):
-            #breakpoint()
-            return getattr(obj, self._name)._value
+            return tr._value
         # support custom timestamp (i.e. elongation age instead of calendar time)
         t = self.time(obj)
         # lazy evaluation preventing redundant computation
         r = lambda: self.compute(obj)
         #HACK: prevent premature initialization?
-        return getattr(obj, self._name).update(t, r, force=obj._force_update)
+        return tr.update(t, r, force=obj._force_update)
 
     def __repr__(self):
         return self._name[1:]
@@ -165,19 +160,7 @@ class optimize(statevar):
 
     def compute(self, obj):
         tr = getattr(obj, self._name)
-        #HACK: prevent recursion loop already in computation tree
-        if self.trace.is_stacked(self):
-            #breakpoint()
-            return tr._value
-        def loss(x):
-            breakpoint()
-            # trace = self.trace
-            # statevar.trace = Trace()
-            # with self.trace(self, obj):
-            #     tr._value = x
-            #     v = self._compute(obj)
-            # statevar.trace = trace
-            # return v
+        def cost(x):
             with self.trace(self, obj, isolate=True):
                 tr._value = x
                 return self._compute(obj)
@@ -185,10 +168,9 @@ class optimize(statevar):
         u = obj.get(self._upper_var)
         obj.force_update(True)
         #TODO: use optimize.minimize_scalar() instead?
-        v = scipy.optimize.brentq(loss, l, u)
-        breakpoint()
+        v = scipy.optimize.brentq(cost, l, u)
         obj.force_update(False)
-        tr._value == v
+        tr._value = v
         return v
 
 class optimize2(statevar):
@@ -198,16 +180,13 @@ class optimize2(statevar):
 
     def compute(self, obj):
         tr = getattr(obj, self._name)
-        #HACK: prevent recursion loop already in computation tree
-        if self.trace.is_stacked(self):
-            #breakpoint()
-            return tr._value
         def cost(x):
-            tr._value = x
-            return self._compute(obj)
+            with self.trace(self, obj, isolate=True):
+                tr._value = x
+                return self._compute(obj)
         bracket = obj.get(self._bracket_var)
         obj.force_update(True)
         v = float(scipy.optimize.minimize_scalar(cost, bracket).x)
         obj.force_update(False)
-        tr._value == v
+        tr._value = v
         return v

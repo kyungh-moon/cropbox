@@ -435,7 +435,6 @@ class Stomata(System):
         # this below is an example of how you can write temporary data to a debug window. It can be copied and
         # pasted into excel for plotting. Dennis See above where the CString object is created.
         #print(f"gs = {gs} LWP = {LWP} Ds = {Ds} T_leaf = {T_leaf} Cs = {Cs} A_net = {A_net} hs = {hs} RH = {RH}")
-        breakpoint()
         return gs
 
     @derive
@@ -459,7 +458,6 @@ class Stomata(System):
     def total_conductance_h2o(self):
         gs = self.stomatal_conductance
         gb = self.boundary_layer_conductance
-        breakpoint()
         return gs * gb / (gs + gb)
 
     @derive
