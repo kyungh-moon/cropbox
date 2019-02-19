@@ -515,9 +515,9 @@ class PhotosyntheticLeaf(System):
         T_leaf = self.temperature
 
         #self.stomata.update(self.weather, self.water, A_net, T_leaf)
-        P = self.P_air / 100
-        Ca = self.CO2 * P # conversion to partial pressure
-        rsc = self.stomata.total_resistance_co2()
+        P = self.weather.P_air / 100
+        Ca = self.weather.CO2 * P # conversion to partial pressure
+        rsc = self.stomata.total_resistance_co2
         Cm = Ca - A_net * rsc * P
         #print(f"+ Cm = {Cm}, Ca = {Ca}, A_net = {A_net}, gs = {self.stomata.gs}, gb = {self.stomata.gb}, rsc = {rsc}, P = {P}")
         return np.clip(Cm, 0, 2*Ca)
@@ -530,7 +530,7 @@ class PhotosyntheticLeaf(System):
         scatt = 0.15 # leaf reflectance + transmittance
         f = 0.15 # spectral correction
 
-        Ia = self.PFD * (1 - scatt) # absorbed irradiance
+        Ia = self.weather.PFD * (1 - scatt) # absorbed irradiance
         I2 = Ia * (1 - f) / 2 # useful light absorbed by PSII
         return I2
 
@@ -561,7 +561,7 @@ class PhotosyntheticLeaf(System):
 
     #TODO: use @optimize
     @derive
-    def temperature(self):
+    def temperature_adjustment(self):
         # see Campbell and Norman (1998) pp 224-225
         # because Stefan-Boltzman constant is for unit surface area by denifition,
         # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
@@ -598,9 +598,14 @@ class PhotosyntheticLeaf(System):
         if Jw == 0:
             VPD = VaporPressure.deficit(T_air, RH)
             # eqn 14.6b linearized form using first order approximation of Taylor series
-            T_leaf = T_air + (psc1 / (VaporPressure.curve_slope(T_air, P_air) + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
+            return (psc1 / (VaporPressure.curve_slope(T_air, P_air) + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
         else:
-            T_leaf = T_air + (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
+            return (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
+
+    @derive
+    def temperature(self):
+        T_air = self.weather.T_air
+        T_leaf = T_air + self.temperature_adjustment
         return T_leaf
 
     #TODO: expand @optimize decorator to support both cost function and variable definition
@@ -613,7 +618,7 @@ class PhotosyntheticLeaf(System):
         gv = self.stomata.total_conductance_h2o
         ea = VaporPressure.ambient(self.weather.T_air, self.weather.RH)
         es_leaf = VaporPressure.saturation(self.temperature)
-        ET = gv * ((es_leaf - ea) / self.P_air) / (1 - (es_leaf + ea) / self.weather.P_air)
+        ET = gv * ((es_leaf - ea) / self.weather.P_air) / (1 - (es_leaf + ea) / self.weather.P_air)
         return max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
 
 
@@ -644,11 +649,11 @@ class GasExchange(System):
     @derive
     def VPD(self):
         #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-        return VaporPressure.deficit(self.leaf.T_air, self.leaf.RH)
+        return VaporPressure.deficit(self.weather.T_air, self.weather.RH)
 
     @derive
     def gs(self):
-        return self.leaf.stomata.gs
+        return self.leaf.stomata.stomatal_conductance
 
 
 #TODO: use improved @drive
@@ -673,7 +678,8 @@ class Weather(System):
     def P_air(self): return 100 # kPa
 
     def __str__(self):
-        return f'PFD = {self.PFD}, CO2 = {self.CO2}, RH = {self.RH}, T_air = {self.T_air}, wind = {self.wind}, P_air = {self.P_air}'
+        w = self.weather
+        return f'PFD = {w.PFD}, CO2 = {w.CO2}, RH = {w.RH}, T_air = {w.T_air}, wind = {w.wind}, P_air = {w.P_air}'
 
 
 class Soil(System):
