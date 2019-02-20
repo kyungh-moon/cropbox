@@ -72,7 +72,7 @@ def test_root_structure(instance):
                 l = r.length
                 if l == 0:
                     return
-                m = trimesh.creation.cylinder(radius=r.diameter, height=l)
+                m = trimesh.creation.cylinder(radius=r.diameter, height=l, sections=4)
                 if pn is None:
                     m.visual.face_colors = (255, 0, 0, 255)
                 # put segment end at origin
@@ -97,7 +97,6 @@ def test_root_structure(instance):
 
     r = instance(R)
     c = r.context
-    T = range(40)
+    T = range(50)
     [c.update() for t in T]
     r.render()
-    breakpoint()
