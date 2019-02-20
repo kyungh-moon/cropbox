@@ -43,13 +43,13 @@ class System(Trackable):
         s = {self.parent} if self.parent is not None else {}
         return s | set(self.children)
 
-    def branch(self, systemcls):
-        self.context.queue(lambda: systemcls(self))
+    def branch(self, systemcls, **kwargs):
+        self.context.queue(lambda: systemcls(self, **kwargs))
 
     def setup(self):
         pass
 
-    def update(self, recursive=False):
+    def update(self, recursive=True):
         super().update()
         if recursive:
             [s.update() for s in self.children]

@@ -1,4 +1,4 @@
-from .track import Track, Accumulate, Difference, Signal
+from .track import Track, Accumulate, Difference, Signal, Static
 
 #HACK: to implement @optimize, need better way of controlling this
 #TODO: probably need a full dependency graph between variables to push updates downwards
@@ -58,14 +58,14 @@ class Trace:
         s = len(self.stack)*' '
         #self.stack.append(v)
         self.push(v, isolate=i)
-        print(f'{s} > {v.__name__}')
+        #print(f'{s} > {v.__name__}')
         return self
 
     def __exit__(self, *excs):
         #v = self.stack.pop()
         v = self.pop()
         s = len(self.stack)*' '
-        print(f'{s} < {v.__name__}')
+        #print(f'{s} < {v.__name__}')
 
     def is_stacked(self, var):
         return len([v for v in self.stack if v is var]) > 1
@@ -132,6 +132,7 @@ def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
 def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
 def difference(f=None, **kwargs): return statevar(f, track=Difference, **kwargs)
 def signal(f=None, **kwargs): return statevar(f, track=Signal, **kwargs)
+def static(f=None, **kwargs): return statevar(f, track=Static, **kwargs)
 
 #TODO: use @proxy <: @var replacing @property, also make @state <: @var
 

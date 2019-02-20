@@ -54,3 +54,13 @@ class Signal(Track):
     def value(self):
         #return self._changed
         return type(self._value)(self._changed * self._value)
+
+class Static(Track):
+    def reset(self, t):
+        super().reset(t)
+        self._stored = False
+
+    def store(self, v, dt):
+        if not self._stored:
+            self._value = v()
+            self._stored = True
