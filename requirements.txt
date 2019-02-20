@@ -1,6 +1,8 @@
 matplotlib
 numpy
 pandas
+pyglet
 pytest
 scipy
 seaborn
+trimesh
