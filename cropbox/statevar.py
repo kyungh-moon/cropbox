@@ -5,6 +5,12 @@ from .track import Track, Accumulate, Difference, Signal, Static
 #FORCE_UPDATE = False
 
 import networkx as nx
+import pint
+
+ureg = pint.UnitRegistry()
+ureg.default_format = '~P'
+#ureg.setup_matplotlib()
+Q = ureg.Quantity
 
 class Trace:
     def __init__(self):
@@ -82,10 +88,11 @@ class Trace:
 class statevar:
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=0):
+    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
+        self._unit_str = unit
         if f is not None:
             self.__call__(f)
 
@@ -96,7 +103,14 @@ class statevar:
         return self
 
     def __get__(self, obj, objtype):
-        return self.update(obj)
+        v = self.update(obj)
+        if self._unit_str is None:
+            return v
+        else:
+            try:
+                return v.to(self._unit_str)
+            except AttributeError:
+                return v * ureg[self._unit_str]
 
     def time(self, obj):
         return obj.get(self._time_var)
