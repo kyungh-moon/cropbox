@@ -1,9 +1,0 @@
-matplotlib
-numpy
-pandas
-pint
-pyglet
-pytest
-scipy
-seaborn
-trimesh
