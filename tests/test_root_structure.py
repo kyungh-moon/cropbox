@@ -4,8 +4,6 @@ from cropbox.system import System
 from cropbox.context import instance
 from cropbox.statevar import accumulate, derive, parameter, static
 
-import pytest
-
 import random
 import trimesh
 import numpy as np

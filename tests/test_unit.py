@@ -4,8 +4,6 @@ from cropbox.system import System
 from cropbox.context import instance
 from cropbox.statevar import derive, Q
 
-import pytest
-
 def test_unit():
     class S(System):
         @derive(unit='m')

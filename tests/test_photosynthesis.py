@@ -1,16 +1,14 @@
-#from . import context
+from . import context
 
 from cropbox.system import System
 from cropbox.context import Context
-from cropbox.stage import Stage
-from cropbox.statevar import statevar, derive, accumulate, difference, signal, parameter, drive, optimize, optimize2
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, signal, statevar
 
 import numpy as np
 import scipy.optimize
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-
 
 # Arrhenius equation
 def temperature_dependence_rate(Ea, T, Tb=25.):

@@ -2,10 +2,7 @@ from . import context
 
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.stage import Stage
-from cropbox.statevar import statevar, derive, accumulate, difference, signal, parameter, drive, optimize
-
-import pytest
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, signal, statevar
 
 def test_derive():
     class S(System):

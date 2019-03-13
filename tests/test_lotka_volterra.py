@@ -4,8 +4,6 @@ from cropbox.system import System
 from cropbox.context import instance
 from cropbox.statevar import accumulate, parameter
 
-import pytest
-
 import matplotlib.pyplot as plt
 
 def test_lotka_volterra():
