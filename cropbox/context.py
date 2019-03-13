@@ -1,5 +1,6 @@
 from .system import System
 from .statevar import accumulate, parameter
+from configparser import ConfigParser
 
 class Clock(System):
     def __init__(self):
@@ -52,3 +53,12 @@ class Context(Clock):
         super().update(recursive=True)
 
         #TODO: process aggregate (i.e. transport) operations?
+
+def instance(systemcls, config_dict=None):
+    config = ConfigParser()
+    if config_dict is not None:
+        config.read_dict(config_dict)
+    c = Context(config)
+    c.branch(systemcls)
+    c.update()
+    return c.children[0]

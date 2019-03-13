@@ -1,26 +1,13 @@
 from . import context
 
 from cropbox.system import System
-from cropbox.context import Context
+from cropbox.context import instance
 from cropbox.stage import Stage
 from cropbox.statevar import statevar, derive, accumulate, difference, signal, parameter, drive, optimize
 
 import pytest
 
-@pytest.fixture
-def instance():
-    def _instance(systemcls, config_dict=None):
-        import configparser
-        config = configparser.ConfigParser()
-        if config_dict is not None:
-            config.read_dict(config_dict)
-        c = Context(config)
-        c.branch(systemcls)
-        c.update()
-        return c.children[0]
-    return _instance
-
-def test_derive(instance):
+def test_derive():
     class S(System):
         @derive
         def a(self):
@@ -34,7 +21,7 @@ def test_derive(instance):
     s = instance(S)
     assert s.a == 1 and s.b == 2 and s.c == 3
 
-def test_accumulate(instance):
+def test_accumulate():
     class S(System):
         @derive
         def a(self):
@@ -52,7 +39,7 @@ def test_accumulate(instance):
     c.update()
     assert s.a == 1 and s.b == 6
 
-def test_accumulate_with_cross_reference(instance):
+def test_accumulate_with_cross_reference():
     class S(System):
         @accumulate
         def a(self):
@@ -70,7 +57,7 @@ def test_accumulate_with_cross_reference(instance):
     c.update()
     assert s.a == 7 and s.b == 7
 
-def test_accumulate_with_time(instance):
+def test_accumulate_with_time():
     class S(System):
         @derive
         def a(self):
@@ -91,7 +78,7 @@ def test_accumulate_with_time(instance):
     c.update()
     assert s.a == 1 and s.b == 3
 
-def test_accumulate_transport(instance):
+def test_accumulate_transport():
     class S(System):
         @accumulate(init=10)
         def a(self):
@@ -110,7 +97,7 @@ def test_accumulate_transport(instance):
     c.update()
     assert s.a == 0 and s.b == 0 and s.c == 10
 
-def test_accumulate_distribute(instance):
+def test_accumulate_distribute():
     class S(System):
         @drive
         def s(self):
@@ -132,7 +119,7 @@ def test_accumulate_distribute(instance):
     c.update()
     assert s.s == 300 and s.d1 == 60 and s.d2 == 90 and s.d3 == 150
 
-def test_difference(instance):
+def test_difference():
     class S(System):
         @derive
         def a(self):
@@ -150,7 +137,7 @@ def test_difference(instance):
     c.update()
     assert s.a == 1 and s.b == 2
 
-def test_signal(instance):
+def test_signal():
     class S(System):
         @derive
         def a(self):
@@ -175,7 +162,7 @@ def test_signal(instance):
     assert s.a == 1 and s.b == 4
     assert s.c == 0 and s.d == 4
 
-def test_parameter(instance):
+def test_parameter():
     class S(System):
         @parameter
         def a(self):
@@ -186,7 +173,7 @@ def test_parameter(instance):
     c.update()
     assert s.a == 1
 
-def test_parameter_with_config(instance):
+def test_parameter_with_config():
     class S(System):
         @parameter
         def a(self):
@@ -197,7 +184,7 @@ def test_parameter_with_config(instance):
     c.update()
     assert s.a == 2
 
-def test_drive_with_dict(instance):
+def test_drive_with_dict():
     class S(System):
         @drive
         def a(self):
@@ -210,7 +197,7 @@ def test_drive_with_dict(instance):
     c.update()
     assert s.a == 30
 
-def test_drive_with_dataframe(instance):
+def test_drive_with_dataframe():
     import pandas as pd
     class S(System):
         @property
@@ -227,7 +214,7 @@ def test_drive_with_dataframe(instance):
     c.update()
     assert c.time == 3 and s.a == 30
 
-def test_optimize(instance):
+def test_optimize():
     class S(System):
         @derive
         def a(self):
@@ -242,7 +229,7 @@ def test_optimize(instance):
     assert s.x == 1
     assert s.a == s.b == 2
 
-def test_clock(instance):
+def test_clock():
     class S(System):
         pass
     s = instance(S)
@@ -253,7 +240,7 @@ def test_clock(instance):
     c.update()
     assert c.time == 2
 
-def test_clock_with_config(instance):
+def test_clock_with_config():
     class S(System):
         pass
     s = instance(S, {'Clock': {'start': 5, 'interval': 10}})
@@ -264,7 +251,7 @@ def test_clock_with_config(instance):
     c.update()
     assert c.time == 25
 
-def test_plot(instance):
+def test_plot():
     class S(System):
         @derive
         def a(self):
@@ -282,7 +269,7 @@ def test_plot(instance):
     nx.draw_circular(g, with_labels=True)
     plt.savefig('graph.png')
 
-def test_cytoscape(instance):
+def test_cytoscape():
     class S(System):
         @derive
         def a(self):

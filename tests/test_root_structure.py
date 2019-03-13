@@ -1,29 +1,16 @@
 from . import context
 
 from cropbox.system import System
-from cropbox.context import Context
+from cropbox.context import instance
 from cropbox.statevar import accumulate, derive, parameter, static
 
 import pytest
-
-@pytest.fixture
-def instance():
-    def _instance(systemcls, config_dict=None):
-        import configparser
-        config = configparser.ConfigParser()
-        if config_dict is not None:
-            config.read_dict(config_dict)
-        c = Context(config)
-        c.branch(systemcls)
-        c.update()
-        return c.children[0]
-    return _instance
 
 import random
 import trimesh
 import numpy as np
 
-def test_root_structure(instance):
+def test_root_structure():
     class R(System):
         @derive
         def elongation_rate(self):

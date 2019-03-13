@@ -1,27 +1,14 @@
 from . import context
 
 from cropbox.system import System
-from cropbox.context import Context
+from cropbox.context import instance
 from cropbox.statevar import accumulate, parameter
 
 import pytest
 
-@pytest.fixture
-def instance():
-    def _instance(systemcls, config_dict=None):
-        import configparser
-        config = configparser.ConfigParser()
-        if config_dict is not None:
-            config.read_dict(config_dict)
-        c = Context(config)
-        c.branch(systemcls)
-        c.update()
-        return c.children[0]
-    return _instance
-
 import matplotlib.pyplot as plt
 
-def test_lotka_volterra(instance):
+def test_lotka_volterra():
     class S(System):
         @parameter
         def prey_birth_rate(self):
