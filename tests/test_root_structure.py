@@ -1,5 +1,3 @@
-from . import context
-
 from cropbox.system import System
 from cropbox.context import instance
 from cropbox.statevar import accumulate, derive, parameter, static

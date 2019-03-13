@@ -1,5 +1,3 @@
-from . import context
-
 from cropbox.system import System
 from cropbox.context import Context
 from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, signal, statevar
