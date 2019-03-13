@@ -151,9 +151,9 @@ def static(f=None, **kwargs): return statevar(f, track=Static, **kwargs)
 #TODO: use @proxy <: @var replacing @property, also make @state <: @var
 
 class parameter(statevar):
-    def __init__(self, f=None, *, type=float):
+    def __init__(self, f=None, *, type=float, **kwargs):
         self._type = type
-        super().__init__(f, track=Track)
+        super().__init__(f, track=Track, **kwargs)
 
     def time(self, obj):
         # doesn't change at t=0 ensuring only one update
@@ -165,8 +165,8 @@ class parameter(statevar):
         return obj.context.option(obj, k, v, self._type)
 
 class drive(statevar):
-    def __init__(self, f):
-        super().__init__(track=Track)
+    def __init__(self, f, **kwargs):
+        super().__init__(track=Track, **kwargs)
         self.__call__(f)
 
     def compute(self, obj):
@@ -177,10 +177,10 @@ class drive(statevar):
 import scipy.optimize
 
 class optimize(statevar):
-    def __init__(self, f=None, *, lower, upper):
+    def __init__(self, f=None, *, lower, upper, **kwargs):
         self._lower_var = lower
         self._upper_var = upper
-        super().__init__(f, track=Track)
+        super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
         tr = getattr(obj, self._name)
@@ -197,9 +197,9 @@ class optimize(statevar):
         return v
 
 class optimize2(statevar):
-    def __init__(self, f=None, *, bracket=None):
+    def __init__(self, f=None, *, bracket=None, **kwargs):
         self._bracket_var = bracket
-        super().__init__(f, track=Track)
+        super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
         tr = getattr(obj, self._name)
