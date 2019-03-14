@@ -280,8 +280,11 @@ def test_args():
         @derive
         def d(self, a):
             return a
+        @derive
+        def e(self, aa='a'):
+            return aa
     s = instance(S)
-    assert s.a == s.b == s.c == s.d == 1
+    assert s.a == s.b == s.c == s.d == s.e == 1
 
 def test_inline():
     class S(System):

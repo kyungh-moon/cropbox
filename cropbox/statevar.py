@@ -4,6 +4,7 @@ from .track import Track, Accumulate, Difference, Signal, Static
 #TODO: probably need a full dependency graph between variables to push updates downwards
 #FORCE_UPDATE = False
 
+import inspect
 import networkx as nx
 import pint
 import uuid
@@ -127,9 +128,9 @@ class statevar:
         return self._compute(obj)
 
     def _compute(self, obj):
-        c = self._compute_fun.__code__
-        vs = c.co_varnames[1:c.co_argcount] # exclude self
-        args = [getattr(obj, v) for v in vs]
+        s = inspect.signature(self._compute_fun)
+        vs = [n if p.default is p.empty else p.default for n, p in s.parameters.items() if n != 'self']
+        args = [obj.get(v) for v in vs]
         return self._compute_fun(obj, *args)
 
     def init(self, obj):
