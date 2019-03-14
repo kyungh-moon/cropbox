@@ -49,12 +49,12 @@ class C4(System):
     def __init__(self, parent, leaf):
         super().__init__(parent, leaf=leaf)
 
-    @derive
+    @derive(abbr='Cm')
     def co2_mesophyll(self):
         Cm = self.leaf.co2_mesophyll
         return np.clip(Cm, 0, Cm)
 
-    @derive
+    @derive(abbr='I2')
     def light(self):
         I2 = self.leaf.light
         return np.clip(I2, 0, I2)
@@ -64,29 +64,19 @@ class C4(System):
     ##############
 
     # activation energy values
-    @parameter
-    def Eac(self): return 59400
-    @parameter
-    def Eao(self): return 36000
+    Eac = parameter(59400)
+    Eao = parameter(36000)
 
-    @parameter
-    def EaVp(self): return 75100
-    @parameter
-    def EaVc(self): return 55900 # Sage (2002) JXB
-    @parameter
-    def Eaj(self): return 32800
+    EaVp = parameter(75100)
+    EaVc = parameter(55900) # Sage (2002) JXB
+    Eaj = parameter(32800)
 
-    @parameter
-    def Hj(self): return 220000
-    @parameter
-    def Sj(self): return 702.6
+    Hj = parameter(220000)
+    Sj = parameter(702.6)
 
-    @parameter
-    def Kc25(self): return 650 # Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
-    @parameter
-    def Ko25(self): return 450 # Michaelis constant of rubisco for O2 (2.5 times C3), mbar
-    @parameter
-    def Kp25(self): return 80 # Michaelis constant for PEP caboxylase for CO2
+    Kc25 = parameter(650) # Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
+    Ko25 = parameter(450) # Michaelis constant of rubisco for O2 (2.5 times C3), mbar
+    Kp25 = parameter(80) # Michaelis constant for PEP caboxylase for CO2
 
     # Kim et al. (2007), Kim et al. (2006)
     # In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
@@ -109,12 +99,9 @@ class C4(System):
 
 
     # switchgrass Vcmax from Le et al. (2010), others multiplied from Vcmax (x2, x5.5)
-    @parameter
-    def Vpm25(self): return 96
-    @parameter
-    def Vcm25(self): return 48
-    @parameter
-    def Jm25(self): return 264
+    Vpm25 = parameter(96)
+    Vcm25 = parameter(48)
+    Jm25 = parameter(264)
 
     # @parameter
     # def Vpm25(self): return 100
@@ -130,14 +117,12 @@ class C4(System):
     # @parameter
     # def Jm25(self): return 180.8
 
-    @parameter
-    def Rd25(self): return 2 # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
+    Rd25 = parameter(2) # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
 
     # switchgrass params from Albaugha et al. (2014)
     # def Rd25(self): return 3.6 # not sure if it was normalized to 25 C
 
-    @parameter
-    def Ear(self): return 39800
+    Ear = parameter(39800)
 
     # FIXME are they even used?
     # self.beta_ABA = 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
@@ -147,21 +132,17 @@ class C4(System):
     # self.lambda_l = 1.0e-12
     # self.K_max = 6.67e-3 # max. xylem conductance (mol m-2 s-1 MPa-1) from root to leaf, Dewar (2002)
 
-    @parameter
-    def gbs(self): return 0.003 # bundle sheath conductance to CO2, mol m-2 s-1
+    gbs = parameter(0.003) # bundle sheath conductance to CO2, mol m-2 s-1
 
     #@parameter
     # def gi(self): return 1.0 # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
-    @derive
-    def dark_respiration(self):
-        return self.Rd25 * temperature_dependence_rate(self.Ear, self.leaf.temperature)
+    @derive(abbr='Rd')
+    def dark_respiration(self, Rd25, Ear, T='leaf.temperature'):
+        return Rd25 * temperature_dependence_rate(Ear, T)
 
-    @derive
-    def maximum_electron_transport_rate(self):
-        T = self.leaf.temperature
-        N = self.leaf.nitrogen
-
+    @derive(abbr='Jmax')
+    def maximum_electron_transport_rate(self, Jm25, Eaj, Sj, Hj, T='leaf.temperature', N='leaf.nitrogen'):
         R = 8.314
 
         Tb = 25
@@ -169,33 +150,27 @@ class C4(System):
         Tk = T + K
         Tbk = Tb + K
 
-        Sj = self.Sj
-        Hj = self.Hj
-
-        r = self.Jm25 * nitrogen_limited_rate(N) \
-                      * temperature_dependence_rate(self.Eaj, T) \
-                      * (1 + np.exp((Sj*Tbk - Hj) / (R*Tbk))) \
-                      / (1 + np.exp((Sj*Tk  - Hj) / (R*Tk)))
+        r = Jm25 * nitrogen_limited_rate(N) \
+                 * temperature_dependence_rate(Eaj, T) \
+                 * (1 + np.exp((Sj*Tbk - Hj) / (R*Tbk))) \
+                 / (1 + np.exp((Sj*Tk  - Hj) / (R*Tk)))
         return max(0, r)
 
-    @derive
-    def enzyme_limited_photosynthesis_rate(self):
-        Cm = self.co2_mesophyll
-        T_leaf = self.leaf.temperature
-
+    @derive(abbr='Ac')
+    def enzyme_limited_photosynthesis_rate(self, Rd, gbs, Cm, T='leaf.temperature'):
         O = 210 # gas units are mbar
         Om = O # mesophyll O2 partial pressure
 
         Kp = self.Kp25 # T dependence yet to be determined
-        Kc = self.Kc25 * temperature_dependence_rate(self.Eac, T_leaf)
-        Ko = self.Ko25 * temperature_dependence_rate(self.Eao, T_leaf)
+        Kc = self.Kc25 * temperature_dependence_rate(self.Eac, T)
+        Ko = self.Ko25 * temperature_dependence_rate(self.Eao, T)
         Km = Kc * (1 + Om / Ko) # effective M-M constant for Kc in the presence of O2
 
-        Vpmax = self.Vpm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVp, T_leaf)
-        Vcmax = self.Vcm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVc, T_leaf)
+        Vpmax = self.Vpm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVp, T)
+        Vcmax = self.Vcm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVc, T)
 
         #print(f'[N] lfNContent = {self.leaf.nitrogen}, rate = {nitrogen_limited_rate(self.leaf.nitrogen)}')
-        #print(f'[T] Tleaf = {T_leaf}, rate = {temperature_dependence_rate(1, T_leaf)}')
+        #print(f'[T] Tleaf = {T_leaf}, rate = {temperature_dependence_rate(1, T)}')
         #print(f'Vpmax = {Vpmax}, Vcmax = {Vcmax}')
 
         # PEP carboxylation rate, that is the rate of C4 acid generation
@@ -203,7 +178,6 @@ class C4(System):
         Vpr = 80 # PEP regeneration limited Vp, value adopted from vC book
         Vp = np.clip(Vp, 0, Vpr)
 
-        Rd = self.dark_respiration
         Rm = 0.5 * Rd
 
         #print(f'Rd = {Rd}, Rm = {Rm}')
@@ -216,7 +190,7 @@ class C4(System):
         #gamma = (Rd*Km + Vcmax*gamma_star) / (Vcmax - Rd)
 
         # Enzyme limited A (Rubisco or PEP carboxylation)
-        Ac1 = Vp + self.gbs*Cm - Rm
+        Ac1 = Vp + gbs*Cm - Rm
         #Ac1 = max(0, Ac1) # prevent Ac1 from being negative Yang 9/26/06
         Ac2 = Vcmax - Rd
         #print(f'Ac1 = {Ac1}, Ac2 = {Ac2}')
@@ -224,38 +198,31 @@ class C4(System):
         return Ac
 
     # Light and electron transport limited A mediated by J
-    @derive
-    def transport_limited_photosynthesis_rate(self):
-        I2 = self.light
-        Cm = self.co2_mesophyll
-        T_leaf = self.leaf.temperature
-
+    @derive(abbr='Aj')
+    def transport_limited_photosynthesis_rate(self, Jmax, Rd, I2, gbs, Cm, T='leaf.temperature'):
         # sharpness of transition from light limitation to light saturation
 #         theta = 0.5
         # switchgrass param from Albaugha et al. (2014)
         theta = 0.79
 
-        Jmax = self.maximum_electron_transport_rate
         J = quadratic_solve_lower(theta, -(I2+Jmax), I2*Jmax)
         #print(f'Jmax = {Jmax}, J = {J}')
         x = 0.4 # Partitioning factor of J, yield maximal J at this value
 
-        Rd = self.dark_respiration
         Rm = 0.5 * Rd
 
-        Aj1 = x * J/2 - Rm + self.gbs*Cm
+        Aj1 = x * J/2 - Rm + gbs*Cm
         Aj2 = (1-x) * J/3 - Rd
         Aj = min(Aj1, Aj2)
         return Aj
 
-    @derive
-    def combined_photosynthesis_rate(self):
-        Ac = self.enzyme_limited_photosynthesis_rate
-        Aj = self.transport_limited_photosynthesis_rate
-
+    @derive(abbr='A_net')
+    def net_photosynthesis(self, Ac, Aj):
         beta = 0.99 # smoothing factor
         # smooting the transition between Ac and Aj
-        return ((Ac+Aj) - ((Ac+Aj)**2 - 4*beta*Ac*Aj)**0.5) / (2*beta)
+        A_net = ((Ac+Aj) - ((Ac+Aj)**2 - 4*beta*Ac*Aj)**0.5) / (2*beta)
+        #print(f'Ac = {Ac}, Aj = {Aj}, A_net = {A_net}')
+        return A_net
 
     # #FIXME put them accordingly
     # @derive
@@ -264,18 +231,6 @@ class C4(System):
     #     alpha = 0.0001 # fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
     #     Os = alpha * A_net / (0.047*self.gbs) + Om # Bundle sheath O2 partial pressure, mbar
     #     #Cbs = Cm + (Vp - A_net - Rm) / self.gbs # Bundle sheath CO2 partial pressure, ubar
-
-    @derive
-    #def photosynthesize(self, I2, Cm, T_leaf):
-    def net_photosynthesis(self):
-        # I2 = self.light
-        # Cm = self.co2_mesophyll
-        # T_leaf = self.leaf_temperature
-        # Ac = self.enzyme_limited_photosynthesis_rate
-        # Aj = self.transport_limited_photosynthesis_rate
-        A_net = self.combined_photosynthesis_rate
-        #print(f'Ac = {Ac}, Aj = {Aj}, A_net = {A_net}')
-        return A_net
 
 
 class VaporPressure:
@@ -332,10 +287,8 @@ class Stomata(System):
     # def g1(self): return 4.0
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
-    @parameter
-    def g0(self): return 0.017
-    @parameter
-    def g1(self): return 4.53
+    g0 = parameter(0.017)
+    g1 = parameter(4.53)
 
     # calibrated above for our switchgrass dataset
     # @parameter
@@ -363,9 +316,9 @@ class Stomata(System):
     #FIXME initial value never used
     #self.leafp_effect = 1 # At first assume there is not drought stress, so assign 1 to leafpEffect. Yang 8/20/06
 
-    @derive
+    @derive(abbr='gb')
     # def update_boundary_layer(self, wind):
-    def boundary_layer_conductance(self):
+    def boundary_layer_conductance(self, l='leaf', w='leaf.weather'):
         # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
         #sr = 1.0
         # switchgrass adaxial : abaxial (Awada 2002)
@@ -374,10 +327,10 @@ class Stomata(System):
         ratio = (sr + 1)**2 / (sr**2 + 1)
 
         # characteristic dimension of a leaf, leaf width in m
-        d = self.leaf.width * 0.72
+        d = l.width * 0.72
 
         #return 1.42 # total BLC (both sides) for LI6400 leaf chamber
-        gb = 1.4 * 0.147 * (max(0.1, self.leaf.weather.wind) / d)**0.5 * ratio
+        gb = 1.4 * 0.147 * (max(0.1, w.wind) / d)**0.5 * ratio
         #gb = (1.4 * 1.1 * 6.62 * (wind / d)**0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
         # 6.62 is for laminar forced convection of air over flat plates on projected area basis
@@ -388,18 +341,13 @@ class Stomata(System):
 
     # stomatal conductance for water vapor in mol m-2 s-1
     #FIXME T_leaf not used
-    @derive(init='g0')
+    @derive(abbr='gs', init='g0')
     # def update_stomata(self, LWP, CO2, A_net, RH, T_leaf):
-    def stomatal_conductance(self):
-        # params
-        g0 = self.g0
-        g1 = self.g1
-        gb = self.boundary_layer_conductance
-
-        CO2 = self.leaf.weather.CO2
-        A_net = self.leaf.A_net
-        RH = self.leaf.weather.RH
-        T_leaf = self.leaf.temperature
+    def stomatal_conductance(self, g0, g1, gb, l='leaf', w='leaf.weather'):
+        CO2 = w.CO2
+        A_net = l.A_net
+        RH = w.RH
+        T_leaf = l.temperature
 
         #FIXME proper use of gamma
         #gamma = 10.0 # for C4 maize
@@ -450,23 +398,21 @@ class Stomata(System):
         #print(f'[LWP] pressure = {LWP}, effect = {m}')
         return m
 
-    @derive
-    def total_conductance_h2o(self):
-        gs = self.stomatal_conductance
-        gb = self.boundary_layer_conductance
+    @derive(abbr='gv')
+    def total_conductance_h2o(self, gs, gb):
         return gs * gb / (gs + gb)
 
-    @derive
-    def boundary_layer_resistance_co2(self):
-        return 1.37 / self.boundary_layer_conductance
+    @derive(abbr='rbc')
+    def boundary_layer_resistance_co2(self, gb):
+        return 1.37 / gb
 
-    @derive
-    def stomatal_resistance_co2(self):
-        return 1.6 / self.stomatal_conductance
+    @derive(abbr='rsc')
+    def stomatal_resistance_co2(self, gs):
+        return 1.6 / gs
 
-    @derive
-    def total_resistance_co2(self):
-        return self.boundary_layer_resistance_co2 + self.stomatal_resistance_co2
+    @derive(abbr='rvc')
+    def total_resistance_co2(self, rbc, rsc):
+        return rbc + rsc
 
 
 class PhotosyntheticLeaf(System):
@@ -485,40 +431,28 @@ class PhotosyntheticLeaf(System):
     ###########
 
     # static properties
-
-    @parameter
-    def nitrogen(self):
-        return 2.0
+    nitrogen = parameter(2.0)
 
     # geometry
-    @parameter
-    def width(self):
-        return 10 / 100 # meters
+    width = parameter(10 / 100) # meters
 
     # soil?
-    @parameter
-    def ET_supply(self):
-        return 0
+    ET_supply = parameter(0)
 
     # dynamic properties
 
     # mesophyll CO2 partial pressure, ubar, one may use the same value as Ci assuming infinite mesohpyle conductance
-    @derive
-    def co2_mesophyll(self):
-        A_net = self.A_net
-        T_leaf = self.temperature
-
-        #self.stomata.update(self.weather, self.water, A_net, T_leaf)
-        P = self.weather.P_air / 100
-        Ca = self.weather.CO2 * P # conversion to partial pressure
-        rsc = self.stomata.total_resistance_co2
-        Cm = Ca - A_net * rsc * P
-        #print(f"+ Cm = {Cm}, Ca = {Ca}, A_net = {A_net}, gs = {self.stomata.gs}, gb = {self.stomata.gb}, rsc = {rsc}, P = {P}")
+    @derive(abbr='Cm')
+    def co2_mesophyll(self, A_net, w='weather', rvc='stomata.rvc'):
+        P = w.P_air / 100
+        Ca = w.CO2 * P # conversion to partial pressure
+        Cm = Ca - A_net * rvc * P
+        #print(f"+ Cm = {Cm}, Ca = {Ca}, A_net = {A_net}, gs = {self.stomata.gs}, gb = {self.stomata.gb}, rvc = {rvc}, P = {P}")
         return np.clip(Cm, 0, 2*Ca)
         #return Cm
 
     #FIXME is it right place? maybe need coordination with geometry object in the future
-    @derive
+    @derive(abbr='I2')
     def light(self):
         #FIXME make scatt global parameter?
         scatt = 0.15 # leaf reflectance + transmittance
