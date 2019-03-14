@@ -91,6 +91,8 @@ def test_accumulate_transport():
     assert s.a == 0 and s.b == 10 and s.c == 0
     c.update()
     assert s.a == 0 and s.b == 0 and s.c == 10
+    c.update()
+    assert s.a == 0 and s.b == 0 and s.c == 10
 
 def test_accumulate_distribute():
     class S(System):
@@ -113,6 +115,8 @@ def test_accumulate_distribute():
     assert s.s == 200 and s.d1 == 20 and s.d2 == 30 and s.d3 == 50
     c.update()
     assert s.s == 300 and s.d1 == 60 and s.d2 == 90 and s.d3 == 150
+    c.update()
+    assert s.s == 400 and s.d1 == 120 and s.d2 == 180 and s.d3 == 300
 
 def test_difference():
     class S(System):
@@ -141,21 +145,21 @@ def test_signal():
         def b(self):
             return self.a + 1
         @signal
-        def c(self):
+        def sa(self):
             return self.a
         @signal
-        def d(self):
+        def sb(self):
             return self.b
     s = instance(S)
     c = s.context
     assert s.a == 1 and s.b == 0
-    assert s.c == 1 and s.d == 0
+    assert s.sa == 1 and s.sb == 0
     c.update()
     assert s.a == 1 and s.b == 2
-    assert s.c == 0 and s.d == 2
+    assert s.sa == 0 and s.sb == 2
     c.update()
     assert s.a == 1 and s.b == 4
-    assert s.c == 0 and s.d == 4
+    assert s.sa == 0 and s.sb == 4
 
 def test_parameter():
     class S(System):
