@@ -2,6 +2,8 @@ from cropbox.system import System
 from cropbox.context import instance
 from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, signal, statevar
 
+import pytest
+
 def test_derive():
     class S(System):
         @derive
@@ -293,6 +295,16 @@ def test_inline():
     s = instance(S)
     assert s.a == 1
     assert s.b == s.c == 2
+
+def test_name():
+    class S(System):
+        @derive(name='b')
+        def a(self):
+            return 1
+    s = instance(S)
+    with pytest.raises(KeyError):
+        assert s.a == 1
+    assert s.b == 1
 
 def test_plot():
     class S(System):

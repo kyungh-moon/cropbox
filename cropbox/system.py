@@ -3,13 +3,27 @@ import functools
 
 class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
+        # manage statevars in namespace
+        def restruct(namespace, decorator):
+            # original namespace excluding statevars
+            n0 = {k: v for k, v in namespace.items() if not isinstance(v, decorator)}
+            # namespace of statevars
+            n1 = {v._name_str if v._name_str else k: v for k, v in namespace.items() if isinstance(v, decorator)}
+            # namespace of statevar aliases
+            n2 = {k: v for d in [{a: v for a in v._abbr_lst} for v in n1.values()] for k, v in d.items()}
+            n1.update(n2)
+            n0.update(n1)
+            return n0, n1
+        namespace, statevars = restruct(namespace, statevar)
+
+        # construct a new Trackable class
         cls = type.__new__(metacls, name, bases, namespace)
-        def remember(key, decorator):
-            s = {k: v for k, v in namespace.items() if isinstance(v, decorator)}
-            a = {k: v for d in [{a: v for a in v._abbr_lst} for v in s.values()] for k, v in d.items()}
-            d = dict(getattr(cls, key, {}), **s, **a)
+
+        # remember statevars in `_statevars`
+        def remember(cls, key, statevars, decorator=statevar):
+            d = dict(getattr(cls, key, {}), **statevars)
             setattr(cls, key, d)
-        remember('_statevars', statevar)
+        remember(cls, '_statevars', statevars, statevar)
         return cls
 
 class Trackable(metaclass=TrackableMeta):

@@ -90,11 +90,12 @@ class Trace:
 class statevar:
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, abbr=None):
+    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, name=None, abbr=None):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
         self._unit_str = unit
+        self._name_str = name
         self._abbr_lst = abbr.split(',') if abbr else []
         if f is not None:
             self.__call__(f)
@@ -106,6 +107,7 @@ class statevar:
         else:
             fun = lambda self: f
             name = f'_statevar_{uuid.uuid4().hex}'
+        name = self._name_str if self._name_str else name
         self.__name__ = name
         self._name = f'_{name}'
         self._compute_fun = fun
