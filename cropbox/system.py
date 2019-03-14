@@ -35,6 +35,9 @@ class Trackable(metaclass=TrackableMeta):
     def __getattr__(self, name):
         return self._statevars[name].__get__(self, type(self))
 
+    def __getitem__(self, key):
+        return getattr(self, key)
+
     def update(self):
         [s.update(self) for s in self._statevars.values()]
 

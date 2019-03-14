@@ -306,6 +306,14 @@ def test_name():
         assert s.a == 1
     assert s.b == 1
 
+def test_getitem():
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+    s = instance(S)
+    assert s.a == s['a'] == 1
+
 def test_plot():
     class S(System):
         @derive
