@@ -5,8 +5,9 @@ class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
         cls = type.__new__(metacls, name, bases, namespace)
         def remember(key, decorator):
-            d = {k: v for (k, v) in namespace.items() if isinstance(v, decorator)}
-            d = dict(getattr(cls, key, {}), **d)
+            s = {k: v for (k, v) in namespace.items() if isinstance(v, decorator)}
+            a = {k: v for d in [{a: v for a in v._abbr_lst} for v in s.values()] for k, v in d.items()}
+            d = dict(getattr(cls, key, {}), **s, **a)
             setattr(cls, key, d)
         remember('_statevars', statevar)
         return cls
@@ -16,6 +17,9 @@ class Trackable(metaclass=TrackableMeta):
         [s.init(self) for s in self._statevars.values()]
         #FIXME: can we avoid this? otherwise, no way to initialize Systems with mutual dependency
         #self.update()
+
+    def __getattr__(self, name):
+        return self._statevars[name].__get__(self, type(self))
 
     def update(self):
         [s.update(self) for s in self._statevars.values()]

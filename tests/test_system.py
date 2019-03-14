@@ -246,6 +246,22 @@ def test_clock_with_config():
     c.update()
     assert c.time == 25
 
+def test_abbr():
+    class S(System):
+        @derive(abbr='aa')
+        def a(self):
+            return 1
+        @derive(abbr='bb,bbb')
+        def b(self):
+            return 2
+        @derive
+        def c(self):
+            return self.a + self.aa + self.b + self.bb + self.bbb
+    s = instance(S)
+    assert s.a == s.aa == 1
+    assert s.b == s.bb == s.bbb == 2
+    assert s.c == 8
+
 def test_plot():
     class S(System):
         @derive
