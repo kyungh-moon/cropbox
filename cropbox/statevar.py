@@ -147,7 +147,7 @@ class statevar:
         return tr.update(t, r, force=self.trace.is_update_forced)
 
     def __repr__(self):
-        return self._name[1:]
+        return f'<{self.__name__}>'
 
 def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
 def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
