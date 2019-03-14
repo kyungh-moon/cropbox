@@ -5,7 +5,7 @@ class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
         cls = type.__new__(metacls, name, bases, namespace)
         def remember(key, decorator):
-            s = {k: v for (k, v) in namespace.items() if isinstance(v, decorator)}
+            s = {k: v for k, v in namespace.items() if isinstance(v, decorator)}
             a = {k: v for d in [{a: v for a in v._abbr_lst} for v in s.values()] for k, v in d.items()}
             d = dict(getattr(cls, key, {}), **s, **a)
             setattr(cls, key, d)
