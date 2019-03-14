@@ -283,6 +283,14 @@ def test_args():
     s = instance(S)
     assert s.a == s.b == s.c == s.d == 1
 
+def test_inline():
+    class S(System):
+        a = derive(1)
+        b = derive(2, abbr='c')
+    s = instance(S)
+    assert s.a == 1
+    assert s.b == s.c == 2
+
 def test_plot():
     class S(System):
         @derive

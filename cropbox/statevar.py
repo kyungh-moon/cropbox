@@ -6,6 +6,7 @@ from .track import Track, Accumulate, Difference, Signal, Static
 
 import networkx as nx
 import pint
+import uuid
 
 ureg = pint.UnitRegistry()
 ureg.default_format = '~P'
@@ -98,9 +99,15 @@ class statevar:
             self.__call__(f)
 
     def __call__(self, f):
-        self.__name__ = f.__name__
-        self._name = f'_{f.__name__}'
-        self._compute_fun = f
+        if callable(f):
+            fun = f
+            name = f.__name__
+        else:
+            fun = lambda self: f
+            name = f'_statevar_{uuid.uuid4().hex}'
+        self.__name__ = name
+        self._name = f'_{name}'
+        self._compute_fun = fun
         return self
 
     def __get__(self, obj, objtype):
