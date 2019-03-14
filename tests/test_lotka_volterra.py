@@ -6,45 +6,36 @@ import matplotlib.pyplot as plt
 
 def test_lotka_volterra():
     class S(System):
-        @parameter
+        @parameter(abbr='a')
         def prey_birth_rate(self):
             return 1.0
 
-        @parameter
+        @parameter(abbr='b')
         def prey_death_rate(self):
             return 0.1
 
-        @parameter
+        @parameter(abbr='c')
         def predator_death_rate(self):
             return 1.5
 
-        @parameter
+        @parameter(abbr='d')
         def predator_reproduction_rate(self):
             return 0.75
 
-        @parameter
+        @parameter(abbr='H0')
         def prey_initial_population(self):
             return 10
 
-        @parameter
+        @parameter(abbr='P0')
         def predator_initial_population(self):
             return 5
 
-        @accumulate(init='prey_initial_population')
-        def prey_population(self):
-            a = self.prey_birth_rate
-            b = self.prey_death_rate
-            H = self.prey_population
-            P = self.predator_population
+        @accumulate(abbr='H', init='H0')
+        def prey_population(self, a, b, H, P):
             return a*H - b*H*P
 
-        @accumulate(init='predator_initial_population')
-        def predator_population(self):
-            b = self.prey_death_rate
-            c = self.predator_death_rate
-            d = self.predator_reproduction_rate
-            H = self.prey_population
-            P = self.predator_population
+        @accumulate(abbr='P', init='P0')
+        def predator_population(self, b, c, d, H, P):
             return d*b*H*P - c*P
 
     s = instance(S, {'Clock': {'interval': 0.01}})
