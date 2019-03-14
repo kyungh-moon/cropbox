@@ -100,7 +100,7 @@ class statevar:
     def __call__(self, f):
         self.__name__ = f.__name__
         self._name = f'_{f.__name__}'
-        self._compute = f
+        self._compute_fun = f
         return self
 
     def __get__(self, obj, objtype):
@@ -118,6 +118,12 @@ class statevar:
 
     def compute(self, obj):
         return self._compute(obj)
+
+    def _compute(self, obj):
+        c = self._compute_fun.__code__
+        vs = c.co_varnames[1:c.co_argcount] # exclude self
+        args = [getattr(obj, v) for v in vs]
+        return self._compute_fun(obj, *args)
 
     def init(self, obj):
         t = self.time(obj)
@@ -161,7 +167,7 @@ class parameter(statevar):
         return 0
 
     def compute(self, obj):
-        k = self._compute.__name__
+        k = self.__name__
         v = self._compute(obj)
         return obj.context.option(obj, k, v, self._type)
 
@@ -171,9 +177,8 @@ class drive(statevar):
         self.__call__(f)
 
     def compute(self, obj):
-        name = self._compute.__name__
         d = self._compute(obj) # i.e. return df.loc[t]
-        return d[name]
+        return d[self.__name__]
 
 import scipy.optimize
 

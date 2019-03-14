@@ -266,6 +266,23 @@ def test_abbr():
     assert s.b == s.bb == s.bbb == 2
     assert s.c == 8
 
+def test_args():
+    class S(System):
+        @derive(abbr='a')
+        def a_long_named_var(self):
+            return 1
+        @derive
+        def b(self):
+            return self.a_long_named_var
+        @derive
+        def c(self, a_long_named_var):
+            return a_long_named_var
+        @derive
+        def d(self, a):
+            return a
+    s = instance(S)
+    assert s.a == s.b == s.c == s.d == 1
+
 def test_plot():
     class S(System):
         @derive
