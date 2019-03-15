@@ -134,7 +134,7 @@ class statevar:
         s = inspect.signature(self._compute_fun)
         def arg(k, p):
             try:
-                a = obj.context.config(sn, fn, k)
+                a = obj.context.option(sn, fn, k)
             except KeyError:
                 v = p.default
                 if v is p.empty:
@@ -189,8 +189,10 @@ class parameter(statevar):
 
     def compute(self, obj):
         k = self.__name__
-        v = self._compute(obj)
-        return obj.context.config_for_system(obj, k, v)
+        v = obj.context.option(obj, k)
+        if v is None:
+            v = self._compute(obj)
+        return v
 
 class drive(statevar):
     def __init__(self, f=None, **kwargs):

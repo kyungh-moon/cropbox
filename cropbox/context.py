@@ -40,20 +40,22 @@ class Context(Clock):
             d = toml.loads(config)
         self._config = d
 
-    def config_for_system(self, obj, k, v=None):
-        #HACK: populate base classes down to System (not inclusive) for section names
-        S = obj.__class__.mro()
-        S = S[:S.index(System)]
-        for s in S:
+    def option(self, *keys):
+        if isinstance(keys[0], System):
+            obj = keys[0]
+            #HACK: populate base classes down to System (not inclusive) for section names
+            S = obj.__class__.mro()
+            S = S[:S.index(System)]
+            for s in S:
+                v = self.option(s.__name__, *keys[1:])
+                if v is not None:
+                    break
+            return v
+        else:
             try:
-                v = self.config(s.__name__, k)
-                break
-            except KeyError:
-                pass
-        return v
-
-    def config(self, *keys):
-        return reduce(dict.__getitem__, keys, self._config)
+                return reduce(dict.get, keys, self._config)
+            except TypeError:
+                return None
 
     def queue(self, f):
         self._pending.append(f)
