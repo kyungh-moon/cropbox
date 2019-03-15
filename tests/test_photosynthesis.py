@@ -63,7 +63,7 @@ class C4(System):
     def temperature(self):
         return self.leaf
 
-    N = drive('leaf', name='nitrogen')
+    nitrogen = drive('leaf', name='N')
 
     ##############
     # Parameters #
