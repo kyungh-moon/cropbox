@@ -554,109 +554,86 @@ class Soil(System):
         return f'WP_leaf = {self.WP_leaf}'
 
 
-config = {}
+config = ''
 
-# Kim et al. (2007), Kim et al. (2006)
-# In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
-# In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
-# config.update({
-#     'C4': {
-#         'Vpm25': 70,
-#         'Vcm25': 50,
-#         'Jm25': 300,
-#         'Rd25': 2, # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
-#     },
-# })
+# config += """
+# # Kim et al. (2007), Kim et al. (2006)
+# # In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
+# # In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
+# C4.Vpm25 = 70
+# C4.Vcm25 = 50
+# C4.Jm25 = 300
+# C4.Rd25 = 2 # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
+# """
 
-# switgrass params from Albaugha et al. (2014)
-# https://doi.org/10.1016/j.agrformet.2014.02.013
-# config.update({
-#     'C4': {
-#         'Vpm25': 52,
-#         'Vcm25': 26,
-#         'Jm25': 145,
-#     },
-# })
+# config += """
+# [C4]
+# # switgrass params from Albaugha et al. (2014)
+# # https://doi.org/10.1016/j.agrformet.2014.02.013
+# C4.Vpm25 = 52
+# C4.Vcm25 = 26
+# C4.Jm25 = 145
+# """
 
-# switchgrass Vcmax from Le et al. (2010), others multiplied from Vcmax (x2, x5.5)
-# config.update({
-#     'C4': {
-#         'Vpm25': 96,
-#         'Vcm25': 48,
-#         'Jm25': 264,
-#     },
-# })
+# config += """
+# # switchgrass Vcmax from Le et al. (2010), others multiplied from Vcmax (x2, x5.5)
+# C4.Vpm25 = 96
+# C4.Vcm25 = 48
+# C4.Jm25 = 264
+# """
 
-# config.update({
-#     'C4': {
-#         'Vpm25': 100,
-#         'Vcm25': 50,
-#         'Jm25': 200,
-#     },
-# })
+# config += """
+# C4.Vpm25 = 100
+# C4.Vcm25 = 50
+# C4.Jm25 = 200
+# """
 
-# config.update({
-#     'C4': {
-#         'Vpm25': 70,
-#         'Vcm25': 50,
-#         'Jm25': 180.8,
-#     },
-# })
+# config += """
+# C4.Vpm25 = 70
+# C4.Vcm25 = 50
+# C4.Jm25 = 180.8
+# """
 
-# switchgrass params from Albaugha et al. (2014)
-# config.update({
-#     'C4': {
-#         'Rd25': 3.6, # not sure if it was normalized to 25 C
-#     },
-# })
+# config += """
+# # switchgrass params from Albaugha et al. (2014)
+# C4.Rd25 = 3.6 # not sure if it was normalized to 25 C
+# """
 
-# in P. J. Sellers, et al.Science 275, 502 (1997)
-# g0 is b, of which the value for c4 plant is 0.04
-# and g1 is m, of which the value for c4 plant is about 4 YY
-# config.update({
-#     'Stomata': {
-#         'g0': 0.04,
-#         'g1': 4.0,
-#     },
-# })
+# config += """
+# # in P. J. Sellers, et al.Science 275, 502 (1997)
+# # g0 is b, of which the value for c4 plant is 0.04
+# # and g1 is m, of which the value for c4 plant is about 4 YY
+# Stomata.g0 = 0.04
+# Stomata.g1 = 4.0
+# """
 
-# Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
-# config.update({
-#     'Stomata': {
-#         'g0': 0.017,
-#         'g1': 4.53,
-#     },
-# })
+# config += """
+# # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
+# Stomata.g0 = 0.017
+# Stomata.g1 = 4.53
+# """
 
-# calibrated above for our switchgrass dataset
-# config.update({
-#     'Stomata': {
-#         'g0': 0.04,
-#         'g1': 1.89,
-#     },
-# })
+# config += """
+# # calibrated above for our switchgrass dataset
+# Stomata.g0 = 0.04
+# Stomata.g1 = 1.89
+# """
 
-# config.update({
-#     'Stomata': {
-#         'g0': 0.02,
-#         'g1': 2.0,
-#     },
-# })
+# config += """
+# Stomata.g0 = 0.02
+# Stomata.g1 = 2.0
+# """
 
-# parameters from Le et. al (2010)
-# config.update({
-#     'Stomata': {
-#         'g0': 0.008,
-#         'g1': 8.0,
-#     },
-# })
+# config += """
+# # parameters from Le et. al (2010)
+# Stomata.g0 = 0.008
+# Stomata.g1 = 8.0
+# """
 
-# for garlic
-# config.update({
-#     'Stomata': {
-#         'g0': 0.0096,
-#         'g1': 6.824,
-#     },
-# })
+# config += """
+# # for garlic
+# Stomata.g0 = 0.0096
+# Stomata.g1 = 6.824
+# """
 
 ge = instance(GasExchange, config)
