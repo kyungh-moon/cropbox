@@ -133,9 +133,11 @@ class statevar:
         fn = self._compute_fun.__name__
         s = inspect.signature(self._compute_fun)
         def arg(k, p):
-            try:
+            if k == 'self':
+                a = obj
+            else:
                 a = obj.context.option(sn, fn, k)
-            except KeyError:
+            if a is None:
                 v = p.default
                 if v is p.empty:
                     a = obj.get(k)
@@ -144,8 +146,8 @@ class statevar:
                 else:
                     a = v
             return a
-        args = [arg(k, p) for k, p in s.parameters.items() if k != 'self']
-        return self._compute_fun(obj, *args)
+        args = [arg(k, p) for k, p in s.parameters.items()]
+        return self._compute_fun(*args)
 
     def init(self, obj):
         t = self.time(obj)
