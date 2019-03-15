@@ -87,46 +87,33 @@ class C4(System):
     # Kim et al. (2007), Kim et al. (2006)
     # In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
     # In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
-    # @paramter
-    # def Vpm25(self): return 70
-    # @paramter
-    # def Vcm25(self): return 50
-    # @paramter
-    # def Jm25(self): return 300
+    # Vpm25 = parameter(70)
+    # Vcm25 = parameter(50)
+    # Jm25 = parameter(300)
 
     # switgrass params from Albaugha et al. (2014)
     # https://doi.org/10.1016/j.agrformet.2014.02.013
-    # @paramter
-    # def Vpm25(self): return 52
-    # @paramter
-    # def Vcm25(self): return 26
-    # @paramter
-    # def Jm25(self): return 145
-
+    # Vpm25 = parameter(52)
+    # Vcm25 = parameter(26)
+    # Jm25 = parameter(145)
 
     # switchgrass Vcmax from Le et al. (2010), others multiplied from Vcmax (x2, x5.5)
     Vpm25 = parameter(96)
     Vcm25 = parameter(48)
     Jm25 = parameter(264)
 
-    # @parameter
-    # def Vpm25(self): return 100
-    # @parameter
-    # def Vcm25(self): return 50
-    # @parameter
-    # def Jm25(self): return 200
+    # Vpm25 = parameter(100)
+    # Vcm25 = parameter(50)
+    # Jm25 = parameter(200)
     #
-    # @parameter
-    # def Vpm25(self): return 70
-    # @parameter
-    # def Vcm25(self): return 50
-    # @parameter
-    # def Jm25(self): return 180.8
+    # Vpm25 = parameter(70)
+    # Vcm25 = parameter(50)
+    # Jm25 = parameter(180.8)
 
     Rd25 = parameter(2) # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
 
     # switchgrass params from Albaugha et al. (2014)
-    # def Rd25(self): return 3.6 # not sure if it was normalized to 25 C
+    Rd25 = parameter(3.6) # not sure if it was normalized to 25 C
 
     Ear = parameter(39800)
 
@@ -140,8 +127,7 @@ class C4(System):
 
     gbs = parameter(0.003) # bundle sheath conductance to CO2, mol m-2 s-1
 
-    #@parameter
-    # def gi(self): return 1.0 # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
+    # gi = parameter(1.0) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
     @derive(alias='Rd')
     def dark_respiration(self, T, Rd25, Ear):
@@ -287,37 +273,27 @@ class Stomata(System):
     # in P. J. Sellers, et al.Science 275, 502 (1997)
     # g0 is b, of which the value for c4 plant is 0.04
     # and g1 is m, of which the value for c4 plant is about 4 YY
-    # @parameter
-    # def g0(self): return 0.04
-    # @parameter
-    # def g1(self): return 4.0
+    # g0 = parameter(0.04)
+    # g1 = parameter(4.0)
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
     g0 = parameter(0.017)
     g1 = parameter(4.53)
 
     # calibrated above for our switchgrass dataset
-    # @parameter
-    # def g0(self): return 0.04
-    # @parameter
-    # def g1(self): return 1.89
+    # g0 = parameter(0.04)
+    # g1 = parameter(1.89)
 
-    # @parameter
-    # def g0(self): return 0.02
-    # @parameter
-    # def g1(self): return 2.0
+    # g0 = parameter(0.02)
+    # g1 = parameter(2.0)
 
     # parameters from Le et. al (2010)
-    # @parameter
-    # def g0(self): return 0.008
-    # @parameter
-    # def g1(self): return 8.0
+    # g0 = parameter(0.008)
+    # g1 = parameter(8.0)
 
     # for garlic
-    # @parameter
-    # def g0(self): return 0.096
-    # @parameter
-    # def g1(self): return 6.824
+    # g0 = parameter(0.096)
+    # g1 = parameter(6.824)
 
     #FIXME initial value never used
     #self.leafp_effect = 1 # At first assume there is not drought stress, so assign 1 to leafpEffect. Yang 8/20/06
@@ -612,7 +588,7 @@ class Weather(System):
     def P_air(self): return 100 # kPa
 
     def __str__(self):
-        w = self.weather
+        w = self
         return f'PFD = {w.PFD}, CO2 = {w.CO2}, RH = {w.RH}, T_air = {w.T_air}, wind = {w.wind}, P_air = {w.P_air}'
 
 
