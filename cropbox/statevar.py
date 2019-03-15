@@ -7,7 +7,6 @@ from .track import Track, Accumulate, Difference, Signal, Static
 import inspect
 import networkx as nx
 import pint
-import uuid
 
 ureg = pint.UnitRegistry()
 ureg.default_format = '~P'
