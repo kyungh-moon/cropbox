@@ -1,5 +1,5 @@
 from cropbox.system import System
-from cropbox.context import Context
+from cropbox.context import instance
 from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, signal, statevar
 
 import numpy as np
@@ -76,6 +76,7 @@ class C4(System):
     EaVp = parameter(75100)
     EaVc = parameter(55900) # Sage (2002) JXB
     Eaj = parameter(32800)
+    Ear = parameter(39800)
 
     Hj = parameter(220000)
     Sj = parameter(702.6)
@@ -87,35 +88,10 @@ class C4(System):
     # Kim et al. (2007), Kim et al. (2006)
     # In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
     # In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
-    # Vpm25 = parameter(70)
-    # Vcm25 = parameter(50)
-    # Jm25 = parameter(300)
-
-    # switgrass params from Albaugha et al. (2014)
-    # https://doi.org/10.1016/j.agrformet.2014.02.013
-    # Vpm25 = parameter(52)
-    # Vcm25 = parameter(26)
-    # Jm25 = parameter(145)
-
-    # switchgrass Vcmax from Le et al. (2010), others multiplied from Vcmax (x2, x5.5)
-    Vpm25 = parameter(96)
-    Vcm25 = parameter(48)
-    Jm25 = parameter(264)
-
-    # Vpm25 = parameter(100)
-    # Vcm25 = parameter(50)
-    # Jm25 = parameter(200)
-    #
-    # Vpm25 = parameter(70)
-    # Vcm25 = parameter(50)
-    # Jm25 = parameter(180.8)
-
+    Vpm25 = parameter(70)
+    Vcm25 = parameter(50)
+    Jm25 = parameter(300)
     Rd25 = parameter(2) # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
-
-    # switchgrass params from Albaugha et al. (2014)
-    Rd25 = parameter(3.6) # not sure if it was normalized to 25 C
-
-    Ear = parameter(39800)
 
     # FIXME are they even used?
     # self.beta_ABA = 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
@@ -126,7 +102,6 @@ class C4(System):
     # self.K_max = 6.67e-3 # max. xylem conductance (mol m-2 s-1 MPa-1) from root to leaf, Dewar (2002)
 
     gbs = parameter(0.003) # bundle sheath conductance to CO2, mol m-2 s-1
-
     # gi = parameter(1.0) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
     @derive(alias='Rd')
@@ -193,7 +168,7 @@ class C4(System):
     @derive(alias='Aj')
     def transport_limited_photosynthesis_rate(self, T, Jmax, Rd, I2, gbs, Cm):
         # sharpness of transition from light limitation to light saturation
-#         theta = 0.5
+        # theta = 0.5
         # switchgrass param from Albaugha et al. (2014)
         theta = 0.79
 
@@ -270,30 +245,9 @@ class Stomata(System):
     def __init__(self, parent, leaf):
         super().__init__(parent, leaf=leaf)
 
-    # in P. J. Sellers, et al.Science 275, 502 (1997)
-    # g0 is b, of which the value for c4 plant is 0.04
-    # and g1 is m, of which the value for c4 plant is about 4 YY
-    # g0 = parameter(0.04)
-    # g1 = parameter(4.0)
-
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
     g0 = parameter(0.017)
     g1 = parameter(4.53)
-
-    # calibrated above for our switchgrass dataset
-    # g0 = parameter(0.04)
-    # g1 = parameter(1.89)
-
-    # g0 = parameter(0.02)
-    # g1 = parameter(2.0)
-
-    # parameters from Le et. al (2010)
-    # g0 = parameter(0.008)
-    # g1 = parameter(8.0)
-
-    # for garlic
-    # g0 = parameter(0.096)
-    # g1 = parameter(6.824)
 
     #FIXME initial value never used
     #self.leafp_effect = 1 # At first assume there is not drought stress, so assign 1 to leafpEffect. Yang 8/20/06
@@ -600,8 +554,109 @@ class Soil(System):
         return f'WP_leaf = {self.WP_leaf}'
 
 
-import configparser
-config = configparser.ConfigParser()
-c = Context(config)
-c.branch(GasExchange)
-c.update()
+config = {}
+
+# Kim et al. (2007), Kim et al. (2006)
+# In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
+# In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
+# config.update({
+#     'C4': {
+#         'Vpm25': 70,
+#         'Vcm25': 50,
+#         'Jm25': 300,
+#         'Rd25': 2, # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
+#     },
+# })
+
+# switgrass params from Albaugha et al. (2014)
+# https://doi.org/10.1016/j.agrformet.2014.02.013
+# config.update({
+#     'C4': {
+#         'Vpm25': 52,
+#         'Vcm25': 26,
+#         'Jm25': 145,
+#     },
+# })
+
+# switchgrass Vcmax from Le et al. (2010), others multiplied from Vcmax (x2, x5.5)
+# config.update({
+#     'C4': {
+#         'Vpm25': 96,
+#         'Vcm25': 48,
+#         'Jm25': 264,
+#     },
+# })
+
+# config.update({
+#     'C4': {
+#         'Vpm25': 100,
+#         'Vcm25': 50,
+#         'Jm25': 200,
+#     },
+# })
+
+# config.update({
+#     'C4': {
+#         'Vpm25': 70,
+#         'Vcm25': 50,
+#         'Jm25': 180.8,
+#     },
+# })
+
+# switchgrass params from Albaugha et al. (2014)
+# config.update({
+#     'C4': {
+#         'Rd25': 3.6, # not sure if it was normalized to 25 C
+#     },
+# })
+
+# in P. J. Sellers, et al.Science 275, 502 (1997)
+# g0 is b, of which the value for c4 plant is 0.04
+# and g1 is m, of which the value for c4 plant is about 4 YY
+# config.update({
+#     'Stomata': {
+#         'g0': 0.04,
+#         'g1': 4.0,
+#     },
+# })
+
+# Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
+# config.update({
+#     'Stomata': {
+#         'g0': 0.017,
+#         'g1': 4.53,
+#     },
+# })
+
+# calibrated above for our switchgrass dataset
+# config.update({
+#     'Stomata': {
+#         'g0': 0.04,
+#         'g1': 1.89,
+#     },
+# })
+
+# config.update({
+#     'Stomata': {
+#         'g0': 0.02,
+#         'g1': 2.0,
+#     },
+# })
+
+# parameters from Le et. al (2010)
+# config.update({
+#     'Stomata': {
+#         'g0': 0.008,
+#         'g1': 8.0,
+#     },
+# })
+
+# for garlic
+# config.update({
+#     'Stomata': {
+#         'g0': 0.0096,
+#         'g1': 6.824,
+#     },
+# })
+
+ge = instance(GasExchange, config)
