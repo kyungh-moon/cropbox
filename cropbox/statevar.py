@@ -90,14 +90,12 @@ class Trace:
 class statevar:
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, abbr=None):
+    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, name=None):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
         self._unit_str = unit
-        #self._name_lst = name.split(',') if name else []
-        self._abbr_lst = abbr.split(',') if abbr else []
-        self._name_lst = self._abbr_lst
+        self._name_lst = name.split(',') if name else []
         if f is not None:
             self.__call__(f)
 

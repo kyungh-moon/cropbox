@@ -252,12 +252,12 @@ def test_clock_with_config():
     c.update()
     assert c.time == 25
 
-def test_abbr():
+def test_name():
     class S(System):
-        @derive(abbr='aa')
+        @derive(name='aa')
         def a(self):
             return 1
-        @derive(abbr='bb,bbb')
+        @derive(name='bb,bbb')
         def b(self):
             return 2
         @derive
@@ -270,7 +270,7 @@ def test_abbr():
 
 def test_args():
     class S(System):
-        @derive(abbr='a')
+        @derive(name='a')
         def a_long_named_var(self):
             return 1
         @derive
@@ -291,20 +291,10 @@ def test_args():
 def test_inline():
     class S(System):
         a = derive(1)
-        b = derive(2, abbr='c')
+        b = derive(2, name='c')
     s = instance(S)
     assert s.a == 1
     assert s.b == s.c == 2
-
-def test_name():
-    class S(System):
-        @derive(abbr='b')
-        def a(self):
-            return 1
-    s = instance(S)
-    with pytest.raises(KeyError):
-        assert s.a == 1
-    assert s.b == 1
 
 def test_getitem():
     class S(System):

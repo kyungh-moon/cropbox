@@ -49,15 +49,21 @@ class C4(System):
     def __init__(self, parent, leaf):
         super().__init__(parent, leaf=leaf)
 
-    @derive(abbr='Cm')
+    @derive(name='Cm')
     def co2_mesophyll(self):
         Cm = self.leaf.co2_mesophyll
         return np.clip(Cm, 0, Cm)
 
-    @derive(abbr='I2')
+    @derive(name='I2')
     def light(self):
         I2 = self.leaf.light
         return np.clip(I2, 0, I2)
+
+    @drive(name='T')
+    def temperature(self):
+        return self.leaf
+
+    N = drive('leaf', name='nitrogen')
 
     ##############
     # Parameters #
@@ -137,12 +143,12 @@ class C4(System):
     #@parameter
     # def gi(self): return 1.0 # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
-    @derive(abbr='Rd')
-    def dark_respiration(self, Rd25, Ear, T='leaf.temperature'):
+    @derive(name='Rd')
+    def dark_respiration(self, T, Rd25, Ear):
         return Rd25 * temperature_dependence_rate(Ear, T)
 
-    @derive(abbr='Jmax')
-    def maximum_electron_transport_rate(self, Jm25, Eaj, Sj, Hj, T='leaf.temperature', N='leaf.nitrogen'):
+    @derive(name='Jmax')
+    def maximum_electron_transport_rate(self, T, N, Jm25, Eaj, Sj, Hj):
         R = 8.314
 
         Tb = 25
@@ -156,8 +162,8 @@ class C4(System):
                  / (1 + np.exp((Sj*Tk  - Hj) / (R*Tk)))
         return max(0, r)
 
-    @derive(abbr='Ac')
-    def enzyme_limited_photosynthesis_rate(self, Rd, gbs, Cm, T='leaf.temperature'):
+    @derive(name='Ac')
+    def enzyme_limited_photosynthesis_rate(self, T, Rd, gbs, Cm):
         O = 210 # gas units are mbar
         Om = O # mesophyll O2 partial pressure
 
@@ -198,8 +204,8 @@ class C4(System):
         return Ac
 
     # Light and electron transport limited A mediated by J
-    @derive(abbr='Aj')
-    def transport_limited_photosynthesis_rate(self, Jmax, Rd, I2, gbs, Cm, T='leaf.temperature'):
+    @derive(name='Aj')
+    def transport_limited_photosynthesis_rate(self, T, Jmax, Rd, I2, gbs, Cm):
         # sharpness of transition from light limitation to light saturation
 #         theta = 0.5
         # switchgrass param from Albaugha et al. (2014)
@@ -216,7 +222,7 @@ class C4(System):
         Aj = min(Aj1, Aj2)
         return Aj
 
-    @derive(abbr='A_net')
+    @derive(name='A_net')
     def net_photosynthesis(self, Ac, Aj):
         beta = 0.99 # smoothing factor
         # smooting the transition between Ac and Aj
@@ -316,7 +322,7 @@ class Stomata(System):
     #FIXME initial value never used
     #self.leafp_effect = 1 # At first assume there is not drought stress, so assign 1 to leafpEffect. Yang 8/20/06
 
-    @derive(abbr='gb')
+    @derive(name='gb')
     # def update_boundary_layer(self, wind):
     def boundary_layer_conductance(self, l='leaf', w='leaf.weather'):
         # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
@@ -341,7 +347,7 @@ class Stomata(System):
 
     # stomatal conductance for water vapor in mol m-2 s-1
     #FIXME T_leaf not used
-    @derive(abbr='gs', init='g0')
+    @derive(name='gs', init='g0')
     # def update_stomata(self, LWP, CO2, A_net, RH, T_leaf):
     def stomatal_conductance(self, g0, g1, gb, l='leaf', w='leaf.weather'):
         CO2 = w.CO2
@@ -398,19 +404,19 @@ class Stomata(System):
         #print(f'[LWP] pressure = {LWP}, effect = {m}')
         return m
 
-    @derive(abbr='gv')
+    @derive(name='gv')
     def total_conductance_h2o(self, gs, gb):
         return gs * gb / (gs + gb)
 
-    @derive(abbr='rbc')
+    @derive(name='rbc')
     def boundary_layer_resistance_co2(self, gb):
         return 1.37 / gb
 
-    @derive(abbr='rsc')
+    @derive(name='rsc')
     def stomatal_resistance_co2(self, gs):
         return 1.6 / gs
 
-    @derive(abbr='rvc')
+    @derive(name='rvc')
     def total_resistance_co2(self, rbc, rsc):
         return rbc + rsc
 
@@ -442,7 +448,7 @@ class PhotosyntheticLeaf(System):
     # dynamic properties
 
     # mesophyll CO2 partial pressure, ubar, one may use the same value as Ci assuming infinite mesohpyle conductance
-    @derive(abbr='Cm')
+    @derive(name='Cm')
     def co2_mesophyll(self, A_net, w='weather', rvc='stomata.rvc'):
         P = w.P_air / 100
         Ca = w.CO2 * P # conversion to partial pressure
@@ -452,7 +458,7 @@ class PhotosyntheticLeaf(System):
         #return Cm
 
     #FIXME is it right place? maybe need coordination with geometry object in the future
-    @derive(abbr='I2')
+    @derive(name='I2')
     def light(self):
         #FIXME make scatt global parameter?
         scatt = 0.15 # leaf reflectance + transmittance
