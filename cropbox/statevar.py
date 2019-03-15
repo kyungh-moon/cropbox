@@ -182,9 +182,8 @@ class parameter(statevar):
         return obj.context.option(obj, k, v, self._type)
 
 class drive(statevar):
-    def __init__(self, f, **kwargs):
-        super().__init__(track=Track, **kwargs)
-        self.__call__(f)
+    def __init__(self, f=None, **kwargs):
+        super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
         d = self._compute(obj) # i.e. return df.loc[t]
