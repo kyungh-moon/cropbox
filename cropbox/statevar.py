@@ -111,7 +111,7 @@ class statevar:
 
     def set_name(self, name):
         self.__name__ = name
-        self._name = f'_{name}'
+        self._tr_name = f'_{name}'
 
     def __get__(self, obj, objtype):
         v = self.update(obj)
@@ -138,7 +138,7 @@ class statevar:
     def init(self, obj):
         t = self.time(obj)
         v = obj.get(self._init_var)
-        setattr(obj, self._name, self._track_cls(t, v))
+        setattr(obj, self._tr_name, self._track_cls(t, v))
 
     def update(self, obj):
         with self.trace(self, obj):
@@ -146,7 +146,7 @@ class statevar:
 
     def _update(self, obj):
         #HACK: prevent recursion loop already in computation tree
-        tr = getattr(obj, self._name)
+        tr = getattr(obj, self._tr_name)
         if self.trace.is_stacked(self):
             return tr._value
         # support custom timestamp (i.e. elongation age instead of calendar time)
@@ -198,7 +198,7 @@ class optimize(statevar):
         super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
-        tr = getattr(obj, self._name)
+        tr = getattr(obj, self._tr_name)
         def cost(x):
             with self.trace(self, obj, isolate=True):
                 tr._value = x
@@ -217,7 +217,7 @@ class optimize2(statevar):
         super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
-        tr = getattr(obj, self._name)
+        tr = getattr(obj, self._tr_name)
         def cost(x):
             print(f'opt2: {x}')
             with self.trace(self, obj, isolate=True):
