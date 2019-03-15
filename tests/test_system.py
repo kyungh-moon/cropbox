@@ -298,7 +298,7 @@ def test_inline():
 
 def test_name():
     class S(System):
-        @derive(name='b')
+        @derive(abbr='b')
         def a(self):
             return 1
     s = instance(S)

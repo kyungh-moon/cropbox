@@ -8,9 +8,9 @@ class TrackableMeta(type):
             # original namespace excluding statevars
             n0 = {k: v for k, v in namespace.items() if not isinstance(v, decorator)}
             # namespace of statevars
-            n1 = {v._name_str if v._name_str else k: v for k, v in namespace.items() if isinstance(v, decorator)}
+            n1 = {k: v for k, v in namespace.items() if isinstance(v, decorator)}
             # namespace of statevar aliases
-            n2 = {k: v for d in [{a: v for a in v._abbr_lst} for v in n1.values()] for k, v in d.items()}
+            n2 = {k: v for d in [{k: v for k in v._name_lst} for v in n1.values()] for k, v in d.items()}
             n1.update(n2)
             n0.update(n1)
             return n0, n1
