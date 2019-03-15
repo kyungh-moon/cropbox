@@ -102,17 +102,16 @@ class statevar:
     def __call__(self, f):
         if callable(f):
             fun = f
-            name = f.__name__
+        elif isinstance(f, str):
+            fun = lambda self: self[f]
         else:
-            if isinstance(f, str):
-                fun = lambda self: self[f]
-            else:
-                fun = lambda self: f
-            name = self._name_lst[0] if self._name_lst else f'_statevar_{uuid.uuid4().hex}'
-        self.__name__ = name
-        self._name = f'_{name}'
+            fun = lambda self: f
         self._compute_fun = fun
         return self
+
+    def set_name(self, name):
+        self.__name__ = name
+        self._name = f'_{name}'
 
     def __get__(self, obj, objtype):
         v = self.update(obj)

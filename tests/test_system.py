@@ -215,6 +215,25 @@ def test_drive_with_dataframe():
     c.update()
     assert c.time == 3 and s.a == 30
 
+def test_drive_with_system():
+    class T(System):
+        @derive
+        def a(self):
+            return 1
+        @derive
+        def b(self):
+            return 2
+    class S(System):
+        def setup(self):
+            self.t = T(self)
+        @drive(name='aa')
+        def a(self):
+            return self.t
+        b = drive('t', name='bb')
+    s = instance(S)
+    assert s.a == s.aa == s.t.a == 1
+    assert s.b == s.bb == s.t.b == 2
+
 def test_optimize():
     class S(System):
         @derive
