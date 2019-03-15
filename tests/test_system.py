@@ -226,10 +226,10 @@ def test_drive_with_system():
     class S(System):
         def setup(self):
             self.t = T(self)
-        @drive(name='aa')
+        @drive(alias='aa')
         def a(self):
             return self.t
-        b = drive('t', name='bb')
+        b = drive('t', alias='bb')
     s = instance(S)
     assert s.a == s.aa == s.t.a == 1
     assert s.b == s.bb == s.t.b == 2
@@ -271,12 +271,12 @@ def test_clock_with_config():
     c.update()
     assert c.time == 25
 
-def test_name():
+def test_alias():
     class S(System):
-        @derive(name='aa')
+        @derive(alias='aa')
         def a(self):
             return 1
-        @derive(name='bb,bbb')
+        @derive(alias='bb,bbb')
         def b(self):
             return 2
         @derive
@@ -289,7 +289,7 @@ def test_name():
 
 def test_args():
     class S(System):
-        @derive(name='a')
+        @derive(alias='a')
         def a_long_named_var(self):
             return 1
         @derive
@@ -310,7 +310,7 @@ def test_args():
 def test_inline():
     class S(System):
         a = derive(1)
-        b = derive(2, name='c')
+        b = derive(2, alias='c')
     s = instance(S)
     assert s.a == 1
     assert s.b == s.c == 2
