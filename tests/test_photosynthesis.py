@@ -184,8 +184,7 @@ class C4(System):
         return Aj
 
     @derive(alias='A_net')
-    def net_photosynthesis(self, Ac, Aj):
-        beta = 0.99 # smoothing factor
+    def net_photosynthesis(self, Ac, Aj, beta=0.99):
         # smooting the transition between Ac and Aj
         A_net = ((Ac+Aj) - ((Ac+Aj)**2 - 4*beta*Ac*Aj)**0.5) / (2*beta)
         #print(f'Ac = {Ac}, Aj = {Aj}, A_net = {A_net}')
