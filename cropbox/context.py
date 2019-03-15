@@ -1,6 +1,7 @@
 from .system import System
 from .statevar import accumulate, parameter
-from configparser import ConfigParser
+from functools import reduce
+import toml
 
 class Clock(System):
     def __init__(self):
@@ -24,26 +25,35 @@ class Clock(System):
         return self.interval
 
 class Context(Clock):
-    def __init__(self, config):
+    def __init__(self, config=None):
         self.context = self
-        self.config = config
         self._pending = []
+        self.configure(config)
         super().__init__()
 
-    def option(self, obj, k, v=None, vtype=float):
+    def configure(self, config):
+        if config is None:
+            d = {}
+        elif isinstance(config, dict):
+            d = config
+        else:
+            d = toml.loads(config)
+        self._config = d
+
+    def config_for_system(self, obj, k, v=None):
         #HACK: populate base classes down to System (not inclusive) for section names
         S = obj.__class__.mro()
         S = S[:S.index(System)]
         for s in S:
             try:
-                v = self._option(s.__name__, k, vtype)
+                v = self.config(s.__name__, k)
                 break
             except KeyError:
                 pass
         return v
 
-    def _option(self, ns, k, vtype=float):
-        return vtype(self.config[ns][k])
+    def config(self, *keys):
+        return reduce(dict.__getitem__, keys, self._config)
 
     def queue(self, f):
         self._pending.append(f)
@@ -58,10 +68,7 @@ class Context(Clock):
 
         #TODO: process aggregate (i.e. transport) operations?
 
-def instance(systemcls, config_dict=None):
-    config = ConfigParser()
-    if config_dict is not None:
-        config.read_dict(config_dict)
+def instance(systemcls, config=None):
     c = Context(config)
     c.branch(systemcls)
     c.update()

@@ -129,11 +129,12 @@ class statevar:
         return self._compute(obj)
 
     def _compute(self, obj):
-        ns = self._compute_fun.__name__
+        sn = obj.__class__.__name__
+        fn = self._compute_fun.__name__
         s = inspect.signature(self._compute_fun)
         def arg(k, p):
             try:
-                a = obj.context._option(ns, k)
+                a = obj.context.config(sn, fn, k)
             except KeyError:
                 v = p.default
                 if v is p.empty:
@@ -179,8 +180,7 @@ def static(f=None, **kwargs): return statevar(f, track=Static, **kwargs)
 #TODO: use @proxy <: @var replacing @property, also make @state <: @var
 
 class parameter(statevar):
-    def __init__(self, f=None, *, type=float, **kwargs):
-        self._type = type
+    def __init__(self, f=None, **kwargs):
         super().__init__(f, track=Track, **kwargs)
 
     def time(self, obj):
@@ -190,7 +190,7 @@ class parameter(statevar):
     def compute(self, obj):
         k = self.__name__
         v = self._compute(obj)
-        return obj.context.option(obj, k, v, self._type)
+        return obj.context.config_for_system(obj, k, v)
 
 class drive(statevar):
     def __init__(self, f=None, **kwargs):
