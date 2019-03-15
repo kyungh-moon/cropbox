@@ -129,9 +129,21 @@ class statevar:
         return self._compute(obj)
 
     def _compute(self, obj):
+        ns = self._compute_fun.__name__
         s = inspect.signature(self._compute_fun)
-        vs = [n if p.default is p.empty else p.default for n, p in s.parameters.items() if n != 'self']
-        args = [obj.get(v) for v in vs]
+        def arg(k, p):
+            try:
+                a = obj.context._option(ns, k)
+            except KeyError:
+                v = p.default
+                if v is p.empty:
+                    a = obj.get(k)
+                elif isinstance(v, str):
+                    a = obj.get(v)
+                else:
+                    a = v
+            return a
+        args = [arg(k, p) for k, p in s.parameters.items() if k != 'self']
         return self._compute_fun(obj, *args)
 
     def init(self, obj):

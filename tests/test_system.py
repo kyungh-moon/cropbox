@@ -310,6 +310,13 @@ def test_args():
     s = instance(S)
     assert s.a == s.b == s.c == s.d == s.e == s.f == 1
 
+def test_args_with_config():
+    class S(System):
+        @derive
+        def a(self, b):
+            return b
+    s = instance(S, {'S': {'a': {'b': 1}}})
+    assert s.a == 1
 
 def test_inline():
     class S(System):

@@ -36,10 +36,14 @@ class Context(Clock):
         S = S[:S.index(System)]
         for s in S:
             try:
-                v = self.config[s.__name__][k]
+                v = self._option(s.__name__, k, vtype)
+                break
             except KeyError:
                 pass
-        return vtype(v)
+        return v
+
+    def _option(self, ns, k, vtype=float):
+        return vtype(self.config[ns][k])
 
     def queue(self, f):
         self._pending.append(f)
