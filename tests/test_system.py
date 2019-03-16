@@ -318,6 +318,17 @@ def test_args_with_config():
     s = instance(S, {'S': {'a': {'b': 1}}})
     assert s.a == 1
 
+def test_args_partial():
+    class S(System):
+        @derive
+        def a(self, b, c):
+            return b + c
+        @derive
+        def b(self):
+            return 1
+    s = instance(S)
+    assert s.a(c=1) == 2
+
 def test_inline():
     class S(System):
         a = derive(1)

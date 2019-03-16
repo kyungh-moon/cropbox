@@ -131,7 +131,7 @@ class statevar:
     def _compute(self, obj):
         sn = obj.__class__.__name__
         fn = self._compute_fun.__name__
-        s = inspect.signature(self._compute_fun)
+        ps = inspect.signature(self._compute_fun).parameters
         def arg(k, p):
             if k == 'self':
                 a = obj
@@ -140,14 +140,22 @@ class statevar:
             if a is None:
                 v = p.default
                 if v is p.empty:
-                    a = obj.get(k)
+                    #TODO: clean up nested conditionals
+                    try:
+                        a = obj.get(k)
+                    except KeyError:
+                        return None
                 elif isinstance(v, str):
                     a = obj.get(v)
                 else:
                     a = v
-            return a
-        args = [arg(k, p) for k, p in s.parameters.items()]
-        return self._compute_fun(*args)
+            return (k, a)
+        kwargs = dict(filter(None, [arg(k, p) for k, p in ps.items()]))
+        if len(ps) == len(kwargs):
+            return self._compute_fun(**kwargs)
+        else:
+            #TODO: set function name
+            return lambda **x: self._compute_fun(**x, **kwargs)
 
     def init(self, obj):
         t = self.time(obj)
