@@ -133,22 +133,23 @@ class statevar:
         fn = self._compute_fun.__name__
         ps = inspect.signature(self._compute_fun).parameters
         def arg(k, p):
+            #HACK: assume first param of method is named `self`
             if k == 'self':
                 a = obj
             else:
                 a = obj.context.option(sn, fn, k)
             if a is None:
                 v = p.default
-                if v is p.empty:
-                    #TODO: clean up nested conditionals
+                if v is not p.empty:
+                    try:
+                        a = obj.get(v)
+                    except KeyError:
+                        a = v
+                else:
                     try:
                         a = obj.get(k)
                     except KeyError:
                         return None
-                elif isinstance(v, str):
-                    a = obj.get(v)
-                else:
-                    a = v
             return (k, a)
         kwargs = dict(filter(None, [arg(k, p) for k, p in ps.items()]))
         if len(ps) == len(kwargs):
