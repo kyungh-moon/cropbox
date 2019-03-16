@@ -155,8 +155,10 @@ class statevar:
         if len(ps) == len(kwargs):
             return self._compute_fun(**kwargs)
         else:
-            #TODO: set function name
-            return lambda **x: self._compute_fun(**x, **kwargs)
+            def f(**x):
+                kwargs.update(x)
+                return self._compute_fun(**kwargs)
+            return f
 
     def init(self, obj):
         t = self.time(obj)
