@@ -215,45 +215,32 @@ class C4(System):
         return (Rd*Km + Vcmax*gamma_star) / (Vcmax - Rd)
 
 
-class VaporPressure:
+class VaporPressure(System):
     # Campbell and Norman (1998), p 41 Saturation vapor pressure in kPa
-    a = 0.611 # kPa
-    b = 17.502 # C
-    c = 240.97 # C
+    a = parameter(0.611) # kPa
+    b = parameter(17.502) # C
+    c = parameter(240.97) # C
 
-    #FIXME August-Roche-Magnus formula gives slightly different parameters
-    # https://en.wikipedia.org/wiki/Clausius–Clapeyron_relation
-    #a = 0.61094 # kPa
-    #b = 17.625 # C
-    #c = 243.04 # C
-
-    @classmethod
-    def saturation(cls, T):
-        a, b, c = cls.a, cls.b, cls.c
+    @derive(alias='es')
+    def saturation(self, T, *, a, b, c):
         return a*np.exp((b*T)/(c+T))
 
-    @classmethod
-    def ambient(cls, T, RH):
-        es = cls.saturation(T)
-        return es * RH
+    @derive(alias='ea')
+    def ambient(self, T, RH):
+        return self.es(T) * RH
 
-    @classmethod
-    def deficit(cls, T, RH):
-        es = cls.saturation(T)
-        return es * (1 - RH)
+    @derive(alias='vpd')
+    def deficit(self, T, RH):
+        return self.es(T) * (1 - RH)
 
-    @classmethod
-    def relative_humidity(cls, T, VPD):
-        es = cls.saturation(T)
-        return 1 - VPD / es
+    @derive(alias='rh')
+    def relative_humidity(self, T, VPD):
+        return 1 - VPD / self.es(T)
 
     # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
-    @classmethod
-    def curve_slope(cls, T, P):
-        es = cls.saturation(T)
-        b, c = cls.b, cls.c
-        slope = es * (b*c)/(c+T)**2 / P
-        return slope
+    @derive(alias='cs')
+    def curve_slope(self, T, P, *, b, c):
+        return self.es(T) * (b*c)/(c+T)**2 / P
 
 
 class Stomata(System):
@@ -319,9 +306,9 @@ class Stomata(System):
         #hs = np.clip(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize
 
         #FIXME unused?
-        #es = VaporPressure.saturation(tleaf)
+        #es = w.vp.saturation(tleaf)
         #Ds = (1 - hs) * es # VPD at leaf surface
-        Ds = VaporPressure.deficit(T_leaf, hs)
+        Ds = w.vp.deficit(T_leaf, hs)
 
         gs = g0 + (g1 * m * (A_net * hs / Cs))
         #print(f'Cs = {Cs}, m = {m}, a = {a}, b = {b}, c = {c}, gs = {gs}')
@@ -440,7 +427,7 @@ class PhotosyntheticLeaf(System):
 
     #TODO: use @optimize
     @derive
-    def temperature_adjustment(self):
+    def temperature_adjustment(self, w='weather'):
         # see Campbell and Norman (1998) pp 224-225
         # because Stefan-Boltzman constant is for unit surface area by denifition,
         # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
@@ -475,9 +462,9 @@ class PhotosyntheticLeaf(System):
 
         # debug dt I commented out the changes that yang made for leaf temperature for a test. I don't think they work
         if Jw == 0:
-            VPD = VaporPressure.deficit(T_air, RH)
+            VPD = w.vp.deficit(T_air, RH)
             # eqn 14.6b linearized form using first order approximation of Taylor series
-            return (psc1 / (VaporPressure.curve_slope(T_air, P_air) + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
+            return (psc1 / (w.vp.curve_slope(T_air, P_air) + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
         else:
             return (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
 
@@ -493,10 +480,10 @@ class PhotosyntheticLeaf(System):
     #     return (self.temperature - self.new_temperature)**2
 
     @derive
-    def ET(self):
+    def ET(self, vp='weather.vp'):
         gv = self.stomata.total_conductance_h2o
-        ea = VaporPressure.ambient(self.weather.T_air, self.weather.RH)
-        es_leaf = VaporPressure.saturation(self.temperature)
+        ea = vp.ambient(self.weather.T_air, self.weather.RH)
+        es_leaf = vp.saturation(self.temperature)
         ET = gv * ((es_leaf - ea) / self.weather.P_air) / (1 - (es_leaf + ea) / self.weather.P_air)
         return max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
 
@@ -526,9 +513,9 @@ class GasExchange(System):
         return self.leaf.temperature
 
     @derive
-    def VPD(self):
+    def VPD(self, vp='weather.vp'):
         #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-        return VaporPressure.deficit(self.weather.T_air, self.weather.RH)
+        return vp.deficit(self.weather.T_air, self.weather.RH)
 
     @derive
     def gs(self):
@@ -538,6 +525,9 @@ class GasExchange(System):
 #TODO: use improved @drive
 #TODO: implement @unit
 class Weather(System):
+    def setup(self):
+        self.vp = VaporPressure(self)
+
     @parameter
     def PFD(self): return 1500 # umol m-2 s-1
 
@@ -650,6 +640,14 @@ config = ''
 # # for garlic
 # Stomata.g0 = 0.0096
 # Stomata.g1 = 6.824
+# """
+
+# config += """
+# #FIXME August-Roche-Magnus formula gives slightly different parameters
+# # https://en.wikipedia.org/wiki/Clausius–Clapeyron_relation
+# VaporPressure.a = 0.61094 # kPa
+# VaporPressure.b = 17.625 # C
+# VaporPressure.c = 243.04 # C
 # """
 
 ge = instance(GasExchange, config)
