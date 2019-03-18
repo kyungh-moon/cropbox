@@ -108,6 +108,10 @@ class C4(System):
     def dark_respiration(self, Rd25, T_dep, Ear):
         return Rd25 * T_dep(Ear)
 
+    @derive
+    def Rm(self, Rd):
+        return 0.5 * Rd
+
     @derive(alias='Jmax')
     def maximum_electron_transport_rate(self, T, Jm25, T_dep, Eaj, N_dep, Sj, Hj):
         R = 8.314
@@ -123,39 +127,47 @@ class C4(System):
                  / (1 + np.exp((Sj*Tk  - Hj) / (R*Tk)))
         return max(0, r)
 
-    @derive(alias='Ac')
-    def enzyme_limited_photosynthesis_rate(self, Rd, gbs, Cm, T_dep, Eac, Eao, EaVp, EaVc, N_dep):
+    @parameter
+    def Om(self):
+        # mesophyll O2 partial pressure
         O = 210 # gas units are mbar
-        Om = O # mesophyll O2 partial pressure
+        return O
 
-        Kp = self.Kp25 # T dependence yet to be determined
-        Kc = self.Kc25 * T_dep(Eac)
-        Ko = self.Ko25 * T_dep(Eao)
-        Km = Kc * (1 + Om / Ko) # effective M-M constant for Kc in the presence of O2
+    @derive
+    def Kp(self, Kp25):
+        return Kp25 # T dependence yet to be determined
 
-        Vpmax = self.Vpm25 * N_dep * T_dep(EaVp)
-        Vcmax = self.Vcm25 * N_dep * T_dep(EaVc)
+    @derive
+    def Kc(self, Kc25, T_dep, Eac):
+        return Kc25 * T_dep(Eac)
 
-        #print(f'[N] lfNContent = {self.leaf.nitrogen}, rate = {N_dep}')
-        #print(f'[T] Tleaf = {T_leaf}, rate = {T_dep(Ea=1, T=self.T)}')
-        #print(f'Vpmax = {Vpmax}, Vcmax = {Vcmax}')
+    @derive
+    def Ko(self, Ko25, T_dep, Eao):
+        return Ko25 * T_dep(Eao)
 
+    @derive
+    def Km(self, Kc, Om, Ko):
+        # effective M-M constant for Kc in the presence of O2
+        return Kc * (1 + Om / Ko)
+
+    @derive
+    def Vpmax(self, Vpm25, N_dep, T_dep, EaVp):
+        return Vpm25 * N_dep * T_dep(EaVp)
+
+    @derive
+    def Vp(self, Vpmax, Cm, Kp):
         # PEP carboxylation rate, that is the rate of C4 acid generation
         Vp = (Cm * Vpmax) / (Cm + Kp)
         Vpr = 80 # PEP regeneration limited Vp, value adopted from vC book
         Vp = np.clip(Vp, 0, Vpr)
+        return Vp
 
-        Rm = 0.5 * Rd
+    @derive
+    def Vcmax(self, Vcm25, N_dep, T_dep, EaVc):
+        return self.Vcm25 * N_dep * T_dep(EaVc)
 
-        #print(f'Rd = {Rd}, Rm = {Rm}')
-
-        #FIXME where should gamma be at?
-        # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
-        # note that this become the same as that in C3 model when multiplied by [O2]
-        #gamma1 = 0.193
-        #gamma_star = gamma1 * Os
-        #gamma = (Rd*Km + Vcmax*gamma_star) / (Vcmax - Rd)
-
+    @derive(alias='Ac')
+    def enzyme_limited_photosynthesis_rate(self, Vp, gbs, Cm, Rm, Vcmax, Rd):
         # Enzyme limited A (Rubisco or PEP carboxylation)
         Ac1 = Vp + gbs*Cm - Rm
         #Ac1 = max(0, Ac1) # prevent Ac1 from being negative Yang 9/26/06
@@ -165,19 +177,12 @@ class C4(System):
         return Ac
 
     # Light and electron transport limited A mediated by J
+    # theta: sharpness of transition from light limitation to light saturation
+    # x: Partitioning factor of J, yield maximal J at this value
     @derive(alias='Aj')
-    def transport_limited_photosynthesis_rate(self, T, Jmax, Rd, I2, gbs, Cm):
-        # sharpness of transition from light limitation to light saturation
-        # theta = 0.5
-        # switchgrass param from Albaugha et al. (2014)
-        theta = 0.79
-
+    def transport_limited_photosynthesis_rate(self, T, Jmax, Rd, Rm, I2, gbs, Cm, theta=0.5, x=0.4):
         J = quadratic_solve_lower(theta, -(I2+Jmax), I2*Jmax)
         #print(f'Jmax = {Jmax}, J = {J}')
-        x = 0.4 # Partitioning factor of J, yield maximal J at this value
-
-        Rm = 0.5 * Rd
-
         Aj1 = x * J/2 - Rm + gbs*Cm
         Aj2 = (1-x) * J/3 - Rd
         Aj = min(Aj1, Aj2)
@@ -190,13 +195,24 @@ class C4(System):
         #print(f'Ac = {Ac}, Aj = {Aj}, A_net = {A_net}')
         return A_net
 
-    # #FIXME put them accordingly
-    # @derive
-    # def bundle_sheath(self):
-    #     A_net = self.net_photosynthesis
-    #     alpha = 0.0001 # fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
-    #     Os = alpha * A_net / (0.047*self.gbs) + Om # Bundle sheath O2 partial pressure, mbar
-    #     #Cbs = Cm + (Vp - A_net - Rm) / self.gbs # Bundle sheath CO2 partial pressure, ubar
+    #FIXME: currently not used variables
+
+    # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
+    @derive(alias='Os')
+    def bundle_sheath_o2(self, A_net, gbs, Om, alpha=0.0001):
+        return alpha * A_net / (0.047*gbs) + Om # Bundle sheath O2 partial pressure, mbar
+
+    @derive(alias='Cbs')
+    def bundle_sheath_co2(self, A_net, Vp, Cm, Rm, gbs):
+        return Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
+
+    @derive
+    def gamma(self, Rd, Km, Vcmax, Os):
+        # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
+        # note that this become the same as that in C3 model when multiplied by [O2]
+        gamma1 = 0.193
+        gamma_star = gamma1 * Os
+        return (Rd*Km + Vcmax*gamma_star) / (Vcmax - Rd)
 
 
 class VaporPressure:
@@ -596,6 +612,7 @@ config = ''
 # config += """
 # # switchgrass params from Albaugha et al. (2014)
 # C4.Rd25 = 3.6 # not sure if it was normalized to 25 C
+# C4.Aj.theta = 0.79
 # """
 
 # config += """
