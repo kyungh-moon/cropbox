@@ -47,30 +47,6 @@ class C4(System):
     # Parameters #
     ##############
 
-    # activation energy values
-    Eac = parameter(59400)
-    Eao = parameter(36000)
-
-    EaVp = parameter(75100)
-    EaVc = parameter(55900) # Sage (2002) JXB
-    Eaj = parameter(32800)
-    Ear = parameter(39800)
-
-    Hj = parameter(220000)
-    Sj = parameter(702.6)
-
-    Kc25 = parameter(650) # Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
-    Ko25 = parameter(450) # Michaelis constant of rubisco for O2 (2.5 times C3), mbar
-    Kp25 = parameter(80) # Michaelis constant for PEP caboxylase for CO2
-
-    # Kim et al. (2007), Kim et al. (2006)
-    # In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
-    # In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
-    Vpm25 = parameter(70)
-    Vcm25 = parameter(50)
-    Jm25 = parameter(300)
-    Rd25 = parameter(2) # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
-
     # FIXME are they even used?
     # self.beta_ABA = 1.48e2 # Tardieu-Davies beta, Dewar (2002) Need the references !?
     # self.delta = -1.0
@@ -99,8 +75,9 @@ class C4(System):
     def nitrogen_limited_rate(self, N, s=2.9, N0=0.25):
         return 2 / (1 + np.exp(-s * (max(N0, N) - N0))) - 1
 
+    # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
     @derive(alias='Rd')
-    def dark_respiration(self, Rd25, T_dep, Ear):
+    def dark_respiration(self, T_dep, Rd25=2, Ear=39800):
         return Rd25 * T_dep(Ear)
 
     @derive
@@ -108,7 +85,7 @@ class C4(System):
         return 0.5 * Rd
 
     @derive(alias='Jmax')
-    def maximum_electron_transport_rate(self, T, Jm25, T_dep, Eaj, N_dep, Sj, Hj):
+    def maximum_electron_transport_rate(self, T, T_dep, N_dep, Jm25=300, Eaj=32800, Sj=702.6, Hj=220000):
         R = 8.314
 
         Tb = 25
@@ -128,16 +105,19 @@ class C4(System):
         O = 210 # gas units are mbar
         return O
 
+    # Kp25: Michaelis constant for PEP caboxylase for CO2
     @derive
-    def Kp(self, Kp25):
+    def Kp(self, Kp25=80):
         return Kp25 # T dependence yet to be determined
 
+    # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
     @derive
-    def Kc(self, Kc25, T_dep, Eac):
+    def Kc(self, T_dep, Kc25=650, Eac=59400):
         return Kc25 * T_dep(Eac)
 
+    # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
     @derive
-    def Ko(self, Ko25, T_dep, Eao):
+    def Ko(self, T_dep, Ko25=450, Eao=36000):
         return Ko25 * T_dep(Eao)
 
     @derive
@@ -146,7 +126,7 @@ class C4(System):
         return Kc * (1 + Om / Ko)
 
     @derive
-    def Vpmax(self, Vpm25, N_dep, T_dep, EaVp):
+    def Vpmax(self, N_dep, T_dep, Vpm25=70, EaVp=75100):
         return Vpm25 * N_dep * T_dep(EaVp)
 
     @derive
@@ -157,9 +137,10 @@ class C4(System):
         Vp = np.clip(Vp, 0, Vpr)
         return Vp
 
+    # EaVc: Sage (2002) JXB
     @derive
-    def Vcmax(self, Vcm25, N_dep, T_dep, EaVc):
-        return self.Vcm25 * N_dep * T_dep(EaVc)
+    def Vcmax(self, N_dep, T_dep, Vcm25=50, EaVc=55900):
+        return Vcm25 * N_dep * T_dep(EaVc)
 
     @derive(alias='Ac')
     def enzyme_limited_photosynthesis_rate(self, Vp, gbs, Cm, Rm, Vcmax, Rd):
@@ -543,43 +524,43 @@ config = ''
 # # Kim et al. (2007), Kim et al. (2006)
 # # In von Cammerer (2000), Vpm25=120, Vcm25=60,Jm25=400
 # # In Soo et al.(2006), under elevated C5O2, Vpm25=91.9, Vcm25=71.6, Jm25=354.2 YY
-# C4.Vpm25 = 70
-# C4.Vcm25 = 50
-# C4.Jm25 = 300
-# C4.Rd25 = 2 # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
+# C4.Vpmax.Vpm25 = 70
+# C4.Vcmax.Vcm25 = 50
+# C4.Jmax.Jm25 = 300
+# C4.Rd.Rd25 = 2 # Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
 # """
 
 # config += """
 # [C4]
 # # switgrass params from Albaugha et al. (2014)
 # # https://doi.org/10.1016/j.agrformet.2014.02.013
-# C4.Vpm25 = 52
-# C4.Vcm25 = 26
-# C4.Jm25 = 145
+# C4.Vpmax.Vpm25 = 52
+# C4.Vcmax.Vcm25 = 26
+# C4.Jmax.Jm25 = 145
 # """
 
 # config += """
 # # switchgrass Vcmax from Le et al. (2010), others multiplied from Vcmax (x2, x5.5)
-# C4.Vpm25 = 96
-# C4.Vcm25 = 48
-# C4.Jm25 = 264
+# C4.Vpmax.Vpm25 = 96
+# C4.Vcmax.Vcm25 = 48
+# C4.Jmax.Jm25 = 264
 # """
 
 # config += """
-# C4.Vpm25 = 100
-# C4.Vcm25 = 50
-# C4.Jm25 = 200
+# C4.Vpmax.Vpm25 = 100
+# C4.Vcmax.Vcm25 = 50
+# C4.Jmax.Jm25 = 200
 # """
 
 # config += """
-# C4.Vpm25 = 70
-# C4.Vcm25 = 50
-# C4.Jm25 = 180.8
+# C4.Vpmax.Vpm25 = 70
+# C4.Vcmax.Vcm25 = 50
+# C4.Jmax.Jm25 = 180.8
 # """
 
 # config += """
 # # switchgrass params from Albaugha et al. (2014)
-# C4.Rd25 = 3.6 # not sure if it was normalized to 25 C
+# C4.Rd.Rd25 = 3.6 # not sure if it was normalized to 25 C
 # C4.Aj.theta = 0.79
 # """
 
