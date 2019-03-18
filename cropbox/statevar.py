@@ -203,9 +203,11 @@ class parameter(statevar):
         return 0
 
     def compute(self, obj):
-        k = self.__name__
-        v = obj.context.option(obj, k)
-        if v is None:
+        for k in [self.__name__] + self._alias_lst:
+            v = obj.context.option(obj, k)
+            if v is not None:
+                break
+        else:
             v = self._compute(obj)
         return v
 

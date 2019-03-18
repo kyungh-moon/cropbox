@@ -185,6 +185,18 @@ def test_parameter_with_config():
     c.update()
     assert s.a == 2
 
+def test_parameter_with_config_alias():
+    class S(System):
+        @parameter(alias='aa')
+        def a(self):
+            return 1
+        @parameter(alias='b')
+        def bb(self):
+            return 1
+    s = instance(S, {'S': {'a': 2, 'b': 2}})
+    assert s.a == 2
+    assert s.b == 2
+
 def test_drive_with_dict():
     class S(System):
         @drive
