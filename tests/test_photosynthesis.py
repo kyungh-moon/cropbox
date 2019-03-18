@@ -96,12 +96,7 @@ class C4(System):
             return 0
 
     @derive(alias='N_dep')
-    def nitrogen_limited_rate(self, N):
-        # in Sinclair and Horie, 1989 Crop sciences, it is 4 and 0.2
-        # In J Vos. et al. Field Crop study, 2005, it is 2.9 and 0.25
-        # In Lindquist, weed science, 2001, it is 3.689 and 0.5
-        s = 2.9 # slope
-        N0 = 0.25
+    def nitrogen_limited_rate(self, N, s=2.9, N0=0.25):
         return 2 / (1 + np.exp(-s * (max(N0, N) - N0))) - 1
 
     @derive(alias='Rd')
@@ -586,6 +581,18 @@ config = ''
 # # switchgrass params from Albaugha et al. (2014)
 # C4.Rd25 = 3.6 # not sure if it was normalized to 25 C
 # C4.Aj.theta = 0.79
+# """
+
+# config += """
+# # In Sinclair and Horie, Crop Sciences, 1989
+# C4.N_dep.s = 4
+# C4.N_dep.N0 = 0.2
+# # In J Vos et al. Field Crop Research, 2005
+# C4.N_dep.s = 2.9
+# C4.N_dep.N0 = 0.25
+# # In Lindquist, Weed Science, 2001
+# C4.N_dep.s = 3.689
+# C4.N_dep.N0 = 0.5
 # """
 
 # config += """
