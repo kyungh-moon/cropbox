@@ -18,8 +18,8 @@ def quadratic_solve(a, b, c, lower=True):
         sv = np.sqrt(v)
         sv *= -1 if lower else 1
         return (-b + sv) / (2*a)
-quadratic_solve_lower = lambda a, b, c: quadratic_solve(a, b, c, lower=True)
-quadratic_solve_upper = lambda a, b, c: quadratic_solve(a, b, c, lower=False)
+def quadratic_solve_lower(a, b, c): return quadratic_solve(a, b, c, lower=True)
+def quadratic_solve_upper(a, b, c): return quadratic_solve(a, b, c, lower=False)
 
 
 class C4(System):
