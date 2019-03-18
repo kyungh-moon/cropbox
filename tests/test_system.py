@@ -330,6 +330,7 @@ def test_args_partial():
     assert s.a(c=1) == 2
     assert s.a(c=2) == 3
     assert s.a(c=2, d=1) == 4
+    assert s.a(1) == 2
 
 def test_inline():
     class S(System):

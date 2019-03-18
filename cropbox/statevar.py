@@ -132,7 +132,7 @@ class statevar:
         sn = obj.__class__.__name__
         fn = self._compute_fun.__name__
         ps = inspect.signature(self._compute_fun).parameters
-        def arg(k, p):
+        def resolve(k, p):
             #HACK: assume first param of method is named `self`
             if k == 'self':
                 a = obj
@@ -151,13 +151,15 @@ class statevar:
                     except KeyError:
                         return None
             return (k, a)
-        kwargs = dict(filter(None, [arg(k, p) for k, p in ps.items()]))
-        if len(ps) == len(kwargs):
-            return self._compute_fun(**kwargs)
+        params = dict(filter(None, [resolve(k, p) for k, p in ps.items()]))
+        if len(ps) == len(params):
+            return self._compute_fun(**params)
         else:
-            def f(**x):
-                kwargs.update(x)
-                return self._compute_fun(**kwargs)
+            def f(*args, **kwargs):
+                p = params.copy()
+                p.update(kwargs)
+                q = dict(zip([k for k in ps if k not in p], args))
+                return self._compute_fun(**p, **q)
             return f
 
     def init(self, obj):
