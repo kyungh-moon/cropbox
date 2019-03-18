@@ -8,28 +8,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-# Arrhenius equation
-def temperature_dependence_rate(Ea, T, Tb=25.):
-    R = 8.314 # universal gas constant (J K-1 mol-1)
-    K = 273.15
-    #HACK handle too low temperature values during optimization
-    Tk = max(0, T + K)
-    Tbk = max(0, Tb + K)
-    try:
-        return np.exp(Ea * (T - Tb) / (Tbk * R * Tk))
-    except ZeroDivisionError:
-        return 0
-
-
-def nitrogen_limited_rate(N):
-    # in Sinclair and Horie, 1989 Crop sciences, it is 4 and 0.2
-    # In J Vos. et al. Field Crop study, 2005, it is 2.9 and 0.25
-    # In Lindquist, weed science, 2001, it is 3.689 and 0.5
-    s = 2.9 # slope
-    N0 = 0.25
-    return 2 / (1 + np.exp(-s * (max(N0, N) - N0))) - 1
-
-
 def quadratic_solve(a, b, c, lower=True):
     if a == 0:
         return -c/b
@@ -104,12 +82,34 @@ class C4(System):
     gbs = parameter(0.003) # bundle sheath conductance to CO2, mol m-2 s-1
     # gi = parameter(1.0) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
+    # Arrhenius equation
+    @derive(alias='T_dep')
+    def temperature_dependence_rate(self, Ea, T, Tb=25):
+        R = 8.314 # universal gas constant (J K-1 mol-1)
+        K = 273.15
+        #HACK handle too low temperature values during optimization
+        Tk = max(0, T + K)
+        Tbk = max(0, Tb + K)
+        try:
+            return np.exp(Ea * (T - Tb) / (Tbk * R * Tk))
+        except ZeroDivisionError:
+            return 0
+
+    @derive(alias='N_dep')
+    def nitrogen_limited_rate(self, N):
+        # in Sinclair and Horie, 1989 Crop sciences, it is 4 and 0.2
+        # In J Vos. et al. Field Crop study, 2005, it is 2.9 and 0.25
+        # In Lindquist, weed science, 2001, it is 3.689 and 0.5
+        s = 2.9 # slope
+        N0 = 0.25
+        return 2 / (1 + np.exp(-s * (max(N0, N) - N0))) - 1
+
     @derive(alias='Rd')
-    def dark_respiration(self, T, Rd25, Ear):
-        return Rd25 * temperature_dependence_rate(Ear, T)
+    def dark_respiration(self, Rd25, T_dep, Ear):
+        return Rd25 * T_dep(Ear)
 
     @derive(alias='Jmax')
-    def maximum_electron_transport_rate(self, T, N, Jm25, Eaj, Sj, Hj):
+    def maximum_electron_transport_rate(self, T, Jm25, T_dep, Eaj, N_dep, Sj, Hj):
         R = 8.314
 
         Tb = 25
@@ -117,27 +117,27 @@ class C4(System):
         Tk = T + K
         Tbk = Tb + K
 
-        r = Jm25 * nitrogen_limited_rate(N) \
-                 * temperature_dependence_rate(Eaj, T) \
+        r = Jm25 * N_dep \
+                 * T_dep(Eaj) \
                  * (1 + np.exp((Sj*Tbk - Hj) / (R*Tbk))) \
                  / (1 + np.exp((Sj*Tk  - Hj) / (R*Tk)))
         return max(0, r)
 
     @derive(alias='Ac')
-    def enzyme_limited_photosynthesis_rate(self, T, Rd, gbs, Cm):
+    def enzyme_limited_photosynthesis_rate(self, Rd, gbs, Cm, T_dep, Eac, Eao, EaVp, EaVc, N_dep):
         O = 210 # gas units are mbar
         Om = O # mesophyll O2 partial pressure
 
         Kp = self.Kp25 # T dependence yet to be determined
-        Kc = self.Kc25 * temperature_dependence_rate(self.Eac, T)
-        Ko = self.Ko25 * temperature_dependence_rate(self.Eao, T)
+        Kc = self.Kc25 * T_dep(Eac)
+        Ko = self.Ko25 * T_dep(Eao)
         Km = Kc * (1 + Om / Ko) # effective M-M constant for Kc in the presence of O2
 
-        Vpmax = self.Vpm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVp, T)
-        Vcmax = self.Vcm25 * nitrogen_limited_rate(self.leaf.nitrogen) * temperature_dependence_rate(self.EaVc, T)
+        Vpmax = self.Vpm25 * N_dep * T_dep(EaVp)
+        Vcmax = self.Vcm25 * N_dep * T_dep(EaVc)
 
-        #print(f'[N] lfNContent = {self.leaf.nitrogen}, rate = {nitrogen_limited_rate(self.leaf.nitrogen)}')
-        #print(f'[T] Tleaf = {T_leaf}, rate = {temperature_dependence_rate(1, T)}')
+        #print(f'[N] lfNContent = {self.leaf.nitrogen}, rate = {N_dep}')
+        #print(f'[T] Tleaf = {T_leaf}, rate = {T_dep(Ea=1, T=self.T)}')
         #print(f'Vpmax = {Vpmax}, Vcmax = {Vcmax}')
 
         # PEP carboxylation rate, that is the rate of C4 acid generation
