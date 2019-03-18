@@ -251,9 +251,6 @@ class Stomata(System):
     g0 = parameter(0.017)
     g1 = parameter(4.53)
 
-    #FIXME initial value never used
-    #self.leafp_effect = 1 # At first assume there is not drought stress, so assign 1 to leafpEffect. Yang 8/20/06
-
     @derive(alias='gb')
     # def update_boundary_layer(self, wind):
     def boundary_layer_conductance(self, l='leaf', w='leaf.weather'):
@@ -281,7 +278,7 @@ class Stomata(System):
     #FIXME T_leaf not used
     @derive(alias='gs', init='g0')
     # def update_stomata(self, LWP, CO2, A_net, RH, T_leaf):
-    def stomatal_conductance(self, g0, g1, gb, l='leaf', w='leaf.weather'):
+    def stomatal_conductance(self, g0, g1, gb, m, l='leaf', w='leaf.weather'):
         CO2 = w.CO2
         A_net = l.A_net
         RH = w.RH
@@ -293,8 +290,6 @@ class Stomata(System):
         Cs = CO2 - (1.37 * A_net / gb) # surface CO2 in mole fraction
         if Cs <= gamma:
             Cs = gamma + 1
-
-        m = self.leafp_effect
 
         a = m * g1 * A_net / Cs
         b = g0 + gb - (m * g1 * A_net / Cs)
@@ -319,22 +314,9 @@ class Stomata(System):
         #print(f"gs = {gs} LWP = {LWP} Ds = {Ds} T_leaf = {T_leaf} Cs = {Cs} A_net = {A_net} hs = {hs} RH = {RH}")
         return gs
 
-    @derive
-    def leafp_effect(self):
-        # pressure - leaf water potential MPa...
-#         sf = 2.3 # sensitivity parameter Tuzet et al. 2003 Yang
-#         phyf = -1.2 # reference potential Tuzet et al. 2003 Yang
-        #? = -1.68 # minimum sustainable leaf water potential (Albaugha 2014)
-        # switchgrass params from Le et al. (2010)
-#         sf = 6.5
-#         phyf = -1.3
-        # hand-picked
-        sf = 2.3
-        phyf = -2.0
-        LWP = self.leaf.soil.WP_leaf
-        m = (1 + np.exp(sf * phyf)) / (1 + np.exp(sf * (phyf - LWP)))
-        #print(f'[LWP] pressure = {LWP}, effect = {m}')
-        return m
+    @derive(alias='m')
+    def leafp_effect(self, LWP='leaf.soil.WP_leaf', sf=2.3, phyf=-2.0):
+        return (1 + np.exp(sf * phyf)) / (1 + np.exp(sf * (phyf - LWP)))
 
     @derive(alias='gv')
     def total_conductance_h2o(self, gs, gb):
@@ -552,6 +534,7 @@ class Weather(System):
 
 
 class Soil(System):
+    # pressure - leaf water potential MPa...
     @parameter
     def WP_leaf(self): return 0
 
@@ -640,6 +623,18 @@ config = ''
 # # for garlic
 # Stomata.g0 = 0.0096
 # Stomata.g1 = 6.824
+# """
+
+# config += """
+# Stomata.m.sf = 2.3 # sensitivity parameter Tuzet et al. 2003 Yang
+# Stomata.m.phyf = -1.2 # reference potential Tuzet et al. 2003 Yang
+# """
+
+# config += """
+# #? = -1.68 # minimum sustainable leaf water potential (Albaugha 2014)
+# # switchgrass params from Le et al. (2010)
+# Stomata.m.sf = 6.5
+# Stomata.m.phyf = -1.3
 # """
 
 # config += """
