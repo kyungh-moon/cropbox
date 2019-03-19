@@ -146,9 +146,10 @@ class statevar:
                     except KeyError:
                         a = v
                 else:
-                    try:
+                    #HACK: distinguish KeyError raised by missing k, or by running statevar definition
+                    if k in obj._statevars:
                         a = obj.get(k)
-                    except KeyError:
+                    else:
                         return None
             return (k, a)
         params = dict(filter(None, [resolve(k, p) for k, p in ps.items()]))
