@@ -191,34 +191,6 @@ class C4(System):
         return (Rd*Km + Vcmax*gamma_star) / (Vcmax - Rd)
 
 
-class VaporPressure(System):
-    # Campbell and Norman (1998), p 41 Saturation vapor pressure in kPa
-    a = parameter(0.611) # kPa
-    b = parameter(17.502) # C
-    c = parameter(240.97) # C
-
-    @derive(alias='es')
-    def saturation(self, T, *, a, b, c):
-        return a*np.exp((b*T)/(c+T))
-
-    @derive(alias='ea')
-    def ambient(self, T, RH):
-        return self.es(T) * RH
-
-    @derive(alias='vpd')
-    def deficit(self, T, RH):
-        return self.es(T) * (1 - RH)
-
-    @derive(alias='rh')
-    def relative_humidity(self, T, VPD):
-        return 1 - VPD / self.es(T)
-
-    # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
-    @derive(alias='cs')
-    def curve_slope(self, T, P, *, b, c):
-        return self.es(T) * (b*c)/(c+T)**2 / P
-
-
 class Stomata(System):
     def __init__(self, parent, leaf):
         super().__init__(parent, leaf=leaf)
@@ -385,7 +357,7 @@ class PhotosyntheticLeaf(System):
 
     #TODO: use @optimize
     @derive
-    def temperature_adjustment(self, w='weather'):
+    def temperature_adjustment(self, w='weather', s='stomata'):
         # see Campbell and Norman (1998) pp 224-225
         # because Stefan-Boltzman constant is for unit surface area by denifition,
         # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
@@ -396,15 +368,14 @@ class PhotosyntheticLeaf(System):
         epsilon = 0.97
         sbc = 5.6697e-8
 
-        T_air = self.weather.T_air
+        T_air = w.T_air
         Tk = T_air + 273.15
-        RH = self.weather.RH
-        PFD = self.weather.PFD
-        P_air = self.weather.P_air
+        PFD = w.PFD
+        P_air = w.P_air
         Jw = self.ET_supply
 
-        gha = self.stomata.boundary_layer_conductance * (0.135 / 0.147) # heat conductance, gha = 1.4*.135*sqrt(u/d), u is the wind speed in m/s} Mol m-2 s-1 ?
-        gv = self.stomata.total_conductance_h2o
+        gha = s.boundary_layer_conductance * (0.135 / 0.147) # heat conductance, gha = 1.4*.135*sqrt(u/d), u is the wind speed in m/s} Mol m-2 s-1 ?
+        gv = s.total_conductance_h2o
         gr = 4 * epsilon * sbc * Tk**3 / Cp * 2 # radiative conductance, 2 account for both sides
         ghr = gha + gr
         thermal_air = epsilon * sbc * Tk**4 * 2 # emitted thermal radiation
@@ -420,9 +391,8 @@ class PhotosyntheticLeaf(System):
 
         # debug dt I commented out the changes that yang made for leaf temperature for a test. I don't think they work
         if Jw == 0:
-            VPD = w.vp.deficit(T_air, RH)
             # eqn 14.6b linearized form using first order approximation of Taylor series
-            return (psc1 / (w.vp.curve_slope(T_air, P_air) + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - VPD / (psc1 * P_air))
+            return (psc1 / (w.VPD_slope + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - w.VPD / (psc1 * P_air))
         else:
             return (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
 
@@ -471,13 +441,41 @@ class GasExchange(System):
         return self.leaf.temperature
 
     @derive
-    def VPD(self, vp='weather.vp'):
+    def VPD(self):
         #TODO: use Weather directly, instead of through PhotosyntheticLeaf
-        return vp.deficit(self.weather.T_air, self.weather.RH)
+        return self.weather.VPD
 
     @derive
     def gs(self):
         return self.leaf.stomata.stomatal_conductance
+
+
+class VaporPressure(System):
+    # Campbell and Norman (1998), p 41 Saturation vapor pressure in kPa
+    a = parameter(0.611) # kPa
+    b = parameter(17.502) # C
+    c = parameter(240.97) # C
+
+    @derive(alias='es')
+    def saturation(self, T, *, a, b, c):
+        return a*np.exp((b*T)/(c+T))
+
+    @derive(alias='ea')
+    def ambient(self, T, RH):
+        return self.es(T) * RH
+
+    @derive(alias='vpd')
+    def deficit(self, T, RH):
+        return self.es(T) * (1 - RH)
+
+    @derive(alias='rh')
+    def relative_humidity(self, T, VPD):
+        return 1 - VPD / self.es(T)
+
+    # slope of the sat vapor pressure curve: first order derivative of Es with respect to T
+    @derive(alias='cs')
+    def curve_slope(self, T, P, *, b, c):
+        return self.es(T) * (b*c)/(c+T)**2 / P
 
 
 #TODO: use improved @drive
@@ -503,6 +501,12 @@ class Weather(System):
 
     @parameter
     def P_air(self): return 100 # kPa
+
+    @derive
+    def VPD(self, T_air, RH): return self.vp.deficit(T_air, RH)
+
+    @derive
+    def VPD_slope(self, T_air, P_air): return self.vp.curve_slope(T_air, P_air)
 
     def __str__(self):
         w = self
