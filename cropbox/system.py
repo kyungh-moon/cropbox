@@ -50,9 +50,9 @@ class System(Trackable):
         if parent is not None:
             parent.children.append(self)
             self.context = parent.context
-        self.setup()
-        [setattr(self, k, v) for k, v in kwargs.items()]
         super().__init__()
+        [setattr(self, k, v) for k, v in kwargs.items()]
+        self.setup()
 
     def get(self, name, *args):
         # support direct specification of value, i.e. 0
