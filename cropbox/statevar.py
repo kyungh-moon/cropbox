@@ -8,10 +8,30 @@ import inspect
 import networkx as nx
 import pint
 
-ureg = pint.UnitRegistry()
-ureg.default_format = '~P'
-#ureg.setup_matplotlib()
-Q = ureg.Quantity
+class Unit:
+    def __init__(self):
+        r = pint.UnitRegistry()
+        r.default_format = '~P'
+        #r.setup_matplotlib()
+        self.registry = r
+
+    def __call__(self, v, unit=None):
+        if v is None:
+            return v
+        try:
+            #HACK: avoid collision (variable named 'm' vs. unit string 'm')
+            if not v[0].isalpha():
+                v = self.registry(v)
+        except:
+            pass
+        if unit is None:
+            return v
+        Q = self.registry.Quantity
+        if isinstance(v, Q):
+            return v.to(unit)
+        else:
+            return Q(v, unit)
+U = Unit()
 
 class Trace:
     def __init__(self):
@@ -93,7 +113,7 @@ class statevar:
         self._track_cls = track
         self._time_var = time
         self._init_var = init
-        self._unit_str = unit
+        self._unit_qtt = U(unit)
         self._alias_lst = alias.split(',') if alias else []
         if f is not None:
             self.__call__(f)
@@ -114,13 +134,7 @@ class statevar:
 
     def __get__(self, obj, objtype):
         v = self.update(obj)
-        if self._unit_str is None:
-            return v
-        else:
-            try:
-                return v.to(self._unit_str)
-            except AttributeError:
-                return v * ureg[self._unit_str]
+        return U(v, self._unit_qtt)
 
     def time(self, obj):
         return obj.get(self._time_var)

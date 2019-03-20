@@ -1,4 +1,4 @@
-from .statevar import statevar
+from .statevar import statevar, U
 import functools
 
 class TrackableMeta(type):
@@ -56,10 +56,13 @@ class System(Trackable):
 
     def get(self, name, *args):
         # support direct specification of value, i.e. 0
-        if not isinstance(name, str):
-            return name
-        #HACK: support nested reference, i.e. 'context.time'
-        return functools.reduce(lambda o, n: getattr(o, n, *args), [self] + name.split('.'))
+        # support string value with unit, i.e. '1 m'
+        v = U(name)
+        if isinstance(v, str):
+            # support nested reference, i.e. 'context.time'
+            return functools.reduce(lambda o, n: getattr(o, n, *args), [self] + v.split('.'))
+        else:
+            return v
 
     @property
     def neighbors(self):

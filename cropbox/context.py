@@ -1,5 +1,5 @@
 from .system import System
-from .statevar import accumulate, parameter
+from .statevar import accumulate, parameter, U
 from functools import reduce
 import toml
 
@@ -50,12 +50,12 @@ class Context(Clock):
                 v = self.option(s.__name__, *keys[1:])
                 if v is not None:
                     break
-            return v
         else:
             try:
-                return reduce(dict.get, keys, self._config)
+                v = reduce(dict.get, keys, self._config)
             except TypeError:
                 return None
+        return U(v)
 
     def queue(self, f):
         self._pending.append(f)
