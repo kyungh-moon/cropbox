@@ -37,5 +37,9 @@ def test_parameter():
         c = parameter(1, unit='m')
         d = parameter(1, unit='m')
         e = parameter(1)
+        @parameter(unit='m')
+        def f(self, ff='1m'):
+            return self.a + ff
     s = instance(S, {'S': {'a': 2, 'b': '2', 'c': '2m', 'd': '200cm', 'e': '2m'}})
     assert s.a == s.b == s.c == s.d == s.e == U(2, 'm')
+    assert s.f == U(3, 'm')
