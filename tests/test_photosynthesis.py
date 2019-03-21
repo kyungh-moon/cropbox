@@ -223,21 +223,13 @@ class Stomata(System):
         return gb
 
     # stomatal conductance for water vapor in mol m-2 s-1
+    # gamma: 10.0 for C4 maize
     #FIXME T_leaf not used
     @derive(alias='gs', init='g0')
     # def update_stomata(self, LWP, CO2, A_net, RH, T_leaf):
-    def stomatal_conductance(self, g0, g1, gb, m, l='leaf', w='leaf.weather'):
-        CO2 = w.CO2
-        A_net = l.A_net
-        RH = w.RH
-        T_leaf = l.temperature
-
-        #FIXME proper use of gamma
-        #gamma = 10.0 # for C4 maize
-        gamma = 10.0 #FIXME supposed to be temperature dependent gamma for C3 garlic
+    def stomatal_conductance(self, g0, g1, gb, m, A_net='leaf.A_net', CO2='leaf.weather.CO2', RH='leaf.weather.RH', gamma=10):
         Cs = CO2 - (1.37 * A_net / gb) # surface CO2 in mole fraction
-        if Cs <= gamma:
-            Cs = gamma + 1
+        Cs = max(Cs, gamma)
 
         a = m * g1 * A_net / Cs
         b = g0 + gb - (m * g1 * A_net / Cs)
@@ -249,17 +241,13 @@ class Stomata(System):
         #hs = np.clip(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize
 
         #FIXME unused?
-        #es = w.vp.saturation(tleaf)
+        #T_leaf = l.temperature
+        #es = w.vp.saturation(T_leaf)
         #Ds = (1 - hs) * es # VPD at leaf surface
-        Ds = w.vp.deficit(T_leaf, hs)
+        #Ds = w.vp.deficit(T_leaf, hs)
 
         gs = g0 + (g1 * m * (A_net * hs / Cs))
-        #print(f'Cs = {Cs}, m = {m}, a = {a}, b = {b}, c = {c}, gs = {gs}')
         gs = max(gs, g0)
-
-        # this below is an example of how you can write temporary data to a debug window. It can be copied and
-        # pasted into excel for plotting. Dennis See above where the CString object is created.
-        #print(f"gs = {gs} LWP = {LWP} Ds = {Ds} T_leaf = {T_leaf} Cs = {Cs} A_net = {A_net} hs = {hs} RH = {RH}")
         return gs
 
     @derive(alias='m')
