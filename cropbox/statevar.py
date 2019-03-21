@@ -154,12 +154,11 @@ class statevar:
                 v = p.default
                 if v is not p.empty:
                     a = obj[v]
+                #HACK: distinguish KeyError raised by missing k, or by running statevar definition
+                elif k in obj._statevars:
+                    a = obj[k]
                 else:
-                    #HACK: distinguish KeyError raised by missing k, or by running statevar definition
-                    if k in obj._statevars:
-                        a = obj[k]
-                    else:
-                        return None
+                    return None
             return (k, a)
         params = dict(filter(None, [resolve(*t, i) for i, t in enumerate(ps.items())]))
         if len(ps) == len(params):
