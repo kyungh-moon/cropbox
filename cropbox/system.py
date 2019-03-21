@@ -106,7 +106,7 @@ class System(Trackable, Configurable):
     def option(self, *keys, config=None):
         if config is None:
             config = self.context._config
-        v = super().option(*keys, config=config)
+        v = super().option(self, *keys, config=config)
         return self[v]
 
     def update(self, recursive=True):

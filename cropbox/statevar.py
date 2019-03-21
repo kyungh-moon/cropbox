@@ -149,7 +149,7 @@ class statevar:
             if i == 0:
                 a = obj
             else:
-                a = obj.context.option(obj, fun, k)
+                a = obj.option(fun, k)
             if a is None:
                 v = p.default
                 if v is not p.empty:
@@ -216,7 +216,7 @@ class parameter(statevar):
         return 0
 
     def compute(self, obj):
-        v = obj.context.option(obj, self)
+        v = obj.option(self)
         if v is None:
             v = self._compute(obj)
         return v
