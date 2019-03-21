@@ -350,17 +350,16 @@ class PhotosyntheticLeaf(System):
 
     #TODO: use @optimize
     @derive
-    def temperature_adjustment(self, w='weather', s='stomata'):
+    def temperature_adjustment(self, w='weather', s='stomata',
         # see Campbell and Norman (1998) pp 224-225
         # because Stefan-Boltzman constant is for unit surface area by denifition,
         # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
-        lamda = 44000 # KJ mole-1 at 25oC
-        psc = 6.66e-4
-        Cp = 29.3 # thermodynamic psychrometer constant and specific heat of air (J mol-1 C-1)
-
-        epsilon = 0.97
-        sbc = 5.6697e-8
-
+        lamda=44000, # KJ mole-1 at 25oC
+        psc=6.66e-4,
+        Cp=29.3, # thermodynamic psychrometer constant and specific heat of air (J mol-1 C-1)
+        epsilon=0.97,
+        sbc=5.6697e-8,
+    ):
         T_air = w.T_air
         Tk = T_air + 273.15
         PFD = w.PFD
