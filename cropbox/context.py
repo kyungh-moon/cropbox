@@ -41,7 +41,7 @@ class Context(Clock):
 
     def option(self, *keys, config=None):
         if config is None:
-            c = self._config
+            config = self._config
         def expand(k):
             if isinstance(k, System):
                 #HACK: populate base classes down to System (not inclusive) for section names
@@ -52,7 +52,7 @@ class Context(Clock):
             else:
                 return k
         keys = [expand(k) for k in keys]
-        v = self._option(*keys, config=c)
+        v = self._option(*keys, config=config)
         return U(v)
 
     def _option(self, *keys, config):
@@ -66,11 +66,9 @@ class Context(Clock):
                     return v
         else:
             try:
-                c = config[key]
+                return self._option(*keys, config=config[key])
             except KeyError:
                 return None
-            else:
-                return self._option(*keys, config=c)
 
     def queue(self, f):
         self._pending.append(f)
