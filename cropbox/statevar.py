@@ -145,9 +145,8 @@ class statevar:
     def _compute(self, obj):
         fun = self._compute_fun
         ps = inspect.signature(fun).parameters
-        def resolve(k, p):
-            #HACK: assume first param of method is named `self`
-            if k == 'self':
+        def resolve(k, p, i):
+            if i == 0:
                 a = obj
             else:
                 a = obj.context.option(obj, fun, k)
@@ -165,7 +164,7 @@ class statevar:
                     else:
                         return None
             return (k, a)
-        params = dict(filter(None, [resolve(k, p) for k, p in ps.items()]))
+        params = dict(filter(None, [resolve(*t, i) for i, t in enumerate(ps.items())]))
         if len(ps) == len(params):
             return fun(**params)
         else:
