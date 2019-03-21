@@ -1,5 +1,5 @@
 from .statevar import statevar, U
-import functools
+from functools import reduce
 
 class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
@@ -37,8 +37,15 @@ class Trackable(metaclass=TrackableMeta):
     def __getattr__(self, name):
         return self._statevars[name].__get__(self, type(self))
 
-    def __getitem__(self, key):
-        return getattr(self, key)
+    def __getitem__(self, name):
+        # support direct specification of value, i.e. 0
+        # support string value with unit, i.e. '1 m'
+        v = U(name)
+        if isinstance(v, str):
+            # support nested reference, i.e. 'context.time'
+            return reduce(lambda o, n: getattr(o, n), [self] + v.split('.'))
+        else:
+            return v
 
     def update(self):
         [s.update(self) for s in self._statevars.values()]
@@ -53,16 +60,6 @@ class System(Trackable):
         super().__init__()
         [setattr(self, k, v) for k, v in kwargs.items()]
         self.setup()
-
-    def get(self, name, *args):
-        # support direct specification of value, i.e. 0
-        # support string value with unit, i.e. '1 m'
-        v = U(name)
-        if isinstance(v, str):
-            # support nested reference, i.e. 'context.time'
-            return functools.reduce(lambda o, n: getattr(o, n, *args), [self] + v.split('.'))
-        else:
-            return v
 
     @property
     def neighbors(self):

@@ -137,7 +137,7 @@ class statevar:
         return U(v, self._unit_qtt)
 
     def time(self, obj):
-        return obj.get(self._time_var)
+        return obj[self._time_var]
 
     def compute(self, obj):
         return self._compute(obj)
@@ -156,13 +156,13 @@ class statevar:
                 v = p.default
                 if v is not p.empty:
                     try:
-                        a = obj.get(v)
+                        a = obj[v]
                     except KeyError:
                         a = v
                 else:
                     #HACK: distinguish KeyError raised by missing k, or by running statevar definition
                     if k in obj._statevars:
-                        a = obj.get(k)
+                        a = obj[k]
                     else:
                         return None
             return (k, a)
@@ -179,7 +179,7 @@ class statevar:
 
     def init(self, obj):
         t = self.time(obj)
-        v = obj.get(self._init_var)
+        v = obj[self._init_var]
         setattr(obj, self._tr_name, self._track_cls(t, v))
 
     def update(self, obj):
@@ -248,8 +248,8 @@ class optimize(statevar):
             with self.trace(self, obj, isolate=True):
                 tr._value = x
                 return self._compute(obj)
-        l = obj.get(self._lower_var)
-        u = obj.get(self._upper_var)
+        l = obj[self._lower_var]
+        u = obj[self._upper_var]
         #TODO: use optimize.minimize_scalar() instead?
         v = scipy.optimize.brentq(cost, l, u)
         # trigger update with final value
@@ -268,7 +268,7 @@ class optimize2(statevar):
             with self.trace(self, obj, isolate=True):
                 tr._value = x
                 return self._compute(obj)
-        bracket = obj.get(self._bracket_var)
+        bracket = obj[self._bracket_var]
         v = float(scipy.optimize.minimize_scalar(cost, bracket).x)
         # trigger update with final value
         cost(v)
