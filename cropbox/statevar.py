@@ -143,15 +143,14 @@ class statevar:
         return self._compute(obj)
 
     def _compute(self, obj):
-        sn = obj.__class__.__name__
-        fn = self._compute_fun.__name__
-        ps = inspect.signature(self._compute_fun).parameters
+        fun = self._compute_fun
+        ps = inspect.signature(fun).parameters
         def resolve(k, p):
             #HACK: assume first param of method is named `self`
             if k == 'self':
                 a = obj
             else:
-                a = obj.context.option(sn, fn, k)
+                a = obj.context.option(obj, fun, k)
             if a is None:
                 v = p.default
                 if v is not p.empty:
@@ -168,13 +167,13 @@ class statevar:
             return (k, a)
         params = dict(filter(None, [resolve(k, p) for k, p in ps.items()]))
         if len(ps) == len(params):
-            return self._compute_fun(**params)
+            return fun(**params)
         else:
             def f(*args, **kwargs):
                 p = params.copy()
                 p.update(kwargs)
                 q = dict(zip([k for k in ps if k not in p], args))
-                return self._compute_fun(**p, **q)
+                return fun(**p, **q)
             return f
 
     def init(self, obj):

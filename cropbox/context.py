@@ -49,6 +49,8 @@ class Context(Clock):
                 return [s.__name__ for s in S[:S.index(System)]]
             if isinstance(k, statevar):
                 return [k.__name__] + k._alias_lst
+            if callable(k):
+                return k.__name__
             else:
                 return k
         keys = [expand(k) for k in keys]
