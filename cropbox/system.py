@@ -50,7 +50,39 @@ class Trackable(metaclass=TrackableMeta):
     def update(self):
         [s.update(self) for s in self._statevars.values()]
 
-class System(Trackable):
+class Configurable:
+    def option(self, *keys, config):
+        def expand(k):
+            if isinstance(k, System):
+                #HACK: populate base classes down to System (not inclusive) for section names
+                S = k.__class__.mro()
+                return [s.__name__ for s in S[:S.index(System)]]
+            if isinstance(k, statevar):
+                return [k.__name__] + k._alias_lst
+            if callable(k):
+                return k.__name__
+            else:
+                return k
+        keys = [expand(k) for k in keys]
+        v = self._option(*keys, config=config)
+        return U(v)
+
+    def _option(self, *keys, config):
+        if not keys:
+            return config
+        key, *keys = keys
+        if isinstance(key, list):
+            for k in key:
+                v = self._option(k, *keys, config=config)
+                if v is not None:
+                    return v
+        else:
+            try:
+                return self._option(*keys, config=config[key])
+            except KeyError:
+                return None
+
+class System(Trackable, Configurable):
     def __init__(self, parent, **kwargs):
         self.parent = parent
         self.children = []
@@ -71,6 +103,11 @@ class System(Trackable):
 
     def setup(self):
         pass
+
+    def option(self, *keys, config=None):
+        if config is None:
+            config = self.context._config
+        return super().option(*keys, config=config)
 
     def update(self, recursive=True):
         super().update()
