@@ -1,5 +1,5 @@
 from .system import System
-from .statevar import accumulate, parameter, U
+from .statevar import accumulate, parameter, statevar, U
 import toml
 
 class Clock(System):
@@ -47,6 +47,8 @@ class Context(Clock):
                 #HACK: populate base classes down to System (not inclusive) for section names
                 S = k.__class__.mro()
                 return [s.__name__ for s in S[:S.index(System)]]
+            if isinstance(k, statevar):
+                return [k.__name__] + k._alias_lst
             else:
                 return k
         keys = [replace(k) for k in keys]
