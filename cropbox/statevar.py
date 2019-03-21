@@ -153,10 +153,7 @@ class statevar:
             if a is None:
                 v = p.default
                 if v is not p.empty:
-                    try:
-                        a = obj[v]
-                    except KeyError:
-                        a = v
+                    a = obj[v]
                 else:
                     #HACK: distinguish KeyError raised by missing k, or by running statevar definition
                     if k in obj._statevars:
