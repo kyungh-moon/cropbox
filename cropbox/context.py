@@ -1,6 +1,5 @@
 from .system import System
 from .statevar import accumulate, parameter, U
-from functools import reduce
 import toml
 
 class Clock(System):
@@ -40,21 +39,36 @@ class Context(Clock):
             d = toml.loads(config)
         self._config = d
 
-    def option(self, *keys):
-        if isinstance(keys[0], System):
-            obj = keys[0]
-            #HACK: populate base classes down to System (not inclusive) for section names
-            S = obj.__class__.mro()
-            S = S[:S.index(System)]
-            for s in S:
-                v = self.option(s.__name__, *keys[1:])
+    def option(self, *keys, config=None):
+        if config is None:
+            c = self._config
+        def replace(k):
+            if isinstance(k, System):
+                #HACK: populate base classes down to System (not inclusive) for section names
+                S = k.__class__.mro()
+                return [s.__name__ for s in S[:S.index(System)]]
+            else:
+                return k
+        keys = [replace(k) for k in keys]
+        v = self._option(*keys, config=c)
+        return U(v)
+
+    def _option(self, *keys, config):
+        if not keys:
+            return config
+        key, *keys = keys
+        if isinstance(key, list):
+            for k in key:
+                v = self._option(k, *keys, config=config)
                 if v is not None:
-                    return U(v)
+                    return v
         else:
             try:
-                return reduce(dict.get, keys, self._config)
-            except TypeError:
+                c = config[key]
+            except KeyError:
                 return None
+            else:
+                return self._option(*keys, config=c)
 
     def queue(self, f):
         self._pending.append(f)
