@@ -207,7 +207,7 @@ def static(f=None, **kwargs): return statevar(f, track=Static, **kwargs)
 
 #TODO: use @proxy <: @var replacing @property, also make @state <: @var
 
-class parameter(statevar):
+class proxy(statevar):
     def __init__(self, f=None, **kwargs):
         super().__init__(f, track=Track, **kwargs)
 
@@ -215,10 +215,12 @@ class parameter(statevar):
         # doesn't change at t=0 ensuring only one update
         return 0
 
+class parameter(proxy):
     def compute(self, obj):
+        # allow override by external option
         v = obj.option(self)
         if v is None:
-            v = self._compute(obj)
+            v = super().compute(obj)
         return v
 
 class drive(statevar):

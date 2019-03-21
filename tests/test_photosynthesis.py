@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, signal, statevar
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, proxy, signal, statevar
 
 import numpy as np
 import scipy.optimize
@@ -199,6 +199,10 @@ class Stomata(System):
     g0 = parameter(0.017)
     g1 = parameter(4.53)
 
+    A_net = proxy('leaf.A_net')
+    CO2 = proxy('leaf.weather.CO2')
+    RH = proxy('leaf.weather.RH')
+
     @derive(alias='gb')
     # def update_boundary_layer(self, wind):
     def boundary_layer_conductance(self, l='leaf', w='leaf.weather'):
@@ -227,7 +231,8 @@ class Stomata(System):
     #FIXME T_leaf not used
     @derive(alias='gs', init='g0')
     # def update_stomata(self, LWP, CO2, A_net, RH, T_leaf):
-    def stomatal_conductance(self, g0, g1, gb, m, A_net='leaf.A_net', CO2='leaf.weather.CO2', RH='leaf.weather.RH', gamma=10):
+    #def stomatal_conductance(self, g0, g1, gb, m, A_net='leaf.A_net', CO2='leaf.weather.CO2', RH='leaf.weather.RH', gamma=10):
+    def stomatal_conductance(self, g0, g1, gb, m, A_net, CO2, RH, gamma=10):
         Cs = CO2 - (1.37 * A_net / gb) # surface CO2 in mole fraction
         Cs = max(Cs, gamma)
 
