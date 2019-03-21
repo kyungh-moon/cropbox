@@ -49,13 +49,12 @@ class Context(Clock):
             for s in S:
                 v = self.option(s.__name__, *keys[1:])
                 if v is not None:
-                    break
+                    return U(v)
         else:
             try:
-                v = reduce(dict.get, keys, self._config)
+                return reduce(dict.get, keys, self._config)
             except TypeError:
                 return None
-        return U(v)
 
     def queue(self, f):
         self._pending.append(f)
