@@ -37,16 +37,6 @@ class Trackable(metaclass=TrackableMeta):
     def __getattr__(self, name):
         return self._statevars[name].__get__(self, type(self))
 
-    def __getitem__(self, name):
-        # support direct specification of value, i.e. 0
-        # support string value with unit, i.e. '1 m'
-        v = U(name)
-        if isinstance(v, str):
-            # support nested reference, i.e. 'context.time'
-            return reduce(lambda o, n: getattr(o, n), [self] + v.split('.'))
-        else:
-            return v
-
     def update(self):
         [s.update(self) for s in self._statevars.values()]
 
@@ -64,8 +54,7 @@ class Configurable:
             else:
                 return k
         keys = [expand(k) for k in keys]
-        v = self._option(*keys, config=config)
-        return U(v)
+        return self._option(*keys, config=config)
 
     def _option(self, *keys, config):
         if not keys:
@@ -93,6 +82,16 @@ class System(Trackable, Configurable):
         [setattr(self, k, v) for k, v in kwargs.items()]
         self.setup()
 
+    def __getitem__(self, key):
+        # support direct specification of value, i.e. 0
+        # support string value with unit, i.e. '1 m'
+        v = U(key)
+        if isinstance(v, str):
+            # support nested reference, i.e. 'context.time'
+            return reduce(lambda o, k: getattr(o, k), [self] + v.split('.'))
+        else:
+            return v
+
     @property
     def neighbors(self):
         s = {self.parent} if self.parent is not None else {}
@@ -107,7 +106,8 @@ class System(Trackable, Configurable):
     def option(self, *keys, config=None):
         if config is None:
             config = self.context._config
-        return super().option(*keys, config=config)
+        v = super().option(*keys, config=config)
+        return self[v]
 
     def update(self, recursive=True):
         super().update()
