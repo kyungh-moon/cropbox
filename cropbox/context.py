@@ -42,7 +42,7 @@ class Context(Clock):
     def option(self, *keys, config=None):
         if config is None:
             c = self._config
-        def replace(k):
+        def expand(k):
             if isinstance(k, System):
                 #HACK: populate base classes down to System (not inclusive) for section names
                 S = k.__class__.mro()
@@ -51,7 +51,7 @@ class Context(Clock):
                 return [k.__name__] + k._alias_lst
             else:
                 return k
-        keys = [replace(k) for k in keys]
+        keys = [expand(k) for k in keys]
         v = self._option(*keys, config=c)
         return U(v)
 
