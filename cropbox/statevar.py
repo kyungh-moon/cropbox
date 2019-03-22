@@ -134,7 +134,6 @@ class statevar:
             return
         # names are set when type.__new__() gets called in TrackableMeta.__new__()
         self.__name__ = name
-        self._tr_name = f'_{name}'
 
     def __get__(self, obj, objtype):
         v = self.update(obj)
@@ -178,7 +177,12 @@ class statevar:
     def init(self, obj):
         t = self.time(obj)
         v = obj[self._init_var]
-        setattr(obj, self._tr_name, self._track_cls(t, v))
+        #HACK: can't do dict comprehension in Trackable.__init__ due to _init_var access
+        try:
+            d = obj._statevars_track
+        except:
+            d = obj._statevars_track = {}
+        d[self] = self._track_cls(t, v)
 
     def update(self, obj):
         with self.trace(self, obj):
@@ -186,7 +190,7 @@ class statevar:
 
     def _update(self, obj):
         #HACK: prevent recursion loop already in computation tree
-        tr = getattr(obj, self._tr_name)
+        tr = obj._statevars_track[self]
         if self.trace.is_stacked(self):
             return tr._value
         # support custom timestamp (i.e. elongation age instead of calendar time)
@@ -240,7 +244,7 @@ class optimize(statevar):
         super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
-        tr = getattr(obj, self._tr_name)
+        tr = obj._statevars_track[self]
         def cost(x):
             with self.trace(self, obj, isolate=True):
                 tr._value = x
@@ -259,7 +263,7 @@ class optimize2(statevar):
         super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
-        tr = getattr(obj, self._tr_name)
+        tr = obj._statevars_track[self]
         def cost(x):
             print(f'opt2: {x}')
             with self.trace(self, obj, isolate=True):
