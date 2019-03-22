@@ -20,10 +20,10 @@ class TrackableMeta(type):
         cls = type.__new__(metacls, name, bases, namespace)
 
         # remember statevars in `_statevars`
-        def remember(cls, key, statevars, decorator=statevar):
+        def remember(cls, key, statevars):
             d = dict(getattr(cls, key, {}), **statevars)
             setattr(cls, key, d)
-        remember(cls, '_statevars', statevars, statevar)
+        remember(cls, '_statevars', statevars)
         return cls
 
 class Trackable(metaclass=TrackableMeta):
