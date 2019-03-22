@@ -128,7 +128,11 @@ class statevar:
         self._compute_fun = fun
         return self
 
-    def set_name(self, name):
+    def __set_name__(self, owner, name):
+        if name in self._alias_lst:
+            # name should have been already set by original
+            return
+        # names are set when type.__new__() gets called in TrackableMeta.__new__()
         self.__name__ = name
         self._tr_name = f'_{name}'
 
