@@ -303,7 +303,7 @@ class PhotosyntheticLeaf(System):
     # dynamic properties
 
     # mesophyll CO2 partial pressure, ubar, one may use the same value as Ci assuming infinite mesohpyle conductance
-    @derive(alias='Cm')
+    @derive(alias='Cm,Ci')
     def co2_mesophyll(self, A_net, w='weather', rvc='stomata.rvc'):
         P = w.P_air / 100
         Ca = w.CO2 * P # conversion to partial pressure
@@ -323,8 +323,8 @@ class PhotosyntheticLeaf(System):
         I2 = Ia * (1 - f) / 2 # useful light absorbed by PSII
         return I2
 
-    @optimize2
-    def A_net(self):
+    @optimize2(alias='A_net')
+    def net_photosynthesis(self):
         #I2 = self.light
         A_net0 = self.A_net
         #print(f"A_net0 = {A_net0}")
@@ -335,18 +335,17 @@ class PhotosyntheticLeaf(System):
         #             return A_net1
         return (A_net1 - A_net0)**2
 
-    @derive
-    def Rd(self):
+    @derive(alias='Rd')
+    def dark_respiration(self):
         return self.photosynthesis.dark_respiration
 
-    @derive
-    def A_gross(self):
+    @derive(alias='A_gross')
+    def gross_photosynthesis(self):
         return max(0, self.A_net + self.Rd) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
 
-    #FIXME: needed?
-    @derive
-    def Ci(self):
-        return self.co2_mesophyll
+    @derive(alias='gs')
+    def stomatal_conductance(self):
+        return self.stomata.stomatal_conductance
 
     #TODO: use @optimize
     @derive
@@ -388,7 +387,7 @@ class PhotosyntheticLeaf(System):
         else:
             return (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
 
-    @derive
+    @derive(alias='T')
     def temperature(self):
         T_air = self.weather.T_air
         T_leaf = T_air + self.temperature_adjustment
@@ -399,8 +398,8 @@ class PhotosyntheticLeaf(System):
     # def temperature(self):
     #     return (self.temperature - self.new_temperature)**2
 
-    @derive
-    def ET(self, vp='weather.vp'):
+    @derive(alias='ET')
+    def evapotranspiration(self, vp='weather.vp'):
         gv = self.stomata.total_conductance_h2o
         ea = vp.ambient(self.weather.T_air, self.weather.RH)
         es_leaf = vp.saturation(self.temperature)
