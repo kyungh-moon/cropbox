@@ -1,6 +1,7 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import derive, parameter, U
+from cropbox.statevar import derive, parameter
+from cropbox.unit import U
 
 def test_U():
     Q = U.registry.Quantity

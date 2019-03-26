@@ -1,4 +1,5 @@
-from .statevar import statevar, U
+from .statevar import statevar
+from .unit import U
 from functools import reduce
 
 class TrackableMeta(type):
