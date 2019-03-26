@@ -10,7 +10,7 @@ import pint
 
 class Unit:
     def __init__(self):
-        r = pint.UnitRegistry()
+        r = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
         r.default_format = '~P'
         #r.setup_matplotlib()
         self.registry = r
