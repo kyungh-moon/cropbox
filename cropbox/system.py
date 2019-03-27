@@ -77,8 +77,8 @@ class System(Trackable, Configurable):
         if parent is not None:
             parent.children.append(self)
             self.context = parent.context
-        super().__init__()
         [setattr(self, k, v) for k, v in kwargs.items()]
+        super().__init__()
         self.setup()
 
     def __getitem__(self, key):
