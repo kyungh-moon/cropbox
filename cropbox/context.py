@@ -5,7 +5,7 @@ import toml
 class Clock(System):
     def __init__(self):
         self.tick = 0
-        super().__init__(None)
+        super().__init__()
 
     @parameter
     def start(self):
@@ -15,9 +15,9 @@ class Clock(System):
     def interval(self):
         return 1
 
-    def update(self, recursive):
+    def update(self):
         self.tick += 1
-        super().update(recursive)
+        super().update()
 
     @accumulate(time='tick', init='start')
     def time(self):
@@ -48,12 +48,13 @@ class Context(Clock):
         self._pending.clear()
 
         # update state variables recursively
-        super().update(recursive=True)
+        super().update()
+        [s.update() for s in self.collect()]
 
         #TODO: process aggregate (i.e. transport) operations?
 
 def instance(systemcls, config=None):
     c = Context(config)
-    c.branch(systemcls)
+    c.create(systemcls)
     c.update()
     return c.children[0]

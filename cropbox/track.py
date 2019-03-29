@@ -20,7 +20,9 @@ class Track:
         return self.value
 
     def store(self, v, dt):
-        self._value = v()
+        value = v()
+        if value is not None:
+            self._value = v()
 
     @property
     def value(self):
@@ -58,9 +60,8 @@ class Signal(Track):
 class Static(Track):
     def reset(self, t):
         super().reset(t)
-        self._stored = False
+        self._stored = (self._value is None)
 
     def store(self, v, dt):
         if not self._stored:
-            self._value = v()
-            self._stored = True
+            super().store(v, dt)

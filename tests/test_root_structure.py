@@ -24,9 +24,9 @@ def test_root_structure():
         def branching_chance(self):
             return 0.5
 
-        @derive
+        @static
         def branched_length(self):
-            return 0
+            return None
 
         @parameter
         def diameter(self):

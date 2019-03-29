@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, signal, statevar
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, signal, statevar, system
 
 import pytest
 
@@ -236,8 +236,9 @@ def test_drive_with_system():
         def b(self):
             return 2
     class S(System):
-        def setup(self):
-            self.t = T(self)
+        @system
+        def t(self):
+            return T
         @drive(alias='aa')
         def a(self):
             return self.t

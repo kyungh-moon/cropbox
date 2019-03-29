@@ -1,6 +1,7 @@
 from .trace import Trace
 from .track import Track, Accumulate, Difference, Signal, Static
 from .unit import U
+from .var import var
 
 #HACK: to implement @optimize, need better way of controlling this
 #TODO: probably need a full dependency graph between variables to push updates downwards
@@ -8,7 +9,25 @@ from .unit import U
 
 import inspect
 
-class statevar:
+class system(var):
+    def init(self, obj, **kwargs):
+        try:
+            s = kwargs[self.__name__]
+        except KeyError:
+            cls = self._wrapped_fun
+            #HACK: when decorated function returns a System class
+            if not isinstance(cls, type):
+                cls = cls(obj)
+            if cls is None:
+                s = None
+            elif isinstance(cls, list):
+                s = []
+            else:
+                s = cls(context=obj.context, **{k: obj[v] for k, v in self._kwargs.items()})
+        d = self.data(obj)
+        d[self] = s
+
+class statevar(var):
     trace = Trace()
 
     def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None):
@@ -16,39 +35,42 @@ class statevar:
         self._time_var = time
         self._init_var = init
         self._unit_qtt = U(unit)
-        self._alias_lst = alias.split(',') if alias else []
-        if f is not None:
-            self.__call__(f)
-
-    def __call__(self, f):
-        if callable(f):
-            fun = f
-        elif isinstance(f, str):
-            fun = lambda self: self[f]
-        else:
-            fun = lambda self: f
-        self._compute_fun = fun
-        return self
-
-    def __set_name__(self, owner, name):
-        if name in self._alias_lst:
-            # name should have been already set by original
-            return
-        # names are set when type.__new__() gets called in TrackableMeta.__new__()
-        self.__name__ = name
+        super().__init__(f, alias=alias)
 
     def __get__(self, obj, objtype):
-        v = self.update(obj)
+        v = super().__get__(obj, objtype)
         return U(v, self._unit_qtt)
 
     def time(self, obj):
         return obj[self._time_var]
 
+    def init(self, obj, **kwargs):
+        d = self.data(obj)
+        t = self.time(obj)
+        try:
+            v = kwargs[self.__name__]
+        except KeyError:
+            v = obj[self._init_var]
+        d[self] = self._track_cls(t, v)
+
+    def get(self, obj):
+        with self.trace(self, obj):
+            #HACK: prevent recursion loop already in computation tree
+            tr = super().get(obj)
+            if self.trace.is_stacked(self):
+                return tr._value
+            # support custom timestamp (i.e. elongation age instead of calendar time)
+            t = self.time(obj)
+            # lazy evaluation preventing redundant computation
+            r = lambda: self.compute(obj)
+            #HACK: prevent premature initialization?
+            return tr.update(t, r, force=self.trace.is_update_forced)
+
     def compute(self, obj):
         return self._compute(obj)
 
     def _compute(self, obj):
-        fun = self._compute_fun
+        fun = self._wrapped_fun
         ps = inspect.signature(fun).parameters
         def resolve(k, p, i):
             if i == 0:
@@ -60,7 +82,7 @@ class statevar:
                 if v is not p.empty:
                     a = obj[v]
                 #HACK: distinguish KeyError raised by missing k, or by running statevar definition
-                elif k in obj._statevars:
+                elif k in obj._trackable:
                     a = obj[k]
                 else:
                     return None
@@ -75,35 +97,6 @@ class statevar:
                 q = dict(zip([k for k in ps if k not in p], args))
                 return fun(**p, **q)
             return f
-
-    def init(self, obj):
-        t = self.time(obj)
-        v = obj[self._init_var]
-        #HACK: can't do dict comprehension in Trackable.__init__ due to _init_var access
-        try:
-            d = obj._statevars_track
-        except:
-            d = obj._statevars_track = {}
-        d[self] = self._track_cls(t, v)
-
-    def update(self, obj):
-        with self.trace(self, obj):
-            return self._update(obj)
-
-    def _update(self, obj):
-        #HACK: prevent recursion loop already in computation tree
-        tr = obj._statevars_track[self]
-        if self.trace.is_stacked(self):
-            return tr._value
-        # support custom timestamp (i.e. elongation age instead of calendar time)
-        t = self.time(obj)
-        # lazy evaluation preventing redundant computation
-        r = lambda: self.compute(obj)
-        #HACK: prevent premature initialization?
-        return tr.update(t, r, force=self.trace.is_update_forced)
-
-    def __repr__(self):
-        return f'<{self.__name__}>'
 
 def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
 def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
@@ -146,7 +139,7 @@ class optimize(statevar):
         super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
-        tr = obj._statevars_track[self]
+        tr = self.data(obj)[self]
         def cost(x):
             with self.trace(self, obj, isolate=True):
                 tr._value = x
@@ -165,7 +158,7 @@ class optimize2(statevar):
         super().__init__(f, track=Track, **kwargs)
 
     def compute(self, obj):
-        tr = obj._statevars_track[self]
+        tr = self.data(obj)[self]
         def cost(x):
             print(f'opt2: {x}')
             with self.trace(self, obj, isolate=True):

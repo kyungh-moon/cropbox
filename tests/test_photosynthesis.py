@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, proxy, signal, statevar
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, proxy, signal, statevar, system
 
 import numpy as np
 import scipy.optimize
@@ -24,8 +24,7 @@ def quadratic_solve_upper(a, b, c): return quadratic_solve(a, b, c, lower=False)
 
 class C4(System):
     #TODO: more robust interface to connect Systems (i.e. type check, automatic prop defines)
-    def __init__(self, parent, leaf):
-        super().__init__(parent, leaf=leaf)
+    leaf = system()
 
     @derive(alias='Cm')
     def co2_mesophyll(self):
@@ -192,8 +191,9 @@ class C4(System):
 
 
 class Stomata(System):
-    def __init__(self, parent, leaf):
-        super().__init__(parent, leaf=leaf)
+    @system
+    def leaf(self):
+        return System
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
     g0 = parameter(0.017)
@@ -277,11 +277,15 @@ class Stomata(System):
 
 
 class PhotosyntheticLeaf(System):
-    def setup(self):
-        self.stomata = Stomata(self, leaf=self)
-        #TODO support modular interface
-        self.photosynthesis = C4(self, leaf=self) # for maize
-        #self.photosynthesis = C3(self, leaf=self) # for garlic
+    weather = system()
+    soil = system()
+
+    @system(leaf='self')
+    def stomata(self):
+        return Stomata
+
+    photosynthesis = system(C4, leaf='self') # for maize
+    #photosynthesis = system(C3, leaf='self') # for garlic
 
     #TODO organize leaf properties like water (LWP), nitrogen content?
     #TODO introduce a leaf geomtery class for leaf_width
@@ -409,11 +413,19 @@ class PhotosyntheticLeaf(System):
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties
 class GasExchange(System):
-    def setup(self):
-        #TODO: use externally initialized Weather / Soil
-        self.weather = w = Weather(self)
-        self.soil = s = Soil(self)
-        self.leaf = PhotosyntheticLeaf(self, weather=w, soil=s)
+    #TODO: use externally initialized Weather / Soil
+    @system(alias='w')
+    def weather(self):
+        return Weather
+
+    @system
+    def soil(self):
+        return Soil
+
+    # @system(weather='weather', soil='soil')
+    # def leaf(self):
+    #     return PhotosyntheticLeaf
+    leaf = system(PhotosyntheticLeaf, weather='weather', soil='soil')
 
     @derive
     def A_gross(self):
@@ -472,8 +484,9 @@ class VaporPressure(System):
 #TODO: use improved @drive
 #TODO: implement @unit
 class Weather(System):
-    def setup(self):
-        self.vp = VaporPressure(self)
+    @system(alias='vp')
+    def vapor_pressure(self):
+        return VaporPressure
 
     @parameter
     def PFD(self): return 1500 # umol m-2 s-1

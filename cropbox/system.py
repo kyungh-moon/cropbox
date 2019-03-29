@@ -1,43 +1,54 @@
-from .statevar import statevar
+from .statevar import statevar, system
 from .unit import U
+from collections import ChainMap
 from functools import reduce
+
+decorators = (system, statevar)
 
 class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
-        # manage statevars in namespace
+        # manage var decorators in namespace
         def restruct(namespace, decorator):
-            # original namespace excluding statevars
-            n0 = {k: v for k, v in namespace.items() if not isinstance(v, decorator)}
-            # namespace of statevars
+            # namespace of vars
             n1 = {k: v for k, v in namespace.items() if isinstance(v, decorator)}
-            # namespace of statevar aliases
+            # namespace of var aliases
             n2 = {k: v for d in [{k: v for k in v._alias_lst} for v in n1.values()] for k, v in d.items()}
             n1.update(n2)
-            n0.update(n1)
-            return n0, n1
-        namespace, statevars = restruct(namespace, statevar)
+            return n1
+        ns = {f'_{d.__name__}': restruct(namespace, d) for d in decorators}
+        var_namespace = dict(ChainMap(*ns.values()))
 
         # construct a new Trackable class
-        cls = type.__new__(metacls, name, bases, namespace)
+        cls = type.__new__(metacls, name, bases, dict(ChainMap(var_namespace, namespace)))
 
-        # remember statevars in `_statevars`
-        def remember(cls, key, statevars):
-            d = dict(getattr(cls, key, {}), **statevars)
+        #FIXME: maybe no need for remember anymore
+        # remember each {var}s in `_{var}`
+        def remember(cls, key, namespace):
+            d = dict(getattr(cls, key, {}), **namespace)
             setattr(cls, key, d)
-        remember(cls, '_statevars', statevars)
+        remember(cls, '_trackable', var_namespace)
+        [remember(cls, k, n) for k, n in ns.items()]
         return cls
 
 class Trackable(metaclass=TrackableMeta):
-    def __init__(self):
-        [s.init(self) for s in self._statevars.values()]
+    def __init__(self, **kwargs):
+        self._trackable_data = {}
+        [v.init(self, **kwargs) for v in self._trackable.values()]
         #FIXME: can we avoid this? otherwise, no way to initialize Systems with mutual dependency
         #self.update()
 
     def __getattr__(self, name):
-        return self._statevars[name].__get__(self, type(self))
+        if name == 'self':
+            return self
+        try:
+            v = self._trackable[name]
+        except KeyError:
+            raise AttributeError(f"{self} has no attribute '{name}'.")
+        else:
+            return v.__get__(self, type(self))
 
     def update(self):
-        [s.update(self) for s in self._statevars.values()]
+        [v.get(self) for v in self._trackable.values()]
 
 class Configurable:
     def option(self, *keys, config):
@@ -71,36 +82,22 @@ class Configurable:
                 return None
 
 class System(Trackable, Configurable):
-    def __init__(self, parent, **kwargs):
-        self.parent = parent
-        self.children = []
-        if parent is not None:
-            parent.children.append(self)
-            self.context = parent.context
-        [setattr(self, k, v) for k, v in kwargs.items()]
-        super().__init__()
-        self.setup()
-
-    def __getitem__(self, key):
+    def __getitem__(self, name):
         # support direct specification of value, i.e. 0
         # support string value with unit, i.e. '1 m'
-        v = U(key)
+        v = U(name)
         if isinstance(v, str):
             # support nested reference, i.e. 'context.time'
             return reduce(lambda o, k: getattr(o, k), [self] + v.split('.'))
         else:
             return v
 
-    @property
-    def neighbors(self):
-        s = {self.parent} if self.parent is not None else {}
-        return s | set(self.children)
-
-    def branch(self, systemcls, **kwargs):
-        self.context.queue(lambda: systemcls(self, **kwargs))
+    def __iter__(self):
+        #HACK: prevent infinite loop due to generous __getitem__
+        raise TypeError('System is not iterable.')
 
     def setup(self):
-        pass
+        return {}
 
     def option(self, *keys, config=None):
         if config is None:
@@ -108,7 +105,30 @@ class System(Trackable, Configurable):
         v = super().option(self, *keys, config=config)
         return self[v]
 
-    def update(self, recursive=True):
-        super().update()
-        if recursive:
-            [s.update() for s in self.children]
+    def collect(self, recursive=True):
+        def cast(v):
+            try:
+                return set(v)
+            except TypeError:
+                return {v}
+        def visit(s, S):
+            S.update(*map(cast, s.children))
+            if recursive:
+                [visit(sc, S) for sc in s.children]
+            return S
+        return visit(self, set())
+
+    context = system()
+    parent = system()
+    children = system([])
+
+    def create(self, systemcls, **kwargs):
+        def f():
+            s = systemcls(context=self.context, parent=self, children=[], **kwargs)
+            self.children.append(s)
+        self.context.queue(f)
+
+    @property
+    def neighbors(self):
+        s = {self.parent} if self.parent is not None else {}
+        return s | set(self.children)
