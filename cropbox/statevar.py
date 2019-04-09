@@ -64,7 +64,8 @@ class statevar(var):
             # lazy evaluation preventing redundant computation
             r = lambda: self.compute(obj)
             #HACK: prevent premature initialization?
-            return tr.update(t, r, force=self.trace.is_update_forced)
+            #return tr.update(t, r, force=self.trace.is_update_forced)
+            return tr.update(t, r, regime=self.trace.regime)
 
     def compute(self, obj):
         return self._compute(obj)
@@ -140,8 +141,12 @@ class optimize(statevar):
 
     def compute(self, obj):
         tr = self.data(obj)[self]
+        i = 0
         def cost(x):
-            with self.trace(self, obj, isolate=True):
+            nonlocal i
+            regime = f'optimize-{obj.__class__.__name__}-{self.__name__}-{i}'
+            i += 1
+            with self.trace(self, obj, regime=regime):
                 tr._value = x
                 return self._compute(obj)
         l = obj[self._lower_var]
@@ -159,9 +164,13 @@ class optimize2(statevar):
 
     def compute(self, obj):
         tr = self.data(obj)[self]
+        i = 0
         def cost(x):
-            print(f'opt2: {x}')
-            with self.trace(self, obj, isolate=True):
+            nonlocal i
+            regime = f'optimize-{obj.__class__.__name__}-{self.__name__}-{i}'
+            i += 1
+            print(f'opt2: {x} ({regime})')
+            with self.trace(self, obj, regime=regime):
                 tr._value = x
                 return self._compute(obj)
         bracket = obj[self._bracket_var]

@@ -8,14 +8,20 @@ class Track:
     def reset(self, t):
         self.timer = Timer(t)
         self._value = None
+        self._regime = None
 
-    def update(self, t, v, force=False):
+    def update(self, t, v, regime):
         dt = self.timer.update(t)
         #TODO check recursion loop?
+        force = False
+        if dt > 0:
+            force = True
         if self._value is None:
             self._value = self._initial_value
             force = True
-        if force or dt > 0:
+        if regime != self._regime:
+            force = True
+        if force:
             self.store(v, dt)
         return self.value
 
