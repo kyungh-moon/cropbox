@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, signal, statevar, static, system
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, produce, signal, statevar, static, system
 
 import pytest
 
@@ -265,6 +265,51 @@ def test_drive_with_system():
     s = instance(S)
     assert s.a == s.aa == s.t.a == 1
     assert s.b == s.bb == s.t.b == 2
+
+def test_produce():
+    class S(System):
+        @produce
+        def a(self):
+            return S
+    s = instance(S)
+    c = s.context
+    assert len(s.children) == 0
+    c.update()
+    assert len(s.children) == 1 and len(s.children[0].children) == 0
+    c.update()
+    assert len(s.children) == 2 and len(s.children[0].children) == 1 and len(s.children[1].children) == 0
+
+def test_produce_with_kwargs():
+    class S(System):
+        @produce
+        def a(self):
+            return (S, {'t': self.context.time})
+        @static(init=0)
+        def t(self):
+            return None
+    s = instance(S)
+    c = s.context
+    assert len(s.children) == 0 and s.t == 0
+    c.update()
+    assert len(s.children) == 1 and s.t == 0
+    s1 = s.children[0]
+    assert len(s1.children) == 0 and s1.t == 1
+    c.update()
+    s2 = s.children[1]
+    s11 = s1.children[0]
+    assert len(s.children) == 2 and len(s1.children) == 1 and len(s2.children) == 0
+    assert s.t == 0 and s1.t == 1 and s2.t == 2 and s11.t == 2
+
+def test_produce_with_none():
+    class S(System):
+        @produce
+        def a(self):
+            return None
+    s = instance(S)
+    c = s.context
+    assert len(s.children) == 0
+    c.update()
+    assert len(s.children) == 0
 
 def test_optimize():
     class S(System):

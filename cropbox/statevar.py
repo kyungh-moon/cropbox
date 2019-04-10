@@ -131,6 +131,24 @@ class drive(statevar):
         d = self._compute(obj) # i.e. return df.loc[t]
         return d[self.__name__]
 
+class produce(statevar):
+    def __init__(self, f=None, **kwargs):
+        super().__init__(f, track=Track, **kwargs)
+
+    def compute(self, obj):
+        v = self._compute(obj)
+        if v is None:
+            return ()
+        elif isinstance(v, tuple):
+            systemcls, kwargs = v
+        else:
+            systemcls, kwargs = v, {}
+        def f():
+            s = systemcls(context=obj.context, parent=obj, children=[], **kwargs)
+            obj.children.append(s)
+        obj.context.queue(f)
+        return v
+
 import scipy.optimize
 
 class optimize(statevar):

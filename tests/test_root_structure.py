@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, parameter, static
+from cropbox.statevar import accumulate, derive, parameter, produce, static
 
 import random
 import trimesh
@@ -47,13 +47,12 @@ def test_root_structure():
             if self.is_branching:
                 return self.length
 
-        #TODO: need own decorator for branching actions?
-        @derive
+        @produce
         def branch(self):
             if self.is_branching:
                 l = self.length
                 print(f'branch at l = {l}')
-                self.create(R, **{'branched_length': l})
+                return (R, {'branched_length': l})
 
         def render(self):
             s = trimesh.scene.scene.Scene()
