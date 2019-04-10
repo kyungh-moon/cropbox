@@ -24,6 +24,12 @@ def test_root_structure():
         def branching_chance(self):
             return 0.5
 
+        @derive
+        def is_branching(self):
+            l = self.length
+            ll = self.last_branching_length
+            return l - ll > self.branching_interval and random.random() <= self.branching_chance
+
         @static
         def branched_length(self):
             return None
@@ -36,17 +42,18 @@ def test_root_structure():
         def length(self):
             return self.elongation_rate
 
-        #TODO: need own decorator for branching actions?
         @derive
         def last_branching_length(self):
-            l = self.length
-            ll = self.last_branching_length
-            if l - ll > self.branching_interval:
-                if random.random() <= self.branching_chance:
-                    print(f'branch at l = {l}')
-                    self.create(R, **{'branched_length': l})
-                    return l
-            return ll
+            if self.is_branching:
+                return self.length
+
+        #TODO: need own decorator for branching actions?
+        @derive
+        def branch(self):
+            if self.is_branching:
+                l = self.length
+                print(f'branch at l = {l}')
+                self.create(R, **{'branched_length': l})
 
         def render(self):
             s = trimesh.scene.scene.Scene()
