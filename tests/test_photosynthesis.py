@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, proxy, signal, statevar, system
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, proxy, statevar, system
 
 import numpy as np
 import scipy.optimize

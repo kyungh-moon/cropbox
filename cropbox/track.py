@@ -49,7 +49,7 @@ class Difference(Accumulate):
         self._value = 0
         super().store(v, dt)
 
-class Signal(Track):
+class Flip(Track):
     def reset(self, t):
         super().reset(t)
         self._changed = False

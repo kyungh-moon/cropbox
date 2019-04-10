@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, flag, optimize, parameter, produce, signal, statevar, static, system
+from cropbox.statevar import accumulate, derive, difference, drive, flag, flip, optimize, parameter, produce, statevar, static, system
 
 import pytest
 
@@ -138,7 +138,7 @@ def test_difference():
     c.update()
     assert s.a == 1 and s.b == 2
 
-def test_signal():
+def test_flip():
     class S(System):
         @derive
         def a(self):
@@ -146,10 +146,10 @@ def test_signal():
         @accumulate
         def b(self):
             return self.a + 1
-        @signal
+        @flip
         def sa(self):
             return self.a
-        @signal
+        @flip
         def sb(self):
             return self.b
     s = instance(S)
