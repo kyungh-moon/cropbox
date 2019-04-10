@@ -100,18 +100,29 @@ class statevar(var):
                 return fun(**p, **q)
             return f
 
-def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
-def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
-def difference(f=None, **kwargs): return statevar(f, track=Difference, **kwargs)
-def flip(f=None, **kwargs): return statevar(f, track=Flip, **kwargs)
-def preserve(f=None, **kwargs): return statevar(f, track=Preserve, **kwargs)
-
-#TODO: use @proxy <: @var replacing @property, also make @state <: @var
-
-class proxy(statevar):
+class derive(statevar):
     def __init__(self, f=None, **kwargs):
         super().__init__(f, track=Track, **kwargs)
 
+class accumulate(statevar):
+    def __init__(self, f=None, **kwargs):
+        super().__init__(f, track=Accumulate, **kwargs)
+
+class difference(statevar):
+    def __init__(self, f=None, **kwargs):
+        super().__init__(f, track=Difference, **kwargs)
+
+class flip(statevar):
+    def __init__(self, f=None, **kwargs):
+        super().__init__(f, track=Flip, **kwargs)
+
+class preserve(statevar):
+    def __init__(self, f=None, **kwargs):
+        super().__init__(f, track=Preserve, **kwargs)
+
+#TODO: use @proxy <: @var replacing @property, also make @state <: @var
+
+class proxy(derive):
     def time(self, obj):
         # doesn't change at t=0 ensuring only one update
         return 0
@@ -124,18 +135,15 @@ class parameter(proxy):
             v = super().compute(obj)
         return v
 
-class drive(statevar):
-    def __init__(self, f=None, **kwargs):
-        super().__init__(f, track=Track, **kwargs)
-
+class drive(derive):
     def compute(self, obj):
         d = self._compute(obj) # i.e. return df.loc[t]
         return d[self.__name__]
 
-class flag(statevar):
+class flag(derive):
     def __init__(self, f=None, prob=1, **kwargs):
         self._prob_var = prob
-        super().__init__(f, track=Track, unit=None, **kwargs)
+        super().__init__(f, unit=None, **kwargs)
 
     def check(self, obj):
         v = obj[self._prob_var]
@@ -144,10 +152,7 @@ class flag(statevar):
     def compute(self, obj):
         return self.check(obj) and self._compute(obj)
 
-class produce(statevar):
-    def __init__(self, f=None, **kwargs):
-        super().__init__(f, track=Track, **kwargs)
-
+class produce(derive):
     def compute(self, obj):
         v = self._compute(obj)
         if v is None:
@@ -164,11 +169,11 @@ class produce(statevar):
 
 import scipy.optimize
 
-class optimize(statevar):
+class optimize(derive):
     def __init__(self, f=None, *, lower=None, upper=None, **kwargs):
         self._lower_var = lower
         self._upper_var = upper
-        super().__init__(f, track=Track, **kwargs)
+        super().__init__(f, **kwargs)
 
     def compute(self, obj):
         tr = self.data(obj)[self]
