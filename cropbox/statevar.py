@@ -1,5 +1,5 @@
 from .trace import Trace
-from .track import Track, Accumulate, Difference, Flip, Static
+from .track import Track, Accumulate, Difference, Flip, Preserve
 from .unit import U
 from .var import var
 
@@ -104,7 +104,7 @@ def derive(f=None, **kwargs): return statevar(f, track=Track, **kwargs)
 def accumulate(f=None, **kwargs): return statevar(f, track=Accumulate, **kwargs)
 def difference(f=None, **kwargs): return statevar(f, track=Difference, **kwargs)
 def flip(f=None, **kwargs): return statevar(f, track=Flip, **kwargs)
-def static(f=None, **kwargs): return statevar(f, track=Static, **kwargs)
+def preserve(f=None, **kwargs): return statevar(f, track=Preserve, **kwargs)
 
 #TODO: use @proxy <: @var replacing @property, also make @state <: @var
 

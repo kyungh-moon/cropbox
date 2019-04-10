@@ -64,7 +64,7 @@ class Flip(Track):
         #return self._changed
         return type(self._value)(self._changed * self._value)
 
-class Static(Track):
+class Preserve(Track):
     def reset(self, t):
         super().reset(t)
         self._stored = False
