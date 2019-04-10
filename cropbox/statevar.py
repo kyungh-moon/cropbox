@@ -8,6 +8,7 @@ from .var import var
 #FORCE_UPDATE = False
 
 import inspect
+import random
 
 class system(var):
     def init(self, obj, **kwargs):
@@ -130,6 +131,18 @@ class drive(statevar):
     def compute(self, obj):
         d = self._compute(obj) # i.e. return df.loc[t]
         return d[self.__name__]
+
+class flag(statevar):
+    def __init__(self, f=None, prob=1, **kwargs):
+        self._prob_var = prob
+        super().__init__(f, track=Track, unit=None, **kwargs)
+
+    def check(self, obj):
+        v = obj[self._prob_var]
+        return True if v >= 1 else random.random() <= v
+
+    def compute(self, obj):
+        return self.check(obj) and self._compute(obj)
 
 class produce(statevar):
     def __init__(self, f=None, **kwargs):

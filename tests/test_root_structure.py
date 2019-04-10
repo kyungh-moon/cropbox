@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, parameter, produce, static
+from cropbox.statevar import accumulate, derive, flag, parameter, produce, static
 
 import random
 import trimesh
@@ -24,11 +24,9 @@ def test_root_structure():
         def branching_chance(self):
             return 0.5
 
-        @derive
-        def is_branching(self):
-            l = self.length
-            ll = self.last_branching_length
-            return l - ll > self.branching_interval and random.random() <= self.branching_chance
+        @flag(prob='branching_chance')
+        def is_branching(self, l='length', ll='last_branching_length', i='branching_interval'):
+            return l - ll > i
 
         @static
         def branched_length(self):

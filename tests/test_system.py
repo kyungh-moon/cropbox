@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, produce, signal, statevar, static, system
+from cropbox.statevar import accumulate, derive, difference, drive, flag, optimize, parameter, produce, signal, statevar, static, system
 
 import pytest
 
@@ -265,6 +265,33 @@ def test_drive_with_system():
     s = instance(S)
     assert s.a == s.aa == s.t.a == 1
     assert s.b == s.bb == s.t.b == 2
+
+def test_flag():
+    class S(System):
+        @flag
+        def a(self):
+            return True
+        @flag
+        def b(self):
+            return False
+        @flag(prob=0)
+        def c(self):
+            return True
+        @flag(prob=1)
+        def d(self):
+            return False
+        zero = derive(0)
+        one = derive(1)
+        @flag(prob='zero')
+        def e(self):
+            return True
+        @flag(prob='one')
+        def f(self):
+            return False
+    s = instance(S)
+    assert s.a and not s.b
+    assert not s.c and not s.d
+    assert not s.e and not s.f
 
 def test_produce():
     class S(System):
