@@ -122,12 +122,6 @@ class System(Trackable, Configurable):
     parent = system()
     children = system([])
 
-    def create(self, systemcls, **kwargs):
-        def f():
-            s = systemcls(context=self.context, parent=self, children=[], **kwargs)
-            self.children.append(s)
-        self.context.queue(f)
-
     @property
     def neighbors(self):
         s = {self.parent} if self.parent is not None else {}

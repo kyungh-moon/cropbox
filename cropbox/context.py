@@ -55,6 +55,7 @@ class Context(Clock):
 
 def instance(systemcls, config=None):
     c = Context(config)
-    c.create(systemcls)
+    s = systemcls(context=c, parent=c)
+    c.children.append(s)
     c.update()
-    return c.children[0]
+    return s
