@@ -165,7 +165,7 @@ class produce(statevar):
 import scipy.optimize
 
 class optimize(statevar):
-    def __init__(self, f=None, *, lower, upper, **kwargs):
+    def __init__(self, f=None, *, lower=None, upper=None, **kwargs):
         self._lower_var = lower
         self._upper_var = upper
         super().__init__(f, track=Track, **kwargs)
@@ -177,35 +177,18 @@ class optimize(statevar):
             nonlocal i
             regime = f'optimize-{obj.__class__.__name__}-{self.__name__}-{i}'
             i += 1
+            print(f'@optimize: {x} ({regime})')
             with self.trace(self, obj, regime=regime):
                 tr._value = x
                 return self._compute(obj)
         l = obj[self._lower_var]
         u = obj[self._upper_var]
-        #TODO: use optimize.minimize_scalar() instead?
-        v = scipy.optimize.brentq(cost, l, u)
-        # trigger update with final value
-        cost(v)
-        return v
-
-class optimize2(statevar):
-    def __init__(self, f=None, *, bracket=None, **kwargs):
-        self._bracket_var = bracket
-        super().__init__(f, track=Track, **kwargs)
-
-    def compute(self, obj):
-        tr = self.data(obj)[self]
-        i = 0
-        def cost(x):
-            nonlocal i
-            regime = f'optimize-{obj.__class__.__name__}-{self.__name__}-{i}'
-            i += 1
-            print(f'opt2: {x} ({regime})')
-            with self.trace(self, obj, regime=regime):
-                tr._value = x
-                return self._compute(obj)
-        bracket = obj[self._bracket_var]
-        v = float(scipy.optimize.minimize_scalar(cost, bracket).x)
+        #FIXME: minimize_scalar(method='brent/bounded') doesn't work with (l, r) bracket/bounds
+        if None in (l, u):
+            v = float(scipy.optimize.minimize_scalar(cost).x)
+        else:
+            v = scipy.optimize.brentq(cost, l, u)
+        #FIXME: no longer need with regime?
         # trigger update with final value
         cost(v)
         return v

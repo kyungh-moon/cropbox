@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, optimize2, parameter, proxy, statevar, system
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, proxy, statevar, system
 
 import numpy as np
 import scipy.optimize
@@ -327,7 +327,7 @@ class PhotosyntheticLeaf(System):
         I2 = Ia * (1 - f) / 2 # useful light absorbed by PSII
         return I2
 
-    @optimize2(alias='A_net')
+    @optimize(alias='A_net')
     def net_photosynthesis(self):
         #I2 = self.light
         A_net0 = self.A_net
