@@ -66,8 +66,9 @@ class Signal(Track):
 class Static(Track):
     def reset(self, t):
         super().reset(t)
-        self._stored = (self._value is None)
+        self._stored = False
 
     def store(self, v, dt):
         if not self._stored:
             super().store(v, dt)
+            self._stored = True

@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, signal, statevar, system
+from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, signal, statevar, static, system
 
 import pytest
 
@@ -162,6 +162,25 @@ def test_signal():
     c.update()
     assert s.a == 1 and s.b == 4
     assert s.sa == 0 and s.sb == 4
+
+def test_static():
+    class S(System):
+        @derive
+        def a(self):
+            return 1
+        @accumulate
+        def b(self):
+            return self.a + 1
+        @static
+        def c(self):
+            return self.b + 1
+    s = instance(S)
+    c = s.context
+    assert s.a == 1 and s.b == 0 and s.c == 1
+    c.update()
+    assert s.a == 1 and s.b == 2 and s.c == 1
+    c.update()
+    assert s.a == 1 and s.b == 4 and s.c == 1
 
 def test_parameter():
     class S(System):
