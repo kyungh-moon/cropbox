@@ -29,7 +29,7 @@ class Track:
     def store(self, v, dt):
         value = v()
         if value is not None:
-            self._value = v()
+            self._value = value
 
     @property
     def value(self):
