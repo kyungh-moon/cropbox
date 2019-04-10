@@ -86,6 +86,6 @@ def test_root_structure():
 
     r = instance(R)
     c = r.context
-    T = range(50)
+    T = range(30)
     [c.update() for t in T]
     r.render()
