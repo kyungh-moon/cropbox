@@ -18,8 +18,9 @@ class Track:
             force = True
         if self._value is None:
             self._value = self._initial_value
-            force = True
-        if regime != self._regime:
+            #force = True
+        if regime is not None and regime != self._regime:
+            self._regime = regime
             force = True
         if force:
             self.store(v, dt)

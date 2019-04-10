@@ -45,7 +45,6 @@ class Trace:
         v = self.stack.pop()
         def clean():
             if len(self.stack) == 0 and len(self._stack) > 0:
-                breakpoint()
                 self._stack.pop()
                 self._regime.pop()
                 clean()
@@ -72,14 +71,14 @@ class Trace:
         s = self.indent
         #self.stack.append(v)
         self.push(v, regime=r)
-        print(f'{s}> {v.__name__} ({r}) - {self._stack}')
+        #print(f'{s}> {v.__name__} ({r}) - {self._stack}')
         return self
 
     def __exit__(self, *excs):
         #v = self.stack.pop()
         v = self.pop()
         s = self.indent
-        print(f'{s}< {v.__name__} - {self._stack}')
+        #print(f'{s}< {v.__name__} - {self._stack}')
 
     def is_stacked(self, var):
         return len([v for v in self.stack if v is var]) > 1
