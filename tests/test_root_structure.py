@@ -44,7 +44,7 @@ def test_root_structure():
             if l - ll > self.branching_interval:
                 if random.random() <= self.branching_chance:
                     print(f'branch at l = {l}')
-                    self.branch(R, **{'branched_length': l})
+                    self.create(R, **{'branched_length': l})
                     return l
             return ll
 
