@@ -452,7 +452,7 @@ def test_getitem():
     s = instance(S)
     assert s.a == s['a'] == 1
 
-def test_plot():
+def test_plot(tmp_path):
     class S(System):
         @derive
         def a(self):
@@ -468,9 +468,9 @@ def test_plot():
     plt.figure(figsize=(12, 12))
     import networkx as nx
     nx.draw_circular(g, with_labels=True)
-    plt.savefig('graph.png')
+    plt.savefig(tmp_path/'graph.png')
 
-def test_cytoscape():
+def test_cytoscape(tmp_path):
     class S(System):
         @derive
         def a(self):
@@ -483,7 +483,7 @@ def test_cytoscape():
     s = instance(S)
     g = statevar.trace.graph
     #import networkx as nx
-    #nx.write_graphml(g, 'cy.graphml')
+    #nx.write_graphml(g, tmp_path/'cy.graphml')
     cy = {
         'elements': {
             'nodes': [],
@@ -507,6 +507,6 @@ def test_cytoscape():
                 'target': e[1],
             }
         })
-    with open('cy.json', 'w') as f:
+    with open(tmp_path/'cy.json', 'w') as f:
         import json
         f.write(json.dumps(cy))

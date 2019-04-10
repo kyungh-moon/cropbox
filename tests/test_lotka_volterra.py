@@ -4,7 +4,7 @@ from cropbox.statevar import accumulate, parameter
 
 import matplotlib.pyplot as plt
 
-def test_lotka_volterra():
+def test_lotka_volterra(tmp_path):
     class S(System):
         @parameter(alias='a')
         def prey_birth_rate(self):
@@ -54,4 +54,4 @@ def test_lotka_volterra():
     plt.ylabel('Population')
     plt.legend()
     #plt.show()
-    plt.savefig('lotka_volterra.png')
+    plt.savefig(tmp_path/'lotka_volterra.png')
