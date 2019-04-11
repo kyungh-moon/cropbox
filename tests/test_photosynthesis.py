@@ -642,3 +642,96 @@ config = ''
 # """
 
 ge = instance(GasExchange, config)
+
+from functools import reduce
+import inspect
+import networkx as nx
+def plot(root):
+    g = nx.DiGraph()
+    S = root.collect(exclude_self=False)
+
+    def add_node(i, name, alias, cls, system):
+        #print(f'id = {i}, name = {name}, alias = {alias}, cls = {cls}, system = {system}')
+        g.add_node(i, name=name, alias=alias, cls=cls, system=system)
+
+    def add_edge(si, di):
+        #print(f'sid = {si}, did = {di}')
+        g.add_edge(si, di)
+
+    def visit(s):
+        si = id(s)
+        sn = s.__class__.__name__
+        add_node(si, name=sn, alias=None, cls='System', system=None)
+        for n, v in s._trackable.items():
+            vcn = v.__class__.__name__
+            va = v._alias_lst
+            if isinstance(v, system):
+                #FIXME: consistent simple ID scheme needed
+                vi = f'{si}-{id(v)}'
+                add_node(vi, name=n, alias=va, cls=vcn, system=si)
+                d = s[n]
+                if d is None:
+                    continue
+                elif isinstance(d, list):
+                    [add_edge(vi, id(dd)) for dd in d]
+                else:
+                    add_edge(vi, id(d))
+            elif isinstance(v, statevar):
+                vi = id(s._trackable_data[v])
+                add_node(vi, name=n, alias=va, cls=vcn, system=si)
+                fun = v._wrapped_fun
+                ps = inspect.signature(fun).parameters
+                for p in ps.values():
+                    if p.default is p.empty:
+                        dn = p.name
+                    else:
+                        dn = p.default
+                    if type(dn) is not str:
+                        #TODO: record parameter values?
+                        continue
+                    dns = dn.split('.')
+                    if len(dns) > 1:
+                        ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
+                    else:
+                        ss = s
+                    dn = dns[-1]
+                    if dn == 'self':
+                        continue
+                    try:
+                        d = ss._trackable[dn]
+                        add_edge(vi, id(ss._trackable_data[d]))
+                    except KeyError:
+                        #HACK: assume arg supporting state variable
+                        pass
+    [visit(s) for s in S]
+
+    #nx.write_graphml(g, tmp_path/'cy.graphml')
+    cy = {
+        'elements': {
+            'nodes': [],
+            'edges': [],
+        }
+    }
+    for n in g.nodes():
+        cy['elements']['nodes'].append({
+            'data': {
+                'id': n,
+                'label': g.node[n]['name'],
+                #'alias': g.node[n]['alias'],
+                'type': g.node[n]['cls'],
+                'parent': g.node[n]['system'],
+            }
+        })
+    for e in g.edges():
+        cy['elements']['edges'].append({
+            'data': {
+                'id': f'{e[0]}__{e[1]}',
+                'source': e[0],
+                'target': e[1],
+            }
+        })
+    #with open(tmp_path/'cy.json', 'w') as f:
+    with open('cy.json', 'w') as f:
+        import json
+        f.write(json.dumps(cy))
+plot(ge)
