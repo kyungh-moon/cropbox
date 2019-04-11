@@ -16,8 +16,8 @@ def plot(root):
         #print(f'id = {i}, name = {name}, alias = {alias}, cls = {cls}, system = {system}')
         g.add_node(i, name=name, alias=alias, cls=cls, system=system)
 
-    def add_edge(si, di, rel):
-        #print(f'sid = {si}, did = {di}, rel = {rel}')
+    def add_edge(si, di, alias, rel):
+        #print(f'sid = {si}, did = {di}, alias = {alias}, rel = {rel}')
         g.add_edge(si, di, rel=rel)
 
     def trackable(s, dn):
@@ -44,10 +44,10 @@ def plot(root):
             #HACK: assume arg supporting state variable
             return None
 
-    def add_edge2(si, s, dn, rel):
+    def add_edge2(si, s, dn, alias, rel):
         t = trackable(s, dn)
         if t is not None:
-            add_edge(si, id(t), rel=rel)
+            add_edge(si, id(t), alias=alias, rel=rel)
 
     def visit(s):
         si = id(s)
@@ -62,9 +62,9 @@ def plot(root):
                 if d is None:
                     continue
                 elif isinstance(d, list):
-                    [add_edge(si, id(dd), rel=n) for dd in d]
+                    [add_edge(si, id(dd), alias=va, rel=n) for dd in d]
                 else:
-                    add_edge(si, id(d), rel=n)
+                    add_edge(si, id(d), alias=va, rel=n)
             elif isinstance(v, statevar):
                 vi = id(s._trackable_data[v])
                 add_node(vi, name=n, alias=va, cls=vcn, system=si)
@@ -81,13 +81,13 @@ def plot(root):
                     if type(dn) is not str:
                         #TODO: record parameter values?
                         continue
-                    add_edge2(vi, s, dn, rel='')
+                    add_edge2(vi, s, dn, alias=va, rel='')
 
                 # support inline @drive
                 if isinstance(v, drive):
                     try:
                         dn = inspect.getclosurevars(fun).nonlocals['f']
-                        add_edge2(vi, s, [dn, n], rel='')
+                        add_edge2(vi, s, [dn, n], alias=va, rel='')
                     except KeyError:
                         pass
 
@@ -113,7 +113,7 @@ def plot(root):
                         if l[0] in kw:
                             l[0] = kw[l[0]]
                         if trackable(s, l):
-                            add_edge2(vi, s, l, rel='')
+                            add_edge2(vi, s, l, alias=va, rel='')
                 Visitor(kw).visit(m)
     [visit(s) for s in S]
 
