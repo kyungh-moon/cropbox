@@ -33,7 +33,7 @@ class TrackableMeta(type):
 class Trackable(metaclass=TrackableMeta):
     def __init__(self, **kwargs):
         self._trackable_data = {}
-        [v.init(self, **kwargs) for v in self._trackable.values()]
+        [v.init(self, **kwargs) for v in list(dict.fromkeys(self._trackable.values()))]
         #FIXME: can we avoid this? otherwise, no way to initialize Systems with mutual dependency
         #self.update()
 
@@ -48,7 +48,7 @@ class Trackable(metaclass=TrackableMeta):
             return v.__get__(self, type(self))
 
     def update(self):
-        [v.get(self) for v in self._trackable.values()]
+        [v.get(self) for v in list(dict.fromkeys(self._trackable.values()))]
 
 class Configurable:
     def option(self, *keys, config):
