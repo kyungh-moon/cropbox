@@ -105,18 +105,29 @@ class System(Trackable, Configurable):
         v = super().option(self, *keys, config=config)
         return self[v]
 
-    def collect(self, recursive=True):
+    def collect(self, recursive=True, exclude_self=True):
         def cast(v):
+            if v is None:
+                return {}
             try:
+                #FIXME: assume v is an iterable of System, not other types
                 return set(v)
             except TypeError:
                 return {v}
-        def visit(s, S):
-            S.update(*map(cast, s.children))
-            if recursive:
-                [visit(sc, S) for sc in s.children]
+        def visit(s, S=set()):
+            SS = set.union(*[cast(s[n]) for n in s._system])
+            for ss in SS:
+                if ss in S:
+                    continue
+                S.add(ss)
+                if recursive:
+                    visit(ss, S)
             return S
-        return visit(self, set())
+        S = visit(self)
+        if exclude_self:
+            return S - {self}
+        else:
+            return S
 
     context = system()
     parent = system()
