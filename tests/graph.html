@@ -1,45 +1,24 @@
 <!DOCTYPE>
-
 <html>
-
   <head>
-    <title>cytoscape-cose-bilkent.js demo (compound)</title>
-
+    <title>cropbox graph viewer</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
-
     <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
-
-    <!-- for testing with local version of cytoscape.js -->
-    <!--<script src="../cytoscape.js/build/cytoscape.js"></script>-->
-
     <script src="https://unpkg.com/cytoscape-cose-bilkent/cytoscape-cose-bilkent.js"></script>
-
-    <!--<script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
-    <script src="cytoscape-cola.js"></script>
-
-    <script src="https://unpkg.com/dagre@0.7.4/dist/dagre.js"></script>
-    <script src="cytoscape-dagre.js"></script>
-
-    <script src="https://unpkg.com/klayjs@0.4.1/klay.js"></script>
-    <script src="cytoscape-klay.js"></script>-->
-
     <style>
       body {
         font-family: helvetica;
         font-size: 14px;
       }
-
       #cy {
         width: 100%;
         height: 90%;
         z-index: 999;
       }
-
       h1 {
         opacity: 0.5;
         font-size: 1em;
       }
-
       button {
         margin-right: 10px;
       }
@@ -72,12 +51,10 @@
           }
           let option = {
             container: document.getElementById('cy'),
-
             layout: {
               name: 'cose-bilkent',
               animate: false
             },
-
             style: [
               {
                 selector: 'node',
@@ -93,7 +70,6 @@
                   'padding': '7%',
                 }
               },
-
               {
                 selector: ':parent',
                 style: {
@@ -102,7 +78,6 @@
                   'font-style': 'italic',
                 }
               },
-
               {
                 selector: 'edge',
                 style: {
@@ -134,78 +109,15 @@
               nestingFactor: 5,
               //padding: 10,
             });
-
-            layout.run();
-          });
-          document.getElementById("randomize").addEventListener("click", function(){
-            var layout = cy.layout({
-              name: 'random',
-              animate: true,
-              animationDuration: 1000,
-              animationEasing: 'ease-out'
-            });
-
-            layout.run();
-          });
-          document.getElementById("coseLayoutButton").addEventListener("click", function(){
-            var layout = cy.layout({
-              name: 'cose',
-              animate: 'end',
-              animationEasing: 'ease-out',
-              animationDuration: 1000,
-              randomize: true,
-              //nodeDimensionsIncludeLabels: true,
-              //nestingFactor: 5,
-
-            });
-
-            layout.run();
-          });
-          document.getElementById("colaLayoutButton").addEventListener("click", function(){
-            var layout = cy.layout({
-              name: 'cola',
-              animate: 'end',
-              animationEasing: 'ease-out',
-              animationDuration: 1000,
-              randomize: true,
-              // infinite: true,
-              // fit: false,
-              nodeSpacing: function( node ){ return 20; },
-              //flow: { axis: 'y', minSeparation: 30 },
-              //alignment: function( node ) { return { x: 0, y: 1 } },
-              //gapInequalities: [{"axis":"y", "left":node1, "right":node2, "gap":25}]
-            });
-
-            layout.run();
-          });
-          document.getElementById("klayLayoutButton").addEventListener("click", function(){
-            var layout = cy.layout({
-              name: 'klay',
-              animate: 'end',
-              animationEasing: 'ease-out',
-              animationDuration: 1000,
-              randomize: true
-            });
-
             layout.run();
           });
         }
       });
     </script>
   </head>
-
   <body>
-    <h1>cytoscape-cose-bilkent demo (compound)</h1>
-
-    <button id="randomize" type="button">Randomize</button>
+    <h1>cropbox graph viewer</h1>
     <button id="layoutButton" type="button">CoSE-Bilkent</button>
-    <button id="coseLayoutButton" type="button">CoSE</button>
-    <button id="colaLayoutButton" type="button">Cola</button>
-    <button id="dagreLayoutButton" type="button">Dagre</button>
-    <button id="klayLayoutButton" type="button">Klay</button>
-
     <div id="cy"></div>
-
   </body>
-
 </html>
