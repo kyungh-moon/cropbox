@@ -723,6 +723,15 @@ def plot(root):
                         #TODO: record parameter values?
                         continue
                     add_edge2(vi, s, dn, rel='')
+
+                # support inline @drive
+                if isinstance(v, drive):
+                    try:
+                        dn = inspect.getclosurevars(fun).nonlocals['f']
+                        add_edge2(vi, s, [dn, n], rel='')
+                    except KeyError:
+                        pass
+
                 src = inspect.getsource(fun)
                 src = textwrap.dedent(src)
                 m = ast.parse(src)
