@@ -1,0 +1,211 @@
+<!DOCTYPE>
+
+<html>
+
+  <head>
+    <title>cytoscape-cose-bilkent.js demo (compound)</title>
+
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+
+    <!-- for testing with local version of cytoscape.js -->
+    <!--<script src="../cytoscape.js/build/cytoscape.js"></script>-->
+
+    <script src="https://unpkg.com/cytoscape-cose-bilkent/cytoscape-cose-bilkent.js"></script>
+
+    <!--<script src="https://unpkg.com/webcola/WebCola/cola.min.js"></script>
+    <script src="cytoscape-cola.js"></script>
+
+    <script src="https://unpkg.com/dagre@0.7.4/dist/dagre.js"></script>
+    <script src="cytoscape-dagre.js"></script>
+
+    <script src="https://unpkg.com/klayjs@0.4.1/klay.js"></script>
+    <script src="cytoscape-klay.js"></script>-->
+
+    <style>
+      body {
+        font-family: helvetica;
+        font-size: 14px;
+      }
+
+      #cy {
+        width: 100%;
+        height: 90%;
+        z-index: 999;
+      }
+
+      h1 {
+        opacity: 0.5;
+        font-size: 1em;
+      }
+
+      button {
+        margin-right: 10px;
+      }
+    </style>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        var req = new XMLHttpRequest()
+        req.open('GET', 'graph.json')
+        req.responseType = 'json'
+        req.send()
+        req.onload = function() {
+          let data = req.response
+          console.log(data)
+          function shapeMap(el) {
+            let t = el.data('type')
+            if (t == 'accumulate') {
+              return 'concave-hexagon'
+            } else if (t == 'parameter') {
+              return 'diamond'
+            } else if (t == 'drive') {
+              return 'rhomboid'
+            } else if (t == 'flag') {
+              return 'tag'
+            } else if (t == 'optimize') {
+              return 'star'
+            } else {
+              return 'ellipse'
+            }
+          }
+          let option = {
+            container: document.getElementById('cy'),
+
+            layout: {
+              name: 'cose-bilkent',
+              animate: false
+            },
+
+            style: [
+              {
+                selector: 'node',
+                style: {
+                  'border-width': 1,
+                  'border-style': 'solid',
+                  'border-color': '#333333',
+                  'background-color': '#666666',
+                  'label': 'data(label)',
+                  'font-size': 12,
+                  'font-family': 'Gill Sans, sans-serif',
+                  'shape': shapeMap,
+                  'padding': '7%',
+                }
+              },
+
+              {
+                selector: ':parent',
+                style: {
+                  'background-opacity': 0.333,
+                  'font-size': 12,
+                  'font-style': 'italic',
+                }
+              },
+
+              {
+                selector: 'edge',
+                style: {
+                  'label': 'data(label)',
+                  //'color': ,
+                  'font-size': 11,
+                  'font-family': 'Gill Sans, sans-serif',
+                  'text-opacity': 0.7,
+                  'width': 1,
+                  'curve-style': 'unbundled-bezier',
+                  'line-color': '#666666',
+                  'line-style': 'dotted',
+                  'target-arrow-color': '#666666',
+                  'target-arrow-shape': 'vee'
+                }
+              }
+            ]
+          }
+          var cy = window.cy = cytoscape({...option, ...data});
+          document.getElementById("layoutButton").addEventListener("click", function(){
+            var layout = cy.layout({
+              name: 'cose-bilkent',
+              animate: 'end',
+              animationEasing: 'ease-out',
+              animationDuration: 1000,
+              randomize: true,
+              //fit: false,
+              nodeDimensionsIncludeLabels: true,
+              nestingFactor: 5,
+              //padding: 10,
+            });
+
+            layout.run();
+          });
+          document.getElementById("randomize").addEventListener("click", function(){
+            var layout = cy.layout({
+              name: 'random',
+              animate: true,
+              animationDuration: 1000,
+              animationEasing: 'ease-out'
+            });
+
+            layout.run();
+          });
+          document.getElementById("coseLayoutButton").addEventListener("click", function(){
+            var layout = cy.layout({
+              name: 'cose',
+              animate: 'end',
+              animationEasing: 'ease-out',
+              animationDuration: 1000,
+              randomize: true,
+              //nodeDimensionsIncludeLabels: true,
+              //nestingFactor: 5,
+
+            });
+
+            layout.run();
+          });
+          document.getElementById("colaLayoutButton").addEventListener("click", function(){
+            var layout = cy.layout({
+              name: 'cola',
+              animate: 'end',
+              animationEasing: 'ease-out',
+              animationDuration: 1000,
+              randomize: true,
+              // infinite: true,
+              // fit: false,
+              nodeSpacing: function( node ){ return 20; },
+              //flow: { axis: 'y', minSeparation: 30 },
+              //alignment: function( node ) { return { x: 0, y: 1 } },
+              //gapInequalities: [{"axis":"y", "left":node1, "right":node2, "gap":25}]
+            });
+
+            layout.run();
+          });
+          document.getElementById("klayLayoutButton").addEventListener("click", function(){
+            var layout = cy.layout({
+              name: 'klay',
+              animate: 'end',
+              animationEasing: 'ease-out',
+              animationDuration: 1000,
+              randomize: true
+            });
+
+            layout.run();
+          });
+        }
+      });
+    </script>
+  </head>
+
+  <body>
+    <h1>cytoscape-cose-bilkent demo (compound)</h1>
+
+    <button id="randomize" type="button">Randomize</button>
+    <button id="layoutButton" type="button">CoSE-Bilkent</button>
+    <button id="coseLayoutButton" type="button">CoSE</button>
+    <button id="colaLayoutButton" type="button">Cola</button>
+    <button id="dagreLayoutButton" type="button">Dagre</button>
+    <button id="klayLayoutButton" type="button">Klay</button>
+
+    <div id="cy"></div>
+
+  </body>
+
+</html>

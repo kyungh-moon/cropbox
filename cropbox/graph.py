@@ -157,7 +157,7 @@ def plot(root):
                 'target': e[1],
             }
         })
-    #with open(tmp_path/'cy.json', 'w') as f:
-    with open('cy.json', 'w') as f:
+    #with open(tmp_path/'graph.json', 'w') as f:
+    with open('tests/graph.json', 'w') as f:
         import json
         f.write(json.dumps(cy))
