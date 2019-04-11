@@ -91,6 +91,10 @@ def plot(root):
                     except KeyError:
                         pass
 
+                # support `init` var
+                if isinstance(v._init_var, str):
+                    add_edge2(vi, s, v._init_var, alias='', rel='init')
+
                 src = inspect.getsource(fun)
                 src = textwrap.dedent(src)
                 m = ast.parse(src)
