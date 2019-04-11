@@ -659,7 +659,7 @@ def plot(root):
         g.add_node(i, name=name, alias=alias, cls=cls, system=system)
 
     def add_edge(si, di, rel):
-        #print(f'sid = {si}, did = {di}')
+        #print(f'sid = {si}, did = {di}, rel = {rel}')
         g.add_edge(si, di, rel=rel)
 
     def trackable(s, dn):
@@ -686,10 +686,10 @@ def plot(root):
             #HACK: assume arg supporting state variable
             return None
 
-    def add_edge2(si, s, dn):
+    def add_edge2(si, s, dn, rel):
         t = trackable(s, dn)
         if t is not None:
-            add_edge(si, id(t), rel='')
+            add_edge(si, id(t), rel=rel)
 
     def visit(s):
         si = id(s)
@@ -722,28 +722,30 @@ def plot(root):
                     if type(dn) is not str:
                         #TODO: record parameter values?
                         continue
-                    add_edge2(vi, s, dn)
-                #TODO: collect reference used inside method (i.e. self.a, self.a.b, self['a'])
+                    add_edge2(vi, s, dn, rel='')
                 src = inspect.getsource(fun)
                 src = textwrap.dedent(src)
                 m = ast.parse(src)
-                #re.findall('self\.(\w+(?:.\w+)*)', src)
-                #re.findall("self\['(\w+)'\]", s)
                 class Visitor(ast.NodeVisitor):
                     def __init__(self, kw):
                         self.kw = kw
-                    def visit_Attribute(self, node):
+                    def generic_visit(self, node):
+                        if not isinstance(node, (ast.Attribute, ast.Subscript)):
+                            return super().generic_visit(node)
                         def gather(n):
                             if isinstance(n, ast.Attribute):
                                 return gather(n.value) + [n.attr]
+                            if isinstance(n ,ast.Subscript):
+                                return gather(n.value) + [n.slice.value]
                             elif isinstance(n, ast.Name):
                                 return [n.id]
+                            elif isinstance(n, ast.Str):
+                                return [n.s]
                         l = gather(node)
-                        l0 = l[0]
-                        if l0 in kw:
-                            l[0] = kw[l0]
+                        if l[0] in kw:
+                            l[0] = kw[l[0]]
                         if trackable(s, l):
-                            add_edge2(vi, s, l)
+                            add_edge2(vi, s, l, rel='')
                 Visitor(kw).visit(m)
     [visit(s) for s in S]
 
