@@ -53,7 +53,8 @@ def plot(root):
         si = id(s)
         sn = s.__class__.__name__
         add_node(si, name=sn, alias=None, cls='System', system=None)
-        for n, v in s._trackable.items():
+        for v in set(s._trackable.values()):
+            n = v.__name__
             vcn = v.__class__.__name__
             va = v._alias_lst
             if isinstance(v, system):
