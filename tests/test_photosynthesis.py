@@ -643,9 +643,13 @@ config = ''
 
 ge = instance(GasExchange, config)
 
+import ast
+from astpretty import pprint
 from functools import reduce
 import inspect
 import networkx as nx
+import re
+import textwrap
 def plot(root):
     g = nx.DiGraph()
     S = root.collect(exclude_self=False)
@@ -657,6 +661,22 @@ def plot(root):
     def add_edge(si, di, rel):
         #print(f'sid = {si}, did = {di}')
         g.add_edge(si, di, rel=rel)
+
+    def add_edge2(si, s, dn):
+        dns = dn.split('.')
+        if len(dns) > 1:
+            ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
+        else:
+            ss = s
+        dn = dns[-1]
+        if dn == 'self':
+            return
+        try:
+            d = ss._trackable[dn]
+            add_edge(si, id(ss._trackable_data[d]), rel='')
+        except KeyError:
+            #HACK: assume arg supporting state variable
+            return
 
     def visit(s):
         si = id(s)
@@ -686,20 +706,29 @@ def plot(root):
                     if type(dn) is not str:
                         #TODO: record parameter values?
                         continue
-                    dns = dn.split('.')
-                    if len(dns) > 1:
-                        ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
-                    else:
-                        ss = s
-                    dn = dns[-1]
-                    if dn == 'self':
-                        continue
-                    try:
-                        d = ss._trackable[dn]
-                        add_edge(vi, id(ss._trackable_data[d]), rel='')
-                    except KeyError:
-                        #HACK: assume arg supporting state variable
-                        pass
+                    add_edge2(vi, s, dn)
+                #TODO: collect reference used inside method (i.e. self.a, self.a.b, self['a'])
+                src = inspect.getsource(fun)
+                src = textwrap.dedent(src)
+                m = ast.parse(src)
+                #re.findall('self\.(\w+(?:.\w+)*)', src)
+                #re.findall("self\['(\w+)'\]", s)
+                # if len(refs) > 0:
+                #     pprint(m)
+                #     breakpoint()
+                #     for r in refs:
+                #         add_edge2(vi, s, r)
+                class Visitor(ast.NodeVisitor):
+                    def visit_Attribute(self, node):
+                        def visit(n):
+                            if isinstance(n, ast.Attribute):
+                                return visit(n.value) + [n.attr]
+                            elif isinstance(n, ast.Name):
+                                return [n.id]
+                        l = visit(node)
+                        #self.generic_visit(node)
+                        breakpoint()
+                Visitor().visit(m)
     [visit(s) for s in S]
 
     #nx.write_graphml(g, tmp_path/'cy.graphml')
