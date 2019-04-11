@@ -654,9 +654,9 @@ def plot(root):
         #print(f'id = {i}, name = {name}, alias = {alias}, cls = {cls}, system = {system}')
         g.add_node(i, name=name, alias=alias, cls=cls, system=system)
 
-    def add_edge(si, di):
+    def add_edge(si, di, rel):
         #print(f'sid = {si}, did = {di}')
-        g.add_edge(si, di)
+        g.add_edge(si, di, rel=rel)
 
     def visit(s):
         si = id(s)
@@ -666,16 +666,13 @@ def plot(root):
             vcn = v.__class__.__name__
             va = v._alias_lst
             if isinstance(v, system):
-                #FIXME: consistent simple ID scheme needed
-                vi = f'{si}-{id(v)}'
-                add_node(vi, name=n, alias=va, cls=vcn, system=si)
                 d = s[n]
                 if d is None:
                     continue
                 elif isinstance(d, list):
-                    [add_edge(vi, id(dd)) for dd in d]
+                    [add_edge(si, id(dd), rel=n) for dd in d]
                 else:
-                    add_edge(vi, id(d))
+                    add_edge(si, id(d), rel=n)
             elif isinstance(v, statevar):
                 vi = id(s._trackable_data[v])
                 add_node(vi, name=n, alias=va, cls=vcn, system=si)
@@ -699,7 +696,7 @@ def plot(root):
                         continue
                     try:
                         d = ss._trackable[dn]
-                        add_edge(vi, id(ss._trackable_data[d]))
+                        add_edge(vi, id(ss._trackable_data[d]), rel='')
                     except KeyError:
                         #HACK: assume arg supporting state variable
                         pass
@@ -726,6 +723,7 @@ def plot(root):
         cy['elements']['edges'].append({
             'data': {
                 'id': f'{e[0]}__{e[1]}',
+                'label': g.edges[e]['rel'],
                 'source': e[0],
                 'target': e[1],
             }
