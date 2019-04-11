@@ -662,21 +662,34 @@ def plot(root):
         #print(f'sid = {si}, did = {di}')
         g.add_edge(si, di, rel=rel)
 
-    def add_edge2(si, s, dn):
-        dns = dn.split('.')
+    def trackable(s, dn):
+        if isinstance(dn, str):
+            dns = dn.split('.')
+        elif isinstance(dn, list):
+            dns = dn
+        else:
+            return None
         if len(dns) > 1:
-            ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
+            try:
+                ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
+            except AttributeError:
+                return None
         else:
             ss = s
         dn = dns[-1]
         if dn == 'self':
-            return
+            return None
         try:
             d = ss._trackable[dn]
-            add_edge(si, id(ss._trackable_data[d]), rel='')
+            return ss._trackable_data[d]
         except KeyError:
             #HACK: assume arg supporting state variable
-            return
+            return None
+
+    def add_edge2(si, s, dn):
+        t = trackable(s, dn)
+        if t is not None:
+            add_edge(si, id(t), rel='')
 
     def visit(s):
         si = id(s)
@@ -698,11 +711,14 @@ def plot(root):
                 add_node(vi, name=n, alias=va, cls=vcn, system=si)
                 fun = v._wrapped_fun
                 ps = inspect.signature(fun).parameters
+                kw = {}
                 for p in ps.values():
                     if p.default is p.empty:
                         dn = p.name
                     else:
                         dn = p.default
+                    if trackable(s, dn):
+                        kw[p.name] = dn
                     if type(dn) is not str:
                         #TODO: record parameter values?
                         continue
@@ -713,22 +729,22 @@ def plot(root):
                 m = ast.parse(src)
                 #re.findall('self\.(\w+(?:.\w+)*)', src)
                 #re.findall("self\['(\w+)'\]", s)
-                # if len(refs) > 0:
-                #     pprint(m)
-                #     breakpoint()
-                #     for r in refs:
-                #         add_edge2(vi, s, r)
                 class Visitor(ast.NodeVisitor):
+                    def __init__(self, kw):
+                        self.kw = kw
                     def visit_Attribute(self, node):
-                        def visit(n):
+                        def gather(n):
                             if isinstance(n, ast.Attribute):
-                                return visit(n.value) + [n.attr]
+                                return gather(n.value) + [n.attr]
                             elif isinstance(n, ast.Name):
                                 return [n.id]
-                        l = visit(node)
-                        #self.generic_visit(node)
-                        breakpoint()
-                Visitor().visit(m)
+                        l = gather(node)
+                        l0 = l[0]
+                        if l0 in kw:
+                            l[0] = kw[l0]
+                        if trackable(s, l):
+                            add_edge2(vi, s, l)
+                Visitor(kw).visit(m)
     [visit(s) for s in S]
 
     #nx.write_graphml(g, tmp_path/'cy.graphml')
