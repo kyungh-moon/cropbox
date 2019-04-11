@@ -6,7 +6,7 @@ import networkx as nx
 import re
 import textwrap
 
-from cropbox.statevar import drive, statevar, system
+from cropbox.statevar import drive, flag, statevar, system
 
 def plot(root):
     g = nx.DiGraph()
@@ -90,6 +90,11 @@ def plot(root):
                         add_edge2(vi, s, [dn, n], alias=va, rel='')
                     except KeyError:
                         pass
+
+                # support `prob` var for @flag
+                if isinstance(v, flag):
+                    if isinstance(v._prob_var, str):
+                        add_edge2(vi, s, v._prob_var, alias='', rel='prob')
 
                 # support `init` var
                 if isinstance(v._init_var, str):
