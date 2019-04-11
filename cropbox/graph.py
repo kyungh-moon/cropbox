@@ -94,6 +94,9 @@ def plot(root):
                 # support `init` var
                 if isinstance(v._init_var, str):
                     add_edge2(vi, s, v._init_var, alias='', rel='init')
+                # support `time` var
+                # if isinstance(v._time_var, str):
+                #     add_edge2(vi, s, v._time_var, alias='', rel='time')
 
                 src = inspect.getsource(fun)
                 src = textwrap.dedent(src)
