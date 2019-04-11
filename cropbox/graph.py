@@ -97,9 +97,11 @@ def plot(root):
                 class Visitor(ast.NodeVisitor):
                     def __init__(self, kw):
                         self.kw = kw
-                    def generic_visit(self, node):
-                        if not isinstance(node, (ast.Attribute, ast.Subscript)):
-                            return super().generic_visit(node)
+                    def visit_Attribute(self, node):
+                        self.process(node)
+                    def visit_Subscript(self, node):
+                        self.process(node)
+                    def process(self, node):
                         def gather(n):
                             if isinstance(n, ast.Attribute):
                                 return gather(n.value) + [n.attr]
