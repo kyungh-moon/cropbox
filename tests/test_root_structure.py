@@ -87,3 +87,6 @@ def test_root_structure():
     T = range(30)
     [c.update() for t in T]
     r.render()
+
+    from cropbox.graph import plot
+    plot(r)
