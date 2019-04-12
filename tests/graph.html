@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
     <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
     <script src="https://unpkg.com/cytoscape-cose-bilkent/cytoscape-cose-bilkent.js"></script>
+    <script src="https://unpkg.com/numeric/numeric-1.2.6.js"></script>
+    <script src="https://unpkg.com/layout-base/layout-base.js"></script>
+    <script src="https://unpkg.com/cose-base/cose-base.js"></script>
+    <script src="http://unpkg.com/cytoscape-fcose/cytoscape-fcose.js"></script>
     <style>
       body {
         font-family: helvetica;
@@ -97,7 +101,7 @@
             ]
           }
           var cy = window.cy = cytoscape({...option, ...data});
-          document.getElementById("layoutButton").addEventListener("click", function(){
+          document.getElementById("layoutButton-cose-bilkent").addEventListener("click", function(){
             var layout = cy.layout({
               name: 'cose-bilkent',
               animate: 'end',
@@ -111,13 +115,29 @@
             });
             layout.run();
           });
+          document.getElementById("layoutButton-fcose").addEventListener("click", function(){
+            var layout = cy.layout({
+              name: 'fcose',
+              animate: 'end',
+              animationEasing: 'ease-out',
+              animationDuration: 1000,
+              randomize: true,
+              //fit: false,
+              nodeDimensionsIncludeLabels: true,
+              nestingFactor: 5,
+              //padding: 10,
+              tile: true,
+            });
+            layout.run();
+          });
         }
       });
     </script>
   </head>
   <body>
     <h1>cropbox graph viewer</h1>
-    <button id="layoutButton" type="button">CoSE-Bilkent</button>
+    <button id="layoutButton-cose-bilkent" type="button">CoSE-Bilkent</button>
+    <button id="layoutButton-fcose" type="button">FCoSE</button>
     <div id="cy"></div>
   </body>
 </html>
