@@ -262,9 +262,10 @@ def test_drive_with_system():
         def a(self):
             return self.t
         b = drive('t', alias='bb')
+        c = derive('t.b')
     s = instance(S)
     assert s.a == s.aa == s.t.a == 1
-    assert s.b == s.bb == s.t.b == 2
+    assert s.b == s.bb == s.t.b == s.c == 2
 
 def test_flag():
     class S(System):
