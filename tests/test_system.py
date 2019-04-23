@@ -198,7 +198,7 @@ def test_parameter_with_config():
         @parameter
         def a(self):
             return 1
-    s = instance(S, {'S': {'a': 2}})
+    s = instance(S, config={'S': {'a': 2}})
     c = s.context
     assert s.a == 2
     c.update()
@@ -212,7 +212,7 @@ def test_parameter_with_config_alias():
         @parameter(alias='b')
         def bb(self):
             return 1
-    s = instance(S, {'S': {'a': 2, 'b': 2}})
+    s = instance(S, config={'S': {'a': 2, 'b': 2}})
     assert s.a == 2
     assert s.b == 2
 
@@ -368,7 +368,7 @@ def test_clock():
 def test_clock_with_config():
     class S(System):
         pass
-    s = instance(S, {'Clock': {'start': 5, 'interval': 10}})
+    s = instance(S, config={'Clock': {'start': 5, 'interval': 10}})
     c = s.context
     assert c.time == 5
     c.update()
@@ -420,7 +420,7 @@ def test_args_with_config():
         @derive
         def a(self, b):
             return b
-    s = instance(S, {'S': {'a': {'b': 1}}})
+    s = instance(S, config={'S': {'a': {'b': 1}}})
     assert s.a == 1
 
 def test_args_partial():

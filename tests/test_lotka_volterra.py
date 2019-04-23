@@ -38,7 +38,7 @@ def test_lotka_volterra(tmp_path):
         def predator_population(self, b, c, d, H, P):
             return d*b*H*P - c*P
 
-    s = instance(S, {'Clock': {'interval': 0.01}})
+    s = instance(S, config={'Clock': {'interval': 0.01}})
     c = s.context
     T = range(2000)
     H = []
