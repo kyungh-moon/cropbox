@@ -3,7 +3,8 @@ from .unit import U
 from collections import ChainMap
 from functools import reduce
 
-decorators = (system, statevar)
+# ChainMap order is backwards like multiple inheritance
+decorators = (statevar, system)
 
 class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
