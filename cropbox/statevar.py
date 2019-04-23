@@ -23,8 +23,10 @@ class system(var):
                 s = None
             elif isinstance(cls, list):
                 s = []
-            else:
+            elif isinstance(cls, type):
                 s = cls(context=obj.context, **{k: obj[v] for k, v in self._kwargs.items()})
+            else:
+                s = cls
         d = self.data(obj)
         d[self] = s
 
