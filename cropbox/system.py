@@ -108,7 +108,7 @@ class System(Trackable, Configurable):
     def collect(self, recursive=True, exclude_self=True):
         def cast(v):
             if v is None:
-                return {}
+                return set()
             try:
                 #FIXME: assume v is an iterable of System, not other types
                 return set(v)
