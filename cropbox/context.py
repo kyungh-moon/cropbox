@@ -1,5 +1,5 @@
 from .system import System
-from .statevar import accumulate, parameter
+from .statevar import accumulate, parameter, system
 import toml
 
 class Clock(System):
@@ -25,10 +25,13 @@ class Clock(System):
 
 class Context(Clock):
     def __init__(self, config=None):
-        self.context = self
         self._pending = []
         self.configure(config)
         super().__init__()
+
+    @system
+    def context(self):
+        return self
 
     def configure(self, config):
         if config is None:
