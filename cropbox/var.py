@@ -28,12 +28,13 @@ class var:
         return self.get(obj)
 
     def data(self, obj):
-        #HACK: can't do dict comprehension in Trackable.__init__ due to _init_var access
         n = '_trackable_data'
-        # if not hasattr(obj, n):
-        #     setattr(obj, n, {})
-        d = obj[n]
-        return d
+        try:
+            #HACK: avoid hasattr() calling __getattr__() when n is not found in __dict__
+            obj.__dict__[n]
+        except KeyError:
+            setattr(obj, n, {})
+        return getattr(obj, n)
 
     def init(self, obj, **kwargs):
         pass
