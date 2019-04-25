@@ -63,8 +63,11 @@ class Context(Clock):
 
     def update(self):
         # process pending operations
-        [f() for f in self._pending]
+        #HACK: avoid more pending operations added during iteration
+        #TODO: more structured way of operation handling (i.e. distinction between pre/post ops)
+        pending = self._pending.copy()
         self._pending.clear()
+        [f() for f in pending]
 
         # update state variables recursively
         super().update()
