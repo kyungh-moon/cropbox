@@ -127,7 +127,7 @@ class flip(statevar):
     def __init__(self, f=None, **kwargs):
         super().__init__(f, track=Flip, **kwargs)
 
-class preserve(statevar):
+class constant(statevar):
     def __init__(self, f=None, **kwargs):
         super().__init__(f, track=Preserve, **kwargs)
 

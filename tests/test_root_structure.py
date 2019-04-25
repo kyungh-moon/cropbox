@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, flag, parameter, preserve, produce
+from cropbox.statevar import accumulate, constant, derive, flag, parameter, produce
 
 import random
 import trimesh
@@ -12,7 +12,7 @@ def test_root_structure():
         def elongation_rate(self):
             return random.gauss(1.0, 0.2)
 
-        @preserve
+        @constant
         def branching_angle(self):
             return random.gauss(20, 10)
 
@@ -28,7 +28,7 @@ def test_root_structure():
         def is_branching(self, l='length', ll='last_branching_length', i='branching_interval'):
             return l - ll > i
 
-        @preserve
+        @constant
         def branched_length(self):
             return None
 

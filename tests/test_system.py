@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, derive, difference, drive, flag, flip, optimize, parameter, preserve, produce, statevar, system
+from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, flip, optimize, parameter, produce, statevar, system
 
 import pytest
 
@@ -165,7 +165,7 @@ def test_flip():
     assert s.a == 1 and s.b == 4
     assert s.sa == 0 and s.sb == 4
 
-def test_preserve():
+def test_constant():
     class S(System):
         @derive
         def a(self):
@@ -173,7 +173,7 @@ def test_preserve():
         @accumulate
         def b(self):
             return self.a + 1
-        @preserve
+        @constant
         def c(self):
             return self.b + 1
     s = instance(S)
@@ -318,7 +318,7 @@ def test_produce_with_kwargs():
         @produce
         def a(self):
             return (S, {'t': self.context.time + 1}) # produced in the next time step
-        @preserve(init=0)
+        @constant(init=0)
         def t(self):
             return None
     s = instance(S)

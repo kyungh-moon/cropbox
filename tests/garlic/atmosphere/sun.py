@@ -14,7 +14,7 @@
 # - added direct and diffuse separation functions according to Weiss and Norman (1985), 3/16/05
 
 from cropbox.system import System
-from cropbox.statevar import derive, drive, parameter, preserve, system
+from cropbox.statevar import constant, derive, drive, parameter, system
 
 from numpy import pi, sin, cos, tan, arcsin, arccos, radians, degrees, log, exp
 
@@ -23,7 +23,7 @@ class Sun(System):
     # see Campbell and Norman (1994) p 149
     # 4.55 is a conversion factor from W to photons for solar radiation, Goudriaan and van Laar (1994)
     # some use 4.6 i.e., Amthor 1994, McCree 1981, Challa 1995.
-    PHOTON_UMOL_PER_J = preserve(4.6)
+    PHOTON_UMOL_PER_J = constant(4.6)
 
     # solar constant, Iqbal (1983)
     #FIXME better to be 1361 or 1362 W/m-2?
@@ -99,7 +99,7 @@ class Sun(System):
         r = 0.006918 - 0.399912*cos(g) + 0.070257*sin(g) - 0.006758*cos(2*g) + 0.000907*sin(2*g) -0.002697*cos(3*g) + 0.00148*sin(3*g)
         return degrees(r)
 
-    @preserve(alias='dph') # (unit='degree')
+    @constant(alias='dph') # (unit='degree')
     def degree_per_hour(self):
         return 360 / 24
 
