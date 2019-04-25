@@ -35,8 +35,8 @@ class Trackable(metaclass=TrackableMeta):
     def __init__(self, **kwargs):
         self._trackable_data = {}
         [v.init(self, **kwargs) for v in list(dict.fromkeys(self._trackable.values()))]
-        #FIXME: can we avoid this? otherwise, no way to initialize Systems with mutual dependency
-        #self.update()
+        # force update here to ensure all trackables get initialized
+        self.update()
 
     def __getattr__(self, name):
         if name == 'self':
@@ -105,7 +105,7 @@ class System(Trackable, Configurable):
             config = self.context._config
         v = super().option(self, *keys, config=config)
         try:
-        return self[v]
+            return self[v]
         #HACK: support unit string bypass
         except AttributeError:
             return v

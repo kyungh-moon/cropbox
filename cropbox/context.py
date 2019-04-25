@@ -79,5 +79,4 @@ def instance(systemcls, config=None):
     c = Context(config)
     s = systemcls(context=c, parent=c)
     c.children.append(s)
-    c.update()
     return s
