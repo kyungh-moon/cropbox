@@ -104,7 +104,11 @@ class System(Trackable, Configurable):
         if config is None:
             config = self.context._config
         v = super().option(self, *keys, config=config)
+        try:
         return self[v]
+        #HACK: support unit string bypass
+        except AttributeError:
+            return v
 
     def collect(self, recursive=True, exclude_self=True):
         def cast(v):
