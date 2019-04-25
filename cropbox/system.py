@@ -49,7 +49,7 @@ class Trackable(metaclass=TrackableMeta):
             return v.__get__(self, type(self))
 
     def update(self):
-        [v.get(self) for v in list(dict.fromkeys(self._trackable.values()))]
+        [v.get(self) for v in dict.fromkeys(self._trackable.values())]
 
 class Configurable:
     def option(self, *keys, config):
