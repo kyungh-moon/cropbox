@@ -28,10 +28,7 @@ def plot(root):
         else:
             return None
         if len(dns) > 1:
-            try:
-                ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
-            except AttributeError:
-                return None
+            ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
         else:
             ss = s
         dn = dns[-1]
@@ -40,7 +37,7 @@ def plot(root):
         try:
             d = ss._trackable[dn]
             return ss._trackable_data[d]
-        except KeyError:
+        except (AttributeError, KeyError):
             #HACK: assume arg supporting state variable
             return None
 
