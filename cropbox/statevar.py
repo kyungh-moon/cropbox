@@ -63,7 +63,7 @@ class statevar(var):
             v = kwargs[self.__name__]
         except KeyError:
             v = obj[self._init_var]
-        d[self] = self._track_cls(t, v)
+        d[self] = self._track_cls(t, self.unit(obj, v))
 
     def get(self, obj):
         with self.trace(self, obj):

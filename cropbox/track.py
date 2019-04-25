@@ -1,4 +1,5 @@
 from .time import Timer
+from .unit import U
 
 class Track:
     def __init__(self, t, v):
@@ -38,15 +39,16 @@ class Track:
 class Accumulate(Track):
     def reset(self, t):
         super().reset(t)
-        self._rate = 0
+        self._rate = None
 
     def store(self, v, dt):
-        self._value += self._rate * dt
+        if self._rate is not None:
+            self._value += self._rate * dt
         self._rate = v()
 
 class Difference(Accumulate):
     def store(self, v, dt):
-        self._value = 0
+        self._value = U(0, U[self._value])
         super().store(v, dt)
 
 class Flip(Track):
