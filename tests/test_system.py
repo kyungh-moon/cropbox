@@ -29,11 +29,11 @@ def test_accumulate():
     s = instance(S)
     c = s.context
     assert s.a == 1 and s.b == 0
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 2
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 4
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 6
 
 def test_accumulate_with_cross_reference():
@@ -47,11 +47,11 @@ def test_accumulate_with_cross_reference():
     s = instance(S)
     c = s.context
     assert s.a == 0 and s.b == 0
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 1
-    c.update()
+    c.advance()
     assert s.a == 3 and s.b == 3
-    c.update()
+    c.advance()
     assert s.a == 7 and s.b == 7
 
 def test_accumulate_with_time():
@@ -68,11 +68,11 @@ def test_accumulate_with_time():
     s = instance(S)
     c = s.context
     assert s.a == 1 and s.b == 0
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 1
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 2
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 3
 
 def test_accumulate_transport():
@@ -89,11 +89,11 @@ def test_accumulate_transport():
     s = instance(S)
     c = s.context
     assert s.a == 10 and s.b == 0 and s.c == 0
-    c.update()
+    c.advance()
     assert s.a == 0 and s.b == 10 and s.c == 0
-    c.update()
+    c.advance()
     assert s.a == 0 and s.b == 0 and s.c == 10
-    c.update()
+    c.advance()
     assert s.a == 0 and s.b == 0 and s.c == 10
 
 def test_accumulate_distribute():
@@ -112,13 +112,15 @@ def test_accumulate_distribute():
             return self.s * 0.5
     s = instance(S)
     c = s.context
-    assert s.s == 100 and s.d1 == 0 and s.d2 == 0 and s.d3 == 0
-    c.update()
-    assert s.s == 200 and s.d1 == 20 and s.d2 == 30 and s.d3 == 50
-    c.update()
-    assert s.s == 300 and s.d1 == 60 and s.d2 == 90 and s.d3 == 150
-    c.update()
-    assert s.s == 400 and s.d1 == 120 and s.d2 == 180 and s.d3 == 300
+    assert c.time == 0 and s.s == 0 and s.d1 == 0 and s.d2 == 0 and s.d3 == 0
+    c.advance()
+    assert c.time == 1 and s.s == 100 and s.d1 == 0 and s.d2 == 0 and s.d3 == 0
+    c.advance()
+    assert c.time == 2 and s.s == 200 and s.d1 == 20 and s.d2 == 30 and s.d3 == 50
+    c.advance()
+    assert c.time == 3 and s.s == 300 and s.d1 == 60 and s.d2 == 90 and s.d3 == 150
+    c.advance()
+    assert c.time == 4 and s.s == 400 and s.d1 == 120 and s.d2 == 180 and s.d3 == 300
 
 def test_difference():
     class S(System):
@@ -131,11 +133,11 @@ def test_difference():
     s = instance(S)
     c = s.context
     assert s.a == 1 and s.b == 0
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 2
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 2
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 2
 
 def test_flip():
@@ -156,10 +158,10 @@ def test_flip():
     c = s.context
     assert s.a == 1 and s.b == 0
     assert s.sa == 1 and s.sb == 0
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 2
     assert s.sa == 0 and s.sb == 2
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 4
     assert s.sa == 0 and s.sb == 4
 
@@ -177,9 +179,9 @@ def test_preserve():
     s = instance(S)
     c = s.context
     assert s.a == 1 and s.b == 0 and s.c == 1
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 2 and s.c == 1
-    c.update()
+    c.advance()
     assert s.a == 1 and s.b == 4 and s.c == 1
 
 def test_parameter():
@@ -190,7 +192,7 @@ def test_parameter():
     s = instance(S)
     c = s.context
     assert s.a == 1
-    c.update()
+    c.advance()
     assert s.a == 1
 
 def test_parameter_with_config():
@@ -201,7 +203,7 @@ def test_parameter_with_config():
     s = instance(S, config={'S': {'a': 2}})
     c = s.context
     assert s.a == 2
-    c.update()
+    c.advance()
     assert s.a == 2
 
 def test_parameter_with_config_alias():
@@ -223,11 +225,13 @@ def test_drive_with_dict():
             return {'a': self.context.time * 10}
     s = instance(S)
     c = s.context
-    assert s.a == 10
-    c.update()
-    assert s.a == 20
-    c.update()
-    assert s.a == 30
+    assert c.time == 0 and s.a == 0
+    c.advance()
+    assert c.time == 1 and s.a == 10
+    c.advance()
+    assert c.time == 2 and s.a == 20
+    c.advance()
+    assert c.time == 3 and s.a == 30
 
 def test_drive_with_dataframe():
     import pandas as pd
@@ -240,10 +244,12 @@ def test_drive_with_dataframe():
             return self.df.loc[self.context.time]
     s = instance(S)
     c = s.context
+    assert c.time == 0 and s.a == 0
+    c.advance()
     assert c.time == 1 and s.a == 10
-    c.update()
+    c.advance()
     assert c.time == 2 and s.a == 20
-    c.update()
+    c.advance()
     assert c.time == 3 and s.a == 30
 
 def test_drive_with_system():
@@ -302,27 +308,27 @@ def test_produce():
     s = instance(S)
     c = s.context
     assert len(s.children) == 0
-    c.update()
+    c.advance()
     assert len(s.children) == 1 and len(s.children[0].children) == 0
-    c.update()
+    c.advance()
     assert len(s.children) == 2 and len(s.children[0].children) == 1 and len(s.children[1].children) == 0
 
 def test_produce_with_kwargs():
     class S(System):
         @produce
         def a(self):
-            return (S, {'t': self.context.time})
+            return (S, {'t': self.context.time + 1}) # produced in the next time step
         @preserve(init=0)
         def t(self):
             return None
     s = instance(S)
     c = s.context
     assert len(s.children) == 0 and s.t == 0
-    c.update()
+    c.advance()
     assert len(s.children) == 1 and s.t == 0
     s1 = s.children[0]
     assert len(s1.children) == 0 and s1.t == 1
-    c.update()
+    c.advance()
     s2 = s.children[1]
     s11 = s1.children[0]
     assert len(s.children) == 2 and len(s1.children) == 1 and len(s2.children) == 0
@@ -336,7 +342,7 @@ def test_produce_with_none():
     s = instance(S)
     c = s.context
     assert len(s.children) == 0
-    c.update()
+    c.advance()
     assert len(s.children) == 0
 
 def test_optimize():
@@ -360,9 +366,9 @@ def test_clock():
     s = instance(S)
     c = s.context
     assert c.time == 0
-    c.update()
+    c.advance()
     assert c.time == 1
-    c.update()
+    c.advance()
     assert c.time == 2
 
 def test_clock_with_config():
@@ -371,9 +377,9 @@ def test_clock_with_config():
     s = instance(S, config={'Clock': {'start': 5, 'interval': 10}})
     c = s.context
     assert c.time == 5
-    c.update()
+    c.advance()
     assert c.time == 15
-    c.update()
+    c.advance()
     assert c.time == 25
 
 def test_clock_with_datetime():
@@ -386,9 +392,9 @@ def test_clock_with_datetime():
         }})
     c = s.context
     assert c.datetime == datetime.datetime(2019, 1, 1)
-    c.update()
+    c.advance()
     assert c.datetime == datetime.datetime(2019, 1, 2)
-    c.update()
+    c.advance()
     assert c.datetime == datetime.datetime(2019, 1, 3)
 
 def test_alias():

@@ -44,7 +44,7 @@ def test_lotka_volterra(tmp_path):
     H = []
     P = []
     for t in T:
-        c.update()
+        c.advance()
         #print(f't = {t}: H = {s.prey_population}, P={s.predator_population}')
         H.append(s.prey_population)
         P.append(s.predator_population)

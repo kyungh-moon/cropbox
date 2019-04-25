@@ -9,7 +9,7 @@ class Track:
     def reset(self, t):
         self.timer = Timer(t)
         self._value = None
-        self._regime = None
+        self._regime = ''
 
     def update(self, t, v, regime):
         dt = self.timer.update(t)
@@ -19,7 +19,7 @@ class Track:
             force = True
         if self._value is None:
             self._value = self._initial_value
-            #force = True
+            force = True
         if regime is not None and regime != self._regime:
             self._regime = regime
             force = True

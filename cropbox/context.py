@@ -4,7 +4,7 @@ import toml
 
 class Clock(System):
     def __init__(self):
-        self.tick = 0
+        self._tick = 0
         super().__init__()
 
     @parameter(init=None)
@@ -19,9 +19,13 @@ class Clock(System):
     def interval(self):
         return 1
 
-    def update(self):
-        self.tick += 1
-        super().update()
+    @property
+    def tick(self):
+        return self._tick
+
+    def advance(self):
+        self._tick += 1
+        self.update()
 
     @accumulate(time='tick', init='start', unit='unit')
     def time(self):
