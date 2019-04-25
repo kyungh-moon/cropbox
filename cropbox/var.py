@@ -39,4 +39,9 @@ class var:
         pass
 
     def get(self, obj):
-        return self.data(obj)[self]
+        d = self.data(obj)
+        try:
+            return d[self]
+        except KeyError:
+            self.init(obj, **obj._kwargs)
+            return d[self]

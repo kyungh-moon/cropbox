@@ -33,8 +33,8 @@ class TrackableMeta(type):
 
 class Trackable(metaclass=TrackableMeta):
     def __init__(self, **kwargs):
+        self._kwargs = kwargs
         self._trackable_data = {}
-        [v.init(self, **kwargs) for v in list(dict.fromkeys(self._trackable.values()))]
         # force update here to ensure all trackables get initialized
         self.update()
 
