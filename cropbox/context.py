@@ -1,5 +1,5 @@
 from .system import System
-from .statevar import accumulate, parameter, system
+from .statevar import accumulate, derive, parameter, system
 import toml
 
 class Clock(System):
@@ -7,11 +7,15 @@ class Clock(System):
         self.tick = 0
         super().__init__()
 
-    @parameter
+    @parameter(init=None)
+    def unit(self):
+        return None
+
+    @parameter(unit='unit')
     def start(self):
         return 0
 
-    @parameter
+    @parameter(unit='unit')
     def interval(self):
         return 1
 
@@ -19,9 +23,21 @@ class Clock(System):
         self.tick += 1
         super().update()
 
-    @accumulate(time='tick', init='start')
+    @accumulate(time='tick', init='start', unit='unit')
     def time(self):
         return self.interval
+
+    @parameter(init=None)
+    def start_datetime(self):
+        return None
+
+    @derive(init=None)
+    def datetime(self, start_datetime):
+        if start_datetime is None:
+            #raise ValueError('base datetime is unknown')
+            return None
+        else:
+            return start_datetime + self.time
 
 class Context(Clock):
     def __init__(self, config=None):

@@ -376,6 +376,21 @@ def test_clock_with_config():
     c.update()
     assert c.time == 25
 
+def test_clock_with_datetime():
+    import datetime
+    class S(System):
+        pass
+    s = instance(S, config={'Clock': {
+        'unit': 'day',
+        'start_datetime': datetime.datetime(2019, 1, 1),
+        }})
+    c = s.context
+    assert c.datetime == datetime.datetime(2019, 1, 1)
+    c.update()
+    assert c.datetime == datetime.datetime(2019, 1, 2)
+    c.update()
+    assert c.datetime == datetime.datetime(2019, 1, 3)
+
 def test_alias():
     class S(System):
         @derive(alias='aa')
