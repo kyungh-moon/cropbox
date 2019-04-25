@@ -13,10 +13,19 @@
 # - (To Do) Then the division model of diffuse and direct radiations was applied
 # - added direct and diffuse separation functions according to Weiss and Norman (1985), 3/16/05
 
+from cropbox.context import instance
 from cropbox.system import System
 from cropbox.statevar import constant, derive, drive, parameter, system
 
 from numpy import pi, sin, cos, tan, arcsin, arccos, radians, degrees, log, exp
+
+class Location(System):
+    latitude = parameter(36)
+    longitude = parameter(128)
+    altitude = parameter(20)
+
+class Weather(System):
+    photosynthetic_active_radiation = parameter(1000, alias='PAR')
 
 class Sun(System):
     # conversion factor from W/m2 to PFD (umol m-2 s-1) for PAR waveband (median 550 nm of 400-700 nm) of solar radiation,
@@ -29,21 +38,21 @@ class Sun(System):
     #FIXME better to be 1361 or 1362 W/m-2?
     SOLAR_CONSTANT = parameter(1370.0, alias='SC')
 
-    location = system()
-    weather = system()
+    location = system(Location)
+    weather = system(Weather)
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
-    @drive(alias='t')
-    def time(self):
+    @derive(alias='t', init=None)
+    def datetime(self):
         #FIXME: how to drive time variable?
-        return self.context.time
+        return self.context.datetime
 
-    @derive(alias='d')
+    @derive(alias='d', init=None)
     def day(self, t):
         #FIXME: properly drive time
         return t.day
 
-    @derive(alias='h')
+    @derive(alias='h', init=None)
     def hour(self, t):
         #FIXME: properly drive time
         return t.hour
@@ -63,7 +72,7 @@ class Sun(System):
     @derive(alias='dec')
     def declination_angle(self, d):
         #FIXME pascal version of LightEnv uses iqbal()
-        return self._declination_angle_spencer(d)
+        return self._declination_angle_spencer
 
     # Goudriaan 1977
     @derive
@@ -126,7 +135,7 @@ class Sun(System):
         return 12 - LC - ET
 
     @derive
-    def _cos_hour_angle(self, zenith_angle, latitude, declination_angle):
+    def _cos_hour_angle(self, angle, latitude, declination_angle):
         # this value should never become negative because -90 <= latitude <= 90 and -23.45 < decl < 23.45
         #HACK is this really needed for crop models?
         # preventing division by zero for N and S poles
@@ -136,14 +145,14 @@ class Sun(System):
         #lat_bound = radians(68)? radians(85)?
         # cos(h0) at cos(theta_s) = 0 (solar zenith angle = 90 deg == elevation angle = 0 deg)
         #return -tan(latitude) * tan(declination_angle)
-        w_s = radians(zenith_angle)
+        w_s = radians(angle) # zenith angle
         p = radians(latitude)
         d = radians(declination_angle)
         return (cos(w_s) - sin(p) * sin(d)) / (cos(p) * cos(d))
 
     @derive # (unit='degree')
     def hour_angle_at_horizon(self):
-        c = self._cos_hour_angle(zenith_angle=90)
+        c = self._cos_hour_angle(angle=90)
         # in the polar region during the winter, sun does not rise
         if c > 1:
             return 0
@@ -326,3 +335,28 @@ class Sun(System):
     @property
     def diffusive_photosynthetic_radiation(self, PARtot):
         return self.diffusive_fraction * PARtot
+
+def test_sun(tmp_path):
+    T = range(24*2)
+    def plot(v):
+        import datetime
+        s = instance(Sun, {'Clock': {
+            'unit': 'hour',
+            'start_datetime': datetime.datetime(2019, 1, 1),
+        }})
+        c = s.context
+        V = []
+        for t in T:
+            c.advance()
+            V.append(s[v])
+        import matplotlib.pyplot as plt
+        plt.figure()
+        plt.plot(T, V)
+        plt.xlabel('time')
+        plt.ylabel(v)
+        plt.savefig(tmp_path/f'{v}.png')
+    plot('declination_angle')
+    plot('elevation_angle')
+    plot('directional_coeff')
+    plot('diffusive_coeff')
+    breakpoint()
