@@ -37,15 +37,24 @@ class statevar(var):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
-        self._unit_qtt = U(unit)
+        self._unit_var = unit
         super().__init__(f, alias=alias)
 
     def __get__(self, obj, objtype):
         v = super().__get__(obj, objtype)
-        return U(v, self._unit_qtt)
+        return self.unit(obj, v)
 
     def time(self, obj):
         return obj[self._time_var]
+
+    def unit(self, obj, v):
+        try:
+            # unit string returned by other variable
+            u = obj[self._unit_var]
+        except:
+            # unit string as is
+            u = self._unit_var
+        return U(v, u)
 
     def init(self, obj, **kwargs):
         d = self.data(obj)
