@@ -86,10 +86,11 @@ class System(Trackable, Configurable):
         # support direct specification of value, i.e. 0
         # support string value with unit, i.e. '1 m'
         v = U(name)
-        if isinstance(v, str):
+        try:
             # support nested reference, i.e. 'context.time'
             return reduce(lambda o, k: getattr(o, k), [self] + v.split('.'))
-        else:
+        except AttributeError:
+            # support baypass of unit string, numbers, None, etc.
             return v
 
     def __iter__(self):
@@ -103,11 +104,7 @@ class System(Trackable, Configurable):
         if config is None:
             config = self.context._config
         v = super().option(self, *keys, config=config)
-        try:
-            return self[v]
-        #HACK: support unit string bypass
-        except AttributeError:
-            return v
+        return self[v]
 
     def collect(self, recursive=True, exclude_self=True):
         def cast(v):
