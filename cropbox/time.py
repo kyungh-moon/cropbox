@@ -7,18 +7,9 @@ class Timer:
         self.dt = 0
 
     def update(self, t):
-        dt = self._interval(t)
+        dt = t - self.t
         if dt > 0:
             self.t = t
             self.dt = dt
         #TODO: make sure dt is not negative
         return dt
-
-    def _interval(self, t):
-        if t == self.t:
-            return 0
-        d = t - self.t
-        try:
-            return d.total_seconds() / (24*60*60) # per day
-        except AttributeError:
-            return d
