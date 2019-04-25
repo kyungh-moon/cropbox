@@ -23,4 +23,11 @@ class Unit:
             return v.to(unit)
         else:
             return Q(v, unit)
+
+    def __getitem__(self, v):
+        try:
+            return v.units
+        except AttributeError:
+            return None
+
 U = Unit()
