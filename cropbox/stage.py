@@ -1,15 +1,15 @@
 from .system import System
-from .statevar import derive
+from .statevar import derive, flag
 
 class Stage(System):
-    @derive
+    @flag
     def ready(self):
         return False
 
-    @derive
+    @flag
     def over(self):
         return False
 
-    @derive
+    @flag
     def ing(self):
         return self.ready and not self.over
