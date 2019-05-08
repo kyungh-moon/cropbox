@@ -1,5 +1,5 @@
 from .system import System
-from .statevar import derive, flag
+from .statevar import flag
 
 class Stage(System):
     @flag
