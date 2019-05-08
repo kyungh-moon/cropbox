@@ -1,4 +1,4 @@
-def growing_degree_day(T, T_base, T_opt=None, T_max=None):
+def growing_degree_days(T, T_base, T_opt=None, T_max=None):
     if T_opt is not None:
         T = min(T, T_opt)
     if T_max is not None:

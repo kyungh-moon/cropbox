@@ -1,4 +1,3 @@
-from cropbox.context import instance
 from cropbox.system import System
 from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, parameter, system
 from cropbox.util import beta_thermal_func, growing_degree_days, q10_thermal_func
