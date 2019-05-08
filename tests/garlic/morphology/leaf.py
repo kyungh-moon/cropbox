@@ -1,10 +1,11 @@
 from cropbox.context import instance
 from cropbox.system import System
 from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, parameter, system
+from cropbox.util import beta_thermal_func, growing_degree_days, q10_thermal_func
 
 from numpy import clip, exp, sqrt
 
-class Leaf(Systme):
+class Leaf(System):
     rank = constant(None)
 
     # cm dd-1 Fournier and Andrieu 1998 Pg239.
@@ -116,9 +117,8 @@ class Leaf(Systme):
         n = max(self.p.pheno.leaves_potential, self.p.pheno.leaves_generic)
         l_t = 1.64 * n
         l_pk = 0.88 * n
-        #TODO make BetaFunc generic for non-temperature use
-        #HACK BetaFunc.create() inefficient since registry signature keeps changing
-        return BetaFunc._calc(T=self.rank, R_max=self.maximum_length, T_opt=l_pk, T_max=l_t)
+        R_max = self.maximum_length
+        return R_max * beta_thermal_func(T=self.rank, T_opt=l_pk, T_max=l_t)
 
     # from CLeaf::calc_dimensions()
     # LM_min is a length characteristic of the longest leaf,in Fournier and Andrieu 1998, it was 90 cm
@@ -173,16 +173,17 @@ class Leaf(Systme):
         #FIXME no need to check here, as it will be compared against duration later anyways
         #return min(self._elongation_tracker.rate, self.growth_duration)
         if self.appeared and not self.mature:
-            return BetaFunc.create(
-                R_max=1.0,
+            R_max = 1.0
+            return R_max * beta_thermal_func(
+                T=self.p.pheno.temperature,
                 T_opt=self.p.pheno.optimal_temperature,
                 T_max=self.p.pheno.ceiling_temperature
-            ).calc(self.p.pheno.temperature)
+            )
 
     #TODO move to common module (i.e. Organ?)
     def _beta_growth(self, t, c_m, t_e, t_m=None, t_b=0, delta=1):
         #FIXME clipping necessary?
-        t = np.clip(t, 0., t_e)
+        t = clip(t, 0., t_e)
         t_m = t_e / 2 if t_m is None else t_m
         t_et = t_e - t
         t_em = t_e - t_m
@@ -211,7 +212,7 @@ class Leaf(Systme):
 
         T_ratio = (T_grow - T_base) / (T_peak - T_base)
         # final leaf size is adjusted by growth temperature determining cell size during elongation
-        return max(0, T_ratio * np.exp(1 - T_ratio))
+        return max(0, T_ratio * exp(1 - T_ratio))
 
     @derive
     def temperature_effect(self):
@@ -320,17 +321,17 @@ class Leaf(Systme):
             return 0
 
     @accumulate
-    def stay_green_water_stress_duration(self):
+    def stay_green_water_stress_duration(self, scale=0.5, threshold=-4.0):
         if self.mature:
             # One day of cumulative severe water stress (i.e., water_effect = 0.0 around -4MPa) would result in a reduction of leaf lifespan in relation staygreeness and growthDuration, SK
             # if scale is 1.0, one day of severe water stress shortens one day of stayGreenDuration
             #TODO remove WaterStress and use general Accumulator with a lambda function?
-            return WaterStress.create(scale=0.5).calc(self.water_potential_effect(-4.0))
+            return scale * (1 - self.water_potential_effect(threshold))
 
     @derive
     def stay_green_duration(self):
         # SK 8/20/10: as in Sinclair and Horie, 1989 Crop sciences, N availability index scaled between 0 and 1 based on
-        #nitrogen_index = max(0, (2 / (1 + np.exp(-2.9 * (self.g_content - 0.25))) - 1))
+        #nitrogen_index = max(0, (2 / (1 + exp(-2.9 * (self.g_content - 0.25))) - 1))
         return max(0, self.stay_green * self.growth_duration - self.stay_green_water_stress_duration)
 
     @accumulate
@@ -343,14 +344,13 @@ class Leaf(Systme):
         #return min(self._aging_tracker.rate, self.stay_green_duration)
         if self.mature and not self.aging:
             #TODO only for MAIZSIM
-            return Q10Func.create(T_opt=self.p.pheno.optimal_temperature).calc(self.p.pheno.temperature)
+            return q10_thermal_func(T=self.p.pheno.temperature, T_opt=self.p.pheno.optimal_temperature)
 
     @accumulate
-    def senescence_water_stress_duration(self):
+    def senescence_water_stress_duration(self, scale=0.5, threshold=-4.0):
         if self.aging:
             # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
-            #TODO remove WaterStress and use general Accumulator with a lambda function?
-            return WaterStress.create(scale=0.5).calc(self.water_potential_effect(-4.0))
+            return scale * (1 - self.water_potential_effect(threshold))
 
     @derive
     def senescence_duration(self):
@@ -365,7 +365,7 @@ class Leaf(Systme):
         #return min(self._senescence_tracker.rate, self.senescence_duration)
         #FIXME need to remove dependency cycle? (senescence_age -> senescence_ratio -> dead -> senescence_age)
         if self.aging and not self.dead:
-            return Q10Func.create(T_opt=self.p.pheno.optimal_temperature).calc(self.p.pheno.temperature)
+            return q10_thermal_func(T=self.p.pheno.temperature, T_opt=self.p.pheno.optimal_temperature)
 
     @derive
     #TODO confirm if it really means the senescence ratio, not rate
@@ -378,7 +378,7 @@ class Leaf(Systme):
         # else:
         #     t_m = t_e / 2
         #     r = (1 + (t_e - t) / (t_e - t_m)) * (t / t_e)**(t_e / (t_e - t_m))
-        #     return np.clip(r, 0., 1.)
+        #     return clip(r, 0., 1.)
         # for garlic
         #HACK prevents nan
         if self.length == 0:
@@ -409,7 +409,7 @@ class Leaf(Systme):
     def maturity(self):
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         if self.p.pheno.emerged and not self.mature:
-            return GrowingDegreeDays.create(T_base=4.0, T_opt=None, T_max=40.0).calc(self.p.pheno.temperature)
+            return growing_degree_days(T=self.p.pheno.temperature, T_base=4.0, T_max=40.0)
 
     # Nitrogen
 
