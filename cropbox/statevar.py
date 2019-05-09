@@ -88,19 +88,18 @@ class statevar(var):
         ps = inspect.signature(fun).parameters
         def resolve(k, p, i):
             if i == 0:
-                a = obj
+                return (k, obj)
+            a = obj.option(fun, k)
+            if a is not None:
+                return (k, a)
+            v = p.default
+            if v is not p.empty:
+                return (k, obj[v])
+            #HACK: distinguish KeyError raised by missing k, or by running statevar definition
+            elif k in obj._trackable:
+                return (k, obj[k])
             else:
-                a = obj.option(fun, k)
-            if a is None:
-                v = p.default
-                if v is not p.empty:
-                    a = obj[v]
-                #HACK: distinguish KeyError raised by missing k, or by running statevar definition
-                elif k in obj._trackable:
-                    a = obj[k]
-                else:
-                    return None
-            return (k, a)
+                return None
         params = dict(filter(None, [resolve(*t, i) for i, t in enumerate(ps.items())]))
         if len(ps) == len(params):
             return fun(**params)
