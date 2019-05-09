@@ -12,7 +12,7 @@ class FloralInitiation(Stage):
 
     @flag
     def over(self):
-        w = self.pheno.plant.weather
+        w = self.pheno.weather
         #FIXME solstice consideration is broken (flag turns false after solstice) and maybe unnecessary
         # solstice = w.time.tz.localize(datetime.datetime(w.time.year, 6, 21))
         # # no MAX_LEAF_NO implied unlike original model

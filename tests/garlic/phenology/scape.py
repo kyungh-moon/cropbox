@@ -20,9 +20,9 @@ class Scape(Stage):
     def over(self):
         return self.pheno.flowering.over or self.pheno.scape_removal.over
 
-class ScapeAppearance(Stage):
-    scape = system(proxy=True)
+#TODO implement @system(proxy=True) or MirroredStage equivalent to remove redundancy
 
+class ScapeAppearance(Scape):
     @flag
     def over(self):
         return self.rate >= 3.0 and not self.pheno.scape_removal.over
@@ -30,10 +30,8 @@ class ScapeAppearance(Stage):
     # def finish(self):
     #     print(f"* Scape Tip Visible: time = {self.time}, leaves = {self.pheno.leaves_appeared} / {self.pheno.leaves_initiated}")
 
-class ScapeRemoval(Stage):
-    scape = system(proxy=True)
-
-    @parameter
+class ScapeRemoval(Scape):
+    @parameter(init=None)
     def scape_removal_date(self):
         #FIXME handling default (non-removal) value
         pass
@@ -44,15 +42,16 @@ class ScapeRemoval(Stage):
 
     @flag
     def over(self):
-        return self.pheno.plant.weather.time >= self.scape_removal_date
+        if self.scape_removal_date is None:
+            return False
+        else:
+            return self.pheno.context.time >= self.scape_removal_date
 
     # def finish(self):
     #     print(f"* Scape Removed and Bulb Maturing: time = {self.time}")
 
 #TODO clean up naming (i.e. remove -ing prefix)
-class Flowering(Stage):
-    scape = system(proxy=True)
-
+class Flowering(Scape):
     @flag
     def over(self):
         return self.rate >= 5.0 and not self.pheno.scape_removal.over
@@ -61,9 +60,7 @@ class Flowering(Stage):
     #     print(f"* Inflorescence Visible and Flowering: time = {self.time}")
 
 #TODO clean up naming (i.e. remove -ing prefix)
-class Bulbiling(Stage):
-    scape = system(proxy=True)
-
+class Bulbiling(Scape):
     @flag
     def over(self):
         return self.rate >= 5.5 and not self.pheno.scape_removal.over

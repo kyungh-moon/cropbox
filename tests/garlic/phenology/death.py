@@ -8,7 +8,9 @@ class Death(Stage):
 
     @flag
     def over(self):
-        return self.pheno.plant.count.total_dropped_leaves >= self.pheno.leaves_initiated
+        #FIXME implement Count trait equivalent
+        #return self.pheno.plant.count.total_dropped_leaves >= self.pheno.leaves_initiated
+        return False
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

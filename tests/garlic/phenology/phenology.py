@@ -9,9 +9,32 @@ from cropbox.system import System
 from cropbox.statevar import derive, flag, parameter, system
 
 from .germination import Germination
+from .emergence import Emergence
+from .leafinitiation import LeafInitiationWithStorage
+from .leafappearance import LeafAppearance
+from .floralinitiation import FloralInitiation
+from .scape import Bulbiling, Flowering, Scape, ScapeAppearance, ScapeRemoval
+from .death import Death
+
+#TODO make common Weather class
+class Weather(System):
+    @parameter
+    def T_air(self): return 25 # C
+
+    #FIXME is day_length part of Weather?
+    @parameter
+    def day_length(self): return 12 # hours
+
+#TODO make common Soil class
+class Soil(System):
+    @parameter
+    def T_soil(self): return 10 # C
 
 #TODO make a common class to be shared by Garlic and MAIZSIM
 class Phenology(System):
+    weather = system(Weather)
+    soil = system(Soil)
+
     @parameter
     def storage_days(self):
         pass
@@ -85,9 +108,18 @@ class Phenology(System):
     # #def record(self, ...):
     # #    pass
 
-    @system(phenology='self')
-    def germination(self):
-        return Germination
+    germination = system(Germination, phenology='self')
+    emergence = system(Emergence, phenology='self')
+    leaf_initiation = system(LeafInitiationWithStorage, phenology='self')
+    leaf_appearance = system(LeafAppearance, phenology='self')
+    floral_initiation = system(FloralInitiation, phenology='self')
+    bulbing = system(Bulbiling, phenology='self')
+    scape = system(Scape, phenology='self')
+    scape_appearance = system(ScapeAppearance, phenology='self')
+    scape_removal = system(ScapeRemoval, phenology='self')
+    flowering = system(Flowering, phenology='self')
+    bulbiling = system(Bulbiling, phenology='self')
+    death = system(Death, phenology='self')
 
     ############
     # Accessor #
@@ -107,26 +139,23 @@ class Phenology(System):
 
     @derive
     def leaves_initiated(self):
-        # return self.leaf_initiation.leaves
-        return 2
+        return self.leaf_initiation.leaves
 
     @derive
     def leaves_appeared(self):
-        # return self.leaf_appearance.leaves
-        return 1
+        return self.leaf_appearance.leaves
 
     @derive(alias='T')
     def temperature(self):
-        # if self.leaves_appeared < 9:
-        #     #FIXME soil module is not implemented yet
-        #     #T = self.plant.soil.T_soil
-        #     #HACK garlic model does not use soil temperature
-        #     T = self.plant.weather.T_air
-        # else:
-        #     T = self.plant.weather.T_air
-        # #FIXME T_cur doesn't go below zero, but is it fair assumption?
-        # return T if T > 0 else 0
-        return 25
+        if self.leaves_appeared < 9:
+            #FIXME soil module is not implemented yet
+            #T = self.soil.T_soil
+            #HACK garlic model does not use soil temperature
+            T = self.weather.T_air
+        else:
+            T = self.weather.T_air
+        #FIXME T_cur doesn't go below zero, but is it fair assumption?
+        return T if T > 0 else 0
 
     # @derive
     # def growing_temperature(self):
@@ -142,46 +171,46 @@ class Phenology(System):
     def germinated(self):
         return self.germination.over
 
-    # @deriflagve
-    # def emerging(self):
-    #     return self.emergence.ing
+    @flag
+    def emerging(self):
+        return self.emergence.ing
 
-    # @flag
-    # def emerged(self):
-    #     return self.emergence.over
+    @flag
+    def emerged(self):
+        return self.emergence.over
 
     # garlic
 
-    # @flag
-    # def floral_initiated(self):
-    #     return self.floral_initiation.over
+    @flag
+    def floral_initiated(self):
+        return self.floral_initiation.over
 
-    # @flag
-    # def scaping(self):
-    #     return self.scape.ing
+    @flag
+    def scaping(self):
+        return self.scape.ing
 
-    # @flag
-    # def scape_appeared(self):
-    #     return self.scape_appearance.over
+    @flag
+    def scape_appeared(self):
+        return self.scape_appearance.over
 
-    # @flag
-    # def scape_removed(self):
-    #     return self.scape_removal.over
+    @flag
+    def scape_removed(self):
+        return self.scape_removal.over
 
-    # @flag
-    # def flowered(self):
-    #     return self.flowering.over
+    @flag
+    def flowered(self):
+        return self.flowering.over
 
-    # @flag
-    # def bulb_maturing(self):
-    #     #FIXME clear definition of bulb maturing
-    #     return self.scape_removed or self.bulbiling.over
+    @flag
+    def bulb_maturing(self):
+        #FIXME clear definition of bulb maturing
+        return self.scape_removed or self.bulbiling.over
 
     # common
 
-    # @flag
-    # def dead(self):
-    #     return self.death.over
+    @flag
+    def dead(self):
+        return self.death.over
 
     # # GDDsum
     # @derive
