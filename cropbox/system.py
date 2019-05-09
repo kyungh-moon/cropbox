@@ -16,7 +16,7 @@ class TrackableMeta(type):
             n2 = {k: v for d in [{k: v for k in v._alias_lst} for v in n1.values()] for k, v in d.items()}
             n1.update(n2)
             return n1
-        ns = {f'_{d.__name__}': restruct(namespace, d) for d in decorators}
+        ns = {f'_trackable_{d.__name__}': restruct(namespace, d) for d in decorators}
         var_namespace = dict(ChainMap(*ns.values()))
 
         # construct a new Trackable class
@@ -116,7 +116,7 @@ class System(Trackable, Configurable):
             except TypeError:
                 return {v}
         def visit(s, S=set()):
-            SS = set.union(*[cast(s[n]) for n in s._system])
+            SS = set.union(*[cast(s[n]) for n in s._trackable_system])
             for ss in SS:
                 if ss in S:
                     continue
