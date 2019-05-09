@@ -1,14 +1,8 @@
-from cropbox.context import instance
 from cropbox.stage import Stage
 from cropbox.statevar import accumulate, drive, derive, flag, parameter, system
 from cropbox.util import beta_thermal_func
 
 class Germination(Stage):
-    phenology = system()
-    temperature = drive('phenology', alias='T')
-    optimal_temperature = drive('phenology', alias='T_opt')
-    ceiling_temperature = drive('phenology', alias='T_ceil')
-
     @parameter(alias='R_max')
     def maximum_germination_rate(self):
         return 0.45
@@ -25,11 +19,7 @@ class Germination(Stage):
 
     @flag
     def over(self):
-        return self.rate >= 0.5 # or self.phenology.emergence.begin_from_emergence
-
-    @derive
-    def x(self):
-        return self.rate
+        return self.rate >= 0.5 or self.pheno.emergence.begin_from_emergence
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

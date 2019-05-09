@@ -1,7 +1,12 @@
 from .system import System
-from .statevar import flag
+from .statevar import drive, flag, system
 
 class Stage(System):
+    phenology = system(alias='pheno')
+    temperature = drive('pheno', alias='T')
+    optimal_temperature = drive('pheno', alias='T_opt')
+    ceiling_temperature = drive('pheno', alias='T_ceil')
+
     @flag
     def ready(self):
         return False
