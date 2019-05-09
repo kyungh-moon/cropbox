@@ -30,6 +30,9 @@ class system(var):
         d = self.data(obj)
         d[self] = s
 
+class systemproxy(system):
+    pass
+
 class statevar(var):
     trace = Trace()
 

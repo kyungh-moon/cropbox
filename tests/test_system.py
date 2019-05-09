@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.context import instance
-from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, flip, optimize, parameter, produce, statevar, system
+from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, flip, optimize, parameter, produce, statevar, system, systemproxy
 
 import pytest
 
@@ -299,6 +299,16 @@ def test_flag():
     assert s.a and not s.b
     assert not s.c and not s.d
     assert not s.e and not s.f
+
+def test_systemproxy():
+    class T(System):
+        @derive
+        def a(self):
+            return 1
+    class S(System):
+        t = systemproxy(T)
+    s = instance(S)
+    assert s.a == s.t.a == 1
 
 def test_produce():
     class S(System):

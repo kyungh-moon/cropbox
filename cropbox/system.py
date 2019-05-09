@@ -1,10 +1,10 @@
-from .statevar import statevar, system
+from .statevar import statevar, system, systemproxy
 from .unit import U
 from collections import ChainMap
 from functools import reduce
 
 # ChainMap order is backwards like multiple inheritance
-decorators = (statevar, system)
+decorators = (statevar, system, systemproxy)
 
 class TrackableMeta(type):
     def __new__(metacls, name, bases, namespace):
@@ -40,12 +40,19 @@ class Trackable(metaclass=TrackableMeta):
     def __getattr__(self, name):
         if name == 'self':
             return self
-        try:
-            v = self._trackable[name]
-        except KeyError:
-            raise AttributeError(f"{self} has no attribute '{name}'.")
+        def obj():
+            yield self
+            for s in self._trackable_systemproxy:
+                yield self[s]
+        for o in obj():
+            try:
+                v = o._trackable[name]
+            except KeyError:
+                continue
+            else:
+                return v.__get__(o, type(o))
         else:
-            return v.__get__(self, type(self))
+            raise AttributeError(f"{self} has no trackable '{name}'.")
 
     def update(self):
         [v.get(self) for v in self._trackable.values()]
