@@ -1,5 +1,8 @@
+from .unit import U
+
 class var:
-    def __init__(self, f=None, *, alias=None, **kwargs):
+    def __init__(self, f=None, *, unit=None, alias=None, **kwargs):
+        self._unit_var = unit
         self._alias_lst = alias.split(',') if alias else []
         self._kwargs = kwargs
         self.__call__(f)
@@ -25,7 +28,8 @@ class var:
         return f'<{self.__name__}>'
 
     def __get__(self, obj, objtype):
-        return self.get(obj)
+        v = self.get(obj)
+        return self.unit(obj, v)
 
     def data(self, obj):
         n = '_trackable_data'
@@ -35,6 +39,15 @@ class var:
         except KeyError:
             setattr(obj, n, {})
         return getattr(obj, n)
+
+    def unit(self, obj, v):
+        try:
+            # unit string returned by other variable
+            u = obj[self._unit_var]
+        except:
+            # unit string as is
+            u = self._unit_var
+        return U(v, u)
 
     def init(self, obj, **kwargs):
         pass

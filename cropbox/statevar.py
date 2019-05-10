@@ -1,6 +1,5 @@
 from .trace import Trace
 from .track import Track, Accumulate, Difference, Flip, Preserve
-from .unit import U
 from .var import var
 
 #HACK: to implement @optimize, need better way of controlling this
@@ -40,24 +39,10 @@ class statevar(var):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
-        self._unit_var = unit
-        super().__init__(f, alias=alias)
-
-    def __get__(self, obj, objtype):
-        v = super().__get__(obj, objtype)
-        return self.unit(obj, v)
+        super().__init__(f, unit=unit, alias=alias)
 
     def time(self, obj):
         return obj[self._time_var]
-
-    def unit(self, obj, v):
-        try:
-            # unit string returned by other variable
-            u = obj[self._unit_var]
-        except:
-            # unit string as is
-            u = self._unit_var
-        return U(v, u)
 
     def init(self, obj, **kwargs):
         d = self.data(obj)
