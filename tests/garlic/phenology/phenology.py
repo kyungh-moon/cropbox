@@ -13,6 +13,7 @@ from .emergence import Emergence
 from .leafinitiation import LeafInitiationWithStorage
 from .leafappearance import LeafAppearance
 from .floralinitiation import FloralInitiation
+from .bulbing import Bulbing
 from .scape import Bulbiling, Flowering, Scape, ScapeAppearance, ScapeRemoval
 from .death import Death
 
@@ -113,7 +114,7 @@ class Phenology(System):
     leaf_initiation = system(LeafInitiationWithStorage, phenology='self')
     leaf_appearance = system(LeafAppearance, phenology='self')
     floral_initiation = system(FloralInitiation, phenology='self')
-    bulbing = system(Bulbiling, phenology='self')
+    bulbing = system(Bulbing, phenology='self')
     scape = system(Scape, phenology='self')
     scape_appearance = system(ScapeAppearance, phenology='self')
     scape_removal = system(ScapeRemoval, phenology='self')
