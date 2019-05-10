@@ -6,28 +6,31 @@ from .var import var
 #TODO: probably need a full dependency graph between variables to push updates downwards
 #FORCE_UPDATE = False
 
-import inspect
 import random
 
 class system(var):
     def init(self, obj, **kwargs):
+        d = self.data(obj)
         try:
             s = kwargs[self.__name__]
         except KeyError:
-            cls = self._wrapped_fun
-            #HACK: when System(s) to be returned were wrapped in __call__()
-            if not isinstance(cls, type):
-                cls = cls(obj)
-            if cls is None:
-                s = None
-            elif isinstance(cls, list):
-                s = []
-            elif isinstance(cls, type):
-                s = cls(context=obj.context, **{k: obj[v] for k, v in self._kwargs.items()})
-            else:
-                s = cls
-        d = self.data(obj)
+            s = self.compute(obj)
         d[self] = s
+
+    def compute(self, obj):
+        cls = self._wrapped_fun
+        #HACK: when System(s) to be returned were wrapped in __call__()
+        if not isinstance(cls, type):
+            cls = cls(obj)
+        if cls is None:
+            s = None
+        elif isinstance(cls, list):
+            s = []
+        elif isinstance(cls, type):
+            s = cls(context=obj.context, **{k: obj[v] for k, v in self._kwargs.items()})
+        else:
+            s = cls
+        return s
 
 class systemproxy(system):
     pass
@@ -68,37 +71,6 @@ class statevar(var):
             #return tr.update(t, r, force=self.trace.is_update_forced)
             return tr.update(t, r, regime=self.trace.regime)
 
-    def compute(self, obj):
-        return self._compute(obj)
-
-    def _compute(self, obj):
-        fun = self._wrapped_fun
-        ps = inspect.signature(fun).parameters
-        def resolve(k, p, i):
-            if i == 0:
-                return (k, obj)
-            a = obj.option(fun, k)
-            if a is not None:
-                return (k, a)
-            v = p.default
-            if v is not p.empty:
-                return (k, obj[v])
-            #HACK: distinguish KeyError raised by missing k, or by running statevar definition
-            elif k in obj._trackable:
-                return (k, obj[k])
-            else:
-                return None
-        params = dict(filter(None, [resolve(*t, i) for i, t in enumerate(ps.items())]))
-        if len(ps) == len(params):
-            return fun(**params)
-        else:
-            def f(*args, **kwargs):
-                p = params.copy()
-                p.update(kwargs)
-                q = dict(zip([k for k in ps if k not in p], args))
-                return fun(**p, **q)
-            return f
-
 class derive(statevar):
     def __init__(self, f=None, **kwargs):
         super().__init__(f, track=Track, **kwargs)
@@ -136,7 +108,7 @@ class parameter(proxy):
 
 class drive(derive):
     def compute(self, obj):
-        d = self._compute(obj) # i.e. return df.loc[t]
+        d = super().compute(obj) # i.e. return df.loc[t]
         return d[self.__name__]
 
 class flag(derive):
@@ -149,11 +121,11 @@ class flag(derive):
         return True if v >= 1 else random.random() <= v
 
     def compute(self, obj):
-        return self.check(obj) and self._compute(obj)
+        return self.check(obj) and super().compute(obj)
 
 class produce(derive):
     def compute(self, obj):
-        v = self._compute(obj)
+        v = super().compute(obj)
         if v is None:
             return ()
         elif isinstance(v, tuple):
@@ -184,7 +156,7 @@ class optimize(derive):
             print(f'@optimize: {x} ({regime})')
             with self.trace(self, obj, regime=regime):
                 tr._value = x
-                return self._compute(obj)
+                return super().compute(obj)
         l = obj[self._lower_var]
         u = obj[self._upper_var]
         #FIXME: minimize_scalar(method='brent/bounded') doesn't work with (l, r) bracket/bounds

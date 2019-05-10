@@ -1,5 +1,7 @@
 from .unit import U
 
+import inspect
+
 class var:
     def __init__(self, f=None, *, unit=None, alias=None, **kwargs):
         self._unit_var = unit
@@ -50,7 +52,9 @@ class var:
         return U(v, u)
 
     def init(self, obj, **kwargs):
-        pass
+        d = self.data(obj)
+        v = self.compute(obj)
+        d[self] = self.unit(obj, v)
 
     def get(self, obj):
         d = self.data(obj)
@@ -59,3 +63,31 @@ class var:
         except KeyError:
             self.init(obj, **obj._kwargs)
             return d[self]
+
+    def compute(self, obj):
+        fun = self._wrapped_fun
+        ps = inspect.signature(fun).parameters
+        def resolve(k, p, i):
+            if i == 0:
+                return (k, obj)
+            a = obj.option(fun, k)
+            if a is not None:
+                return (k, a)
+            v = p.default
+            if v is not p.empty:
+                return (k, obj[v])
+            #HACK: distinguish KeyError raised by missing k, or by running statevar definition
+            elif k in obj._trackable:
+                return (k, obj[k])
+            else:
+                return None
+        params = dict(filter(None, [resolve(*t, i) for i, t in enumerate(ps.items())]))
+        if len(ps) == len(params):
+            return fun(**params)
+        else:
+            def f(*args, **kwargs):
+                p = params.copy()
+                p.update(kwargs)
+                q = dict(zip([k for k in ps if k not in p], args))
+                return fun(**p, **q)
+            return f
