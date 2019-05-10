@@ -15,7 +15,7 @@ class system(var):
             s = kwargs[self.__name__]
         except KeyError:
             cls = self._wrapped_fun
-            #HACK: when decorated function returns a System class
+            #HACK: when System(s) to be returned were wrapped in __call__()
             if not isinstance(cls, type):
                 cls = cls(obj)
             if cls is None:
