@@ -116,10 +116,10 @@ class Phenology(System):
     floral_initiation = system(FloralInitiation, phenology='self')
     bulbing = system(Bulbing, phenology='self')
     scape = system(Scape, phenology='self')
-    scape_appearance = system(ScapeAppearance, phenology='self')
-    scape_removal = system(ScapeRemoval, phenology='self')
-    flowering = system(Flowering, phenology='self')
-    bulbiling = system(Bulbiling, phenology='self')
+    scape_appearance = system(ScapeAppearance, phenology='self', scape='scape')
+    scape_removal = system(ScapeRemoval, phenology='self', scape='scape')
+    flowering = system(Flowering, phenology='self', scape='scape')
+    bulbiling = system(Bulbiling, phenology='self', scape='scape')
     death = system(Death, phenology='self')
 
     ############

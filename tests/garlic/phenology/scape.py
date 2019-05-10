@@ -1,5 +1,5 @@
 from cropbox.stage import Stage
-from cropbox.statevar import accumulate, flag, parameter, system
+from cropbox.statevar import accumulate, flag, parameter, system, systemproxy
 from cropbox.util import beta_thermal_func
 
 class Scape(Stage):
@@ -20,9 +20,9 @@ class Scape(Stage):
     def over(self):
         return self.pheno.flowering.over or self.pheno.scape_removal.over
 
-#TODO implement @system(proxy=True) or MirroredStage equivalent to remove redundancy
+class ScapeAppearance(Stage):
+    scape = systemproxy()
 
-class ScapeAppearance(Scape):
     @flag
     def over(self):
         return self.rate >= 3.0 and not self.pheno.scape_removal.over
@@ -30,7 +30,9 @@ class ScapeAppearance(Scape):
     # def finish(self):
     #     print(f"* Scape Tip Visible: time = {self.time}, leaves = {self.pheno.leaves_appeared} / {self.pheno.leaves_initiated}")
 
-class ScapeRemoval(Scape):
+class ScapeRemoval(Stage):
+    scape = systemproxy()
+
     @parameter(init=None)
     def scape_removal_date(self):
         #FIXME handling default (non-removal) value
@@ -51,7 +53,9 @@ class ScapeRemoval(Scape):
     #     print(f"* Scape Removed and Bulb Maturing: time = {self.time}")
 
 #TODO clean up naming (i.e. remove -ing prefix)
-class Flowering(Scape):
+class Flowering(Stage):
+    scape = systemproxy()
+
     @flag
     def over(self):
         return self.rate >= 5.0 and not self.pheno.scape_removal.over
@@ -60,7 +64,9 @@ class Flowering(Scape):
     #     print(f"* Inflorescence Visible and Flowering: time = {self.time}")
 
 #TODO clean up naming (i.e. remove -ing prefix)
-class Bulbiling(Scape):
+class Bulbiling(Stage):
+    scape = systemproxy()
+
     @flag
     def over(self):
         return self.rate >= 5.5 and not self.pheno.scape_removal.over
