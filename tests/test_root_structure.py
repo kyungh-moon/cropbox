@@ -24,7 +24,7 @@ def test_root_structure():
         def branching_chance(self):
             return 0.5
 
-        @flag(prob='branching_chance')
+        @flag(prob='branching_chance', cyclic=True)
         def is_branching(self, l='length', ll='last_branching_length', i='branching_interval'):
             return l - ll > i
 

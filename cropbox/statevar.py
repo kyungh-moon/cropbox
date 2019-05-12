@@ -119,7 +119,7 @@ class drive(derive):
 class flag(derive):
     def __init__(self, f=None, prob=1, **kwargs):
         self._prob_var = prob
-        super().__init__(f, unit=None, **kwargs)
+        super().__init__(f, unit=None, cyclic=True, **kwargs)
 
     def check(self, obj):
         v = obj[self._prob_var]

@@ -3,7 +3,7 @@ from .statevar import drive, flag, system
 
 class Stage(System):
     phenology = system(alias='pheno')
-    temperature = drive('pheno', alias='T')
+    temperature = drive('pheno', alias='T', cyclic=True)
     optimal_temperature = drive('pheno', alias='T_opt')
     ceiling_temperature = drive('pheno', alias='T_ceil')
 
