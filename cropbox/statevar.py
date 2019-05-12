@@ -38,10 +38,11 @@ class systemproxy(system):
 class statevar(var):
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None):
+    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None, cyclic=False):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
+        self._cyclic_flag = cyclic
         super().__init__(f, unit=unit, alias=alias)
 
     def time(self, obj):
@@ -61,8 +62,7 @@ class statevar(var):
             #HACK: prevent recursion loop already in computation tree
             tr = super().get(obj)
             if self.trace.is_stacked(self):
-                #FIXME: general approach
-                if type(self) in {accumulate, difference, optimize}:
+                if self._cyclic_flag:
                     print(f'{self} stacked -- return {tr._value}')
                     return tr._value
                 else:
@@ -82,11 +82,11 @@ class derive(statevar):
 
 class accumulate(statevar):
     def __init__(self, f=None, **kwargs):
-        super().__init__(f, track=Accumulate, **kwargs)
+        super().__init__(f, track=Accumulate, cyclic=True, **kwargs)
 
 class difference(statevar):
     def __init__(self, f=None, **kwargs):
-        super().__init__(f, track=Difference, **kwargs)
+        super().__init__(f, track=Difference, cyclic=True, **kwargs)
 
 class flip(statevar):
     def __init__(self, f=None, **kwargs):
@@ -149,7 +149,7 @@ class optimize(derive):
     def __init__(self, f=None, *, lower=None, upper=None, **kwargs):
         self._lower_var = lower
         self._upper_var = upper
-        super().__init__(f, **kwargs)
+        super().__init__(f, cyclic=True, **kwargs)
 
     def compute(self, obj):
         tr = self.data(obj)[self]
