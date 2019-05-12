@@ -27,7 +27,7 @@ class Emergence(Stage):
     @flag
     def over(self):
         if self.begin_from_emergence:
-            return self.context.time >= self.emregence_date
+            return self.context.time >= self.emergence_date
         else:
             return self.rate >= 1.0
 
