@@ -156,7 +156,7 @@ class optimize(derive):
             print(f'@optimize: {x} ({regime})')
             with self.trace(self, obj, regime=regime):
                 tr._value = x
-                return super().compute(obj)
+                return super(optimize, self).compute(obj)
         l = obj[self._lower_var]
         u = obj[self._upper_var]
         #FIXME: minimize_scalar(method='brent/bounded') doesn't work with (l, r) bracket/bounds
