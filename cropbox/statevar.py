@@ -38,11 +38,12 @@ class systemproxy(system):
 class statevar(var):
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None, cyclic=False):
+    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None, cyclic=False, breakpoint=False):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
         self._cyclic_flag = cyclic
+        self._breakpoint_flg = breakpoint
         super().__init__(f, unit=unit, alias=alias)
 
     def time(self, obj):
@@ -59,6 +60,9 @@ class statevar(var):
 
     def get(self, obj):
         with self.trace(self, obj):
+            # for debugging purpose
+            if self._breakpoint_flg:
+                breakpoint()
             #HACK: prevent recursion loop already in computation tree
             tr = super().get(obj)
             if self.trace.is_stacked(self):
