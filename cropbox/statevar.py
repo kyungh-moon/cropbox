@@ -42,7 +42,7 @@ class statevar(var):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
-        self._cyclic_flag = cyclic
+        self._cyclic_flg = cyclic
         self._breakpoint_flg = breakpoint
         super().__init__(f, unit=unit, alias=alias)
 
@@ -66,7 +66,7 @@ class statevar(var):
             #HACK: prevent recursion loop already in computation tree
             tr = super().get(obj)
             if self.trace.is_stacked(self):
-                if self._cyclic_flag:
+                if self._cyclic_flg:
                     print(f'{self} stacked -- return {tr._value}')
                     return tr._value
                 else:
