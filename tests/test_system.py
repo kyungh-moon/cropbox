@@ -18,6 +18,17 @@ def test_derive():
     s = instance(S)
     assert s.a == 1 and s.b == 2 and s.c == 3
 
+def test_derive_with_cross_reference():
+    class S(System):
+        @derive
+        def a(self):
+            return self.b
+        @derive
+        def b(self):
+            return self.a
+    with pytest.raises(RecursionError):
+        s = instance(S)
+
 def test_accumulate():
     class S(System):
         @derive
@@ -53,6 +64,36 @@ def test_accumulate_with_cross_reference():
     assert s.a == 3 and s.b == 3
     c.advance()
     assert s.a == 7 and s.b == 7
+
+def test_accumulate_with_cross_reference_mirror():
+    class S1(System):
+        @accumulate
+        def a(self):
+            return self.b + 1
+        @accumulate
+        def b(self):
+            return self.a + 2
+    class S2(System):
+        @accumulate
+        def a(self):
+            return self.b + 2
+        @accumulate
+        def b(self):
+            return self.a + 1
+    s1 = instance(S1)
+    s2 = instance(S2)
+    c1 = s1.context
+    c2 = s2.context
+    assert s1.a == s2.b and s1.b == s2.a
+    c1.advance()
+    c2.advance()
+    assert s1.a == s2.b and s1.b == s2.a
+    c1.advance()
+    c2.advance()
+    assert s1.a == s2.b and s1.b == s2.a
+    c1.advance()
+    c2.advance()
+    assert s1.a == s2.b and s1.b == s2.a
 
 def test_accumulate_with_time():
     class S(System):

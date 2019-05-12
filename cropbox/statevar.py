@@ -61,8 +61,13 @@ class statevar(var):
             #HACK: prevent recursion loop already in computation tree
             tr = super().get(obj)
             if self.trace.is_stacked(self):
-                print(f'{self} stacked -- return {tr._value}')
-                return tr._value
+                #FIXME: general approach
+                if type(self) in {accumulate, difference, optimize}:
+                    print(f'{self} stacked -- return {tr._value}')
+                    return tr._value
+                else:
+                    #TODO: implement own exception
+                    raise RecursionError(f'{self} stacked -- {self.trace.stack}')
             # support custom timestamp (i.e. elongation age instead of calendar time)
             t = self.time(obj)
             # lazy evaluation preventing redundant computation
