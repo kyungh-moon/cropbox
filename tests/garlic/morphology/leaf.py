@@ -199,6 +199,8 @@ class Leaf(System):
                 c_m=self.maximum_elongation_rate,
                 t_e=self.growth_duration,
             )
+        else:
+            return 0
 
     @derive
     def _temperature_effect(self, T_grow, T_peak, T_base):
