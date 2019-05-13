@@ -132,6 +132,10 @@ class flag(derive):
         return self.check(obj) and super().compute(obj)
 
 class produce(derive):
+    def __init__(self, f=None, *, target='children', **kwargs):
+        self._target_var = target
+        super().__init__(f, **kwargs)
+
     def compute(self, obj):
         V = super().compute(obj)
         def queue(v):
@@ -144,7 +148,11 @@ class produce(derive):
                 systemcls, kwargs = v, {}
             def f():
                 s = systemcls(context=obj.context, parent=obj, children=[], **kwargs)
-                obj.children.append(s)
+                v = obj[self._target_var]
+                if isinstance(v, list):
+                    v.append(s)
+                else:
+                    raise NotImplementedError()
             obj.context.queue(f)
             return v
         if isinstance(V, list):
