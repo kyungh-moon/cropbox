@@ -133,18 +133,24 @@ class flag(derive):
 
 class produce(derive):
     def compute(self, obj):
-        v = super().compute(obj)
-        if v is None:
-            return ()
-        elif isinstance(v, tuple):
-            systemcls, kwargs = v
+        V = super().compute(obj)
+        def queue(v):
+            if v is None:
+                #FIXME return None for consistency?
+                return ()
+            elif isinstance(v, tuple):
+                systemcls, kwargs = v
+            else:
+                systemcls, kwargs = v, {}
+            def f():
+                s = systemcls(context=obj.context, parent=obj, children=[], **kwargs)
+                obj.children.append(s)
+            obj.context.queue(f)
+            return v
+        if isinstance(V, list):
+            return [queue(v) for v in V]
         else:
-            systemcls, kwargs = v, {}
-        def f():
-            s = systemcls(context=obj.context, parent=obj, children=[], **kwargs)
-            obj.children.append(s)
-        obj.context.queue(f)
-        return v
+            return queue(V)
 
 import scipy.optimize
 
