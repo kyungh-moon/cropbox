@@ -52,9 +52,9 @@ class var:
         return U(v, u)
 
     def init(self, obj, **kwargs):
-        d = self.data(obj)
         v = self.compute(obj)
-        d[self] = self.unit(obj, v)
+        uv = self.unit(obj, v)
+        self.set(obj, uv)
 
     def get(self, obj):
         d = self.data(obj)
@@ -63,6 +63,10 @@ class var:
         except KeyError:
             self.init(obj, **obj._kwargs)
             return d[self]
+
+    def set(self, obj, value):
+        d = self.data(obj)
+        d[self] = value
 
     def compute(self, obj):
         fun = self._wrapped_fun

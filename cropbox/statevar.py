@@ -10,12 +10,11 @@ import random
 
 class system(var):
     def init(self, obj, **kwargs):
-        d = self.data(obj)
         try:
             s = kwargs[self.__name__]
         except KeyError:
             s = self.compute(obj)
-        d[self] = s
+        self.set(obj, s)
 
     def compute(self, obj):
         cls = self._wrapped_fun
@@ -50,13 +49,13 @@ class statevar(var):
         return obj[self._time_var]
 
     def init(self, obj, **kwargs):
-        d = self.data(obj)
         t = self.time(obj)
         try:
             v = kwargs[self.__name__]
         except KeyError:
             v = obj[self._init_var]
-        d[self] = self._track_cls(t, self.unit(obj, v))
+        tr = self._track_cls(t, self.unit(obj, v))
+        self.set(obj, tr)
 
     def get(self, obj):
         with self.trace(self, obj):
@@ -156,6 +155,7 @@ class optimize(derive):
         super().__init__(f, cyclic=True, **kwargs)
 
     def compute(self, obj):
+        #HACK: can't use self.get(obj) overriden in @derive
         tr = self.data(obj)[self]
         i = 0
         def cost(x):
