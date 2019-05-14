@@ -67,7 +67,7 @@ class statevar(var):
             if self.trace.is_stacked(self):
                 if self._cyclic_flg:
                     print(f'{self} stacked -- return {tr._value}')
-                    return tr._value
+                    return tr.value
                 else:
                     #TODO: implement own exception
                     raise RecursionError(f'{self} stacked -- {self.trace.stack}')
