@@ -14,16 +14,16 @@ class Track:
     def check(self, t, regime):
         dt = self.timer.update(t)
         #TODO check recursion loop?
-        force = False
+        update = False
         if dt > 0:
-            force = True
+            update = True
         if self._value is None:
             self._value = self._initial_value
-            force = True
+            update = True
         if regime is not None and regime != self._regime:
             self._regime = regime
-            force = True
-        return force
+            update = True
+        return update
 
     def store(self, v):
         value = v()
