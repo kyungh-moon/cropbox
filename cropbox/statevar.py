@@ -77,7 +77,11 @@ class statevar(var):
             r = lambda: self.compute(obj)
             #HACK: prevent premature initialization?
             #return tr.update(t, r, force=self.trace.is_update_forced)
-            return tr.update(t, r, regime=self.trace.regime)
+            #return tr.update(t, r, regime=self.trace.regime)
+            if tr.check(t, regime=self.trace.regime):
+                return tr.store(r)
+            else:
+                return tr.value
 
 class derive(statevar):
     def __init__(self, f=None, **kwargs):

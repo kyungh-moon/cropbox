@@ -11,7 +11,7 @@ class Track:
         self._value = None
         self._regime = ''
 
-    def update(self, t, v, regime):
+    def check(self, t, regime):
         dt = self.timer.update(t)
         #TODO check recursion loop?
         force = False
@@ -23,14 +23,13 @@ class Track:
         if regime is not None and regime != self._regime:
             self._regime = regime
             force = True
-        if force:
-            self.store(v, dt)
-        return self.value
+        return force
 
-    def store(self, v, dt):
+    def store(self, v):
         value = v()
         if value is not None:
             self._value = value
+        return self.value
 
     @property
     def value(self):
@@ -41,25 +40,27 @@ class Accumulate(Track):
         super().reset(t)
         self._rate = None
 
-    def store(self, v, dt):
+    def store(self, v):
         if self._rate is not None:
-            self._value += self._rate * dt
+            self._value += self._rate * self.timer.dt
         self._rate = v()
+        return self.value
 
 class Difference(Accumulate):
-    def store(self, v, dt):
+    def store(self, v):
         self._value = U(0, U[self._value])
-        super().store(v, dt)
+        return super().store(v)
 
 class Flip(Track):
     def reset(self, t):
         super().reset(t)
         self._changed = False
 
-    def store(self, v, dt):
+    def store(self, v):
         value = v()
         self._changed = (value != self._value)
         self._value = value
+        return self.value
 
     @property
     def value(self):
@@ -71,7 +72,9 @@ class Preserve(Track):
         super().reset(t)
         self._stored = False
 
-    def store(self, v, dt):
-        if not self._stored:
-            super().store(v, dt)
-            self._stored = True
+    def check(self, t, regime):
+        return super().check(t, regime) and not self._stored
+
+    def store(self, v):
+        self._stored = True
+        return super().store(v)
