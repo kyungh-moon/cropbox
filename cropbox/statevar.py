@@ -6,6 +6,13 @@ from .var import var
 #TODO: probably need a full dependency graph between variables to push updates downwards
 #FORCE_UPDATE = False
 
+from enum import IntEnum
+class Priority(IntEnum):
+    DEFAULT = 0
+    FLAG = 1
+    ACCUMULATE = 2
+    PRODUCE = -1
+
 import random
 
 class system(var):
@@ -37,11 +44,12 @@ class systemproxy(system):
 class statevar(var):
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None, cyclic=False, breakpoint=False):
+    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None, cyclic=False, priority=Priority.DEFAULT, breakpoint=False):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
         self._cyclic_flg = cyclic
+        self._priority_lvl = priority
         self._breakpoint_flg = breakpoint
         super().__init__(f, unit=unit, alias=alias)
 
@@ -54,7 +62,7 @@ class statevar(var):
             v = kwargs[self.__name__]
         except KeyError:
             v = obj[self._init_var]
-        tr = self._track_cls(t, self.unit(obj, v))
+        tr = self._track_cls(t, self.unit(obj, v), name=self.__name__)
         self.set(obj, tr)
 
     def get(self, obj):
@@ -79,9 +87,9 @@ class statevar(var):
             #return tr.update(t, r, force=self.trace.is_update_forced)
             #return tr.update(t, r, regime=self.trace.regime)
             if tr.check(t, regime=self.trace.regime):
-                return tr.store(r)
-            else:
-                return tr.value
+                tr.store(r)
+                obj.context.queue(tr.poststore(r), self._priority_lvl)
+            return tr.value
 
 class derive(statevar):
     def __init__(self, f=None, **kwargs):
@@ -89,11 +97,11 @@ class derive(statevar):
 
 class accumulate(statevar):
     def __init__(self, f=None, **kwargs):
-        super().__init__(f, track=Accumulate, cyclic=True, **kwargs)
+        super().__init__(f, track=Accumulate, cyclic=True, priority=Priority.ACCUMULATE, **kwargs)
 
 class difference(statevar):
     def __init__(self, f=None, **kwargs):
-        super().__init__(f, track=Difference, cyclic=True, **kwargs)
+        super().__init__(f, track=Difference, cyclic=True, priority=Priority.ACCUMULATE, **kwargs)
 
 class flip(statevar):
     def __init__(self, f=None, **kwargs):
@@ -126,7 +134,7 @@ class drive(derive):
 class flag(derive):
     def __init__(self, f=None, prob=1, **kwargs):
         self._prob_var = prob
-        super().__init__(f, unit=None, cyclic=True, **kwargs)
+        super().__init__(f, unit=None, cyclic=True, priority=Priority.FLAG, **kwargs)
 
     def check(self, obj):
         v = obj[self._prob_var]
@@ -138,7 +146,7 @@ class flag(derive):
 class produce(derive):
     def __init__(self, f=None, *, target='children', **kwargs):
         self._target_var = target
-        super().__init__(f, **kwargs)
+        super().__init__(f, priority=Priority.PRODUCE, **kwargs)
 
     def compute(self, obj):
         V = super().compute(obj)
@@ -157,7 +165,7 @@ class produce(derive):
                     v.append(s)
                 else:
                     raise NotImplementedError()
-            obj.context.queue(f)
+            obj.context.queue(f, self._priority_lvl)
             return v
         if isinstance(V, list):
             return [queue(v) for v in V]

@@ -2,9 +2,13 @@ from .time import Timer
 from .unit import U
 
 class Track:
-    def __init__(self, t, v):
+    def __init__(self, t, v, name=''):
         self._initial_value = v
+        self.__name__ = name
         self.reset(t)
+
+    def __repr__(self):
+        return f'<{self.__name__} = {self.value}>'
 
     def reset(self, t):
         self.timer = Timer(t)
@@ -29,7 +33,9 @@ class Track:
         value = v()
         if value is not None:
             self._value = value
-        return self.value
+
+    def poststore(self, v):
+        return None
 
     @property
     def value(self):
@@ -43,13 +49,17 @@ class Accumulate(Track):
     def store(self, v):
         if self._rate is not None:
             self._value += self._rate * self.timer.dt
-        self._rate = v()
-        return self.value
+        #self._rate = v()
+
+    def poststore(self, v):
+        def f():
+            self._rate = v()
+        return f
 
 class Difference(Accumulate):
     def store(self, v):
         self._value = U(0, U[self._value])
-        return super().store(v)
+        super().store(v)
 
 class Flip(Track):
     def reset(self, t):
@@ -60,7 +70,6 @@ class Flip(Track):
         value = v()
         self._changed = (value != self._value)
         self._value = value
-        return self.value
 
     @property
     def value(self):
@@ -76,5 +85,5 @@ class Preserve(Track):
         return super().check(t, regime) and not self._stored
 
     def store(self, v):
+        super().store(v)
         self._stored = True
-        return super().store(v)
