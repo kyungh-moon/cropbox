@@ -98,6 +98,12 @@ class Context(Clock):
 def instance(systemcls, config=None):
     c = Context(config)
     s = systemcls(context=c, parent=c)
-    c.children.append(s)
+    c.children.append(s) # mimicking c.flush(post=False)
     c.flush(post=True)
+    # def f():
+    #     s = systemcls(context=c, parent=c)
+    #     c.children.append(s)
+    # c.queue(f, Priority.PRODUCE)
+    # c.update()
+    # s = c.children[0]
     return s
