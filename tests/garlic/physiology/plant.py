@@ -1,6 +1,11 @@
 from cropbox.system import System
 from cropbox.statevar import derive, drive, parameter, produce, system
 
+from .atmosphere.weather import Weather
+from .rhizosphere.soil import Soil
+from .phenology.phenology import Phenology
+from .physiology.
+
 class Plant(System):
     weather = system(Weather)
     soil = system(Soil)
@@ -12,8 +17,8 @@ class Plant(System):
     area = system(Area, plant='self')
     count = system(Count, plant='self')
     ratio = system(Ratio, plant='self')
-    carbon = system(Carbon, plant='self')
-    nitrogen = system(Nitrogen, plant='self')
+    #carbon = system(Carbon, plant='self')
+    #nitrogen = system(Nitrogen, plant='self')
     water = system(Water, plant='self')
 
     #TODO pass PRIMORDIA as initial_leaves
@@ -23,6 +28,11 @@ class Plant(System):
     scape = system(None)
     root = system(None)
     nodal_units = system([])
+
+    #TODO find a better place?
+    @parameter # unit (m-2)
+    def planting_density(self):
+        return 55
 
     @produce(target='nodal_units')
     def initiate_primordia(self):
@@ -47,3 +57,6 @@ class Plant(System):
                 else:
                     return None
             return [f(i) for i in range(self.pheno.leaves_initiated)]
+
+class Trait(System):
+    plant = system(alias='p')

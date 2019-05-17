@@ -55,28 +55,34 @@ class Weather(System):
         return self.df.loc[self.key]
 
     @drive
-    def PFD(self): #return 1500 # umol m-2 s-1
-        return self.store
+    def PFD(self):
+        return 1500 # umol m-2 s-1
+        #return self.store
 
     @drive
-    def CO2(self): #return 400 # ppm
-        return self.store
+    def CO2(self):
+        return 400 # ppm
+        #return self.store
 
     @drive
-    def RH(self): #return 0.6 # 0~1
-        return self.store
+    def RH(self):
+        return 0.6 # 0~1
+        #return self.store
 
     @drive
-    def T_air(self): #return 25 # C
-        return self.store
+    def T_air(self):
+        return 25 # C
+        #return self.store
 
     @drive
-    def wind(self): #return 2.0 # meters s-1
-        return self.store
+    def wind(self):
+        return 2.0 # meters s-1
+        #return self.store
 
     @drive
-    def P_air(self): #return 100 # kPa
-        return self.store
+    def P_air(self):
+        return 100 # kPa
+        #return self.store
 
     @derive
     def VPD(self, T_air, RH): return self.vp.deficit(T_air, RH)
