@@ -327,12 +327,12 @@ class Sun(System):
             return self.solar_radiation * self.photosynthetic_coeff * self.PHOTON_UMOL_PER_J
 
     # PARdir
-    @property
+    @derive
     def directional_photosynthetic_radiation(self, PARtot):
         return self.directional_fraction * PARtot
 
     # PARdif
-    @property
+    @derive
     def diffusive_photosynthetic_radiation(self, PARtot):
         return self.diffusive_fraction * PARtot
 

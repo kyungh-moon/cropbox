@@ -1,6 +1,6 @@
 from cropbox.statevar import derive
 
-from .plant import Trait
+from .trait import Trait
 from .weight import Weight
 
 class Ratio(Trait):

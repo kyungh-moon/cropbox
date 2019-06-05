@@ -1,6 +1,6 @@
 from cropbox.statevar import derive
 
-from .plant import Trait
+from .trait import Trait
 
 class Area(Trait):
     @derive
@@ -12,9 +12,9 @@ class Area(Trait):
         return sum([nu.leaf.green_area for nu in self.p.nodal_units])
 
     #TODO remove if unnecessary
-    @derive
-    def active_leaf_ratio(self):
-        return self.green_leaf / self.leaf
+    # @derive
+    # def active_leaf_ratio(self):
+    #     return self.green_leaf / self.leaf
 
     @derive
     def leaf_area_index(self):

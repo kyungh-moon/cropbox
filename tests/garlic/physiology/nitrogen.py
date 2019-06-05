@@ -1,6 +1,6 @@
 from cropbox.statevar import derive
 
-from .plant import Trait
+from .trait import Trait
 
 #TODO move into Leaf class?
 class Nitrogen(Trait):

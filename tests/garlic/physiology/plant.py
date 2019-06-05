@@ -1,10 +1,20 @@
 from cropbox.system import System
 from cropbox.statevar import derive, drive, parameter, produce, system
 
-from .atmosphere.weather import Weather
-from .rhizosphere.soil import Soil
-from .phenology.phenology import Phenology
-from .physiology.
+from ..atmosphere.weather import Weather
+from ..rhizosphere.soil import Soil
+from ..phenology.phenology import Phenology
+from ..physiology.photosynthesis import Photosynthesis
+
+from ..morphology.nodalunit import NodalUnit
+
+from .mass import Mass
+from .area import Area
+from .count import Count
+from .ratio import Ratio
+#from .carbon import Carbon
+from .nitrogen import Nitrogen
+from .water import Water
 
 class Plant(System):
     weather = system(Weather)
@@ -57,6 +67,3 @@ class Plant(System):
                 else:
                     return None
             return [f(i) for i in range(self.pheno.leaves_initiated)]
-
-class Trait(System):
-    plant = system(alias='p')

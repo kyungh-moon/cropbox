@@ -1,6 +1,6 @@
 from cropbox.statevar import derive, parameter
 
-from .plant import Trait
+from .trait import Trait
 
 class Mass(Trait):
     # seed weight g/seed
@@ -11,7 +11,9 @@ class Mass(Trait):
     #HACK carbon mass of seed is pulled in the reserve
     @derive
     def seed(self):
-        return self.initial_seed - self.p.carbon.reserve_from_seed
+        #FIXME carbon not ready yet
+        #return self.initial_seed - self.p.carbon.reserve_from_seed
+        return self.initial_seed
 
     @derive
     #def stem(self): # for maize
@@ -19,7 +21,9 @@ class Mass(Trait):
         # dt the addition of C_reserve here only serves to maintain a total for the mass. It could have just as easily been added to total mass.
         # C_reserve is added to stem here to represent soluble TNC, SK
         #return sum([nu.stem.mass for nu in self.p.nodal_units]) + self.p.carbon.reserve
-        return sum([nu.sheath.mass for nu in self.p.nodal_units]) + self.p.carbon.reserve
+        #return sum([nu.sheath.mass for nu in self.p.nodal_units]) + self.p.carbon.reserve
+        #FIXME carbon not ready yet
+        return sum([nu.sheath.mass for nu in self.p.nodal_units])
 
     @derive
     def initial_leaf(self):
@@ -54,33 +58,45 @@ class Mass(Trait):
 
     @derive
     def bulb(self):
-        return self.p.bulb.mass
+        #FIXME handling None
+        #return self.p.bulb.mass
+        return 0
 
     @derive
     def scape(self):
-        return self.p.scape.mass
+        #FIXME handling None
+        #return self.p.scape.mass
+        return 0
 
     @derive
     def stalk(self):
         #FIXME inconsistency: stem vs. sheath
-        return self.sheath + self.scape
+        #FIXME handling None
+        #return self.sheath + self.scape
+        return 0
 
     @derive
     def root(self):
-        return self.p.root.mass
+        #FIXME handling None
+        #return self.p.root.mass
+        return 0
 
     @derive
     def shoot(self):
         # for maize
         #return self.seed + self.stem + self.leaf + self.ear
         # for garlic
-        return self.seed + self.stalk + self.leaf + self.bulb
+        #FIXME handling None
+        #return self.seed + self.stalk + self.leaf + self.bulb
+        return 0
 
     @derive
     def total(self):
         #HACK include mobilized carbon pool (for more accurate mass under germination)
         #return self.shoot + self.root + self.p.carbon.pool
-        return self.shoot + self.root
+        #FIXME handling None
+        #return self.shoot + self.root
+        return 0
 
     # this will only be used for total leaf area adjustment.
     # If the individual leaf thing works out this will be deleted.

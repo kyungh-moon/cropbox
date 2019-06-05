@@ -1,10 +1,11 @@
-from cropbox.statevar import derive
+from cropbox.statevar import constant, derive, parameter, system
 
-from .plant import Trait
+from .trait import Trait
 from .gasexchange import GasExchange
 from .radiation import Radiation
 from .weight import Weight
-from ..atmosphere import Sun
+from ..atmosphere.sun import Sun
+from ..atmosphere.weather import Weather
 
 import numpy as np
 
@@ -21,15 +22,15 @@ class ShadedWeather(Weather):
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 class Photosynthesis(Trait):
     sun = system(Sun) #, PAR='p.weather.PFD') #FIXME: use external Weather object
-    radiation = system(Radiation, LAI='LAI', LAF='LAF')
+    radiation = system(Radiation, sun='sun', LAI='LAI', LAF='LAF')
 
     sunlit_weather = system(SunlitWeather, weather='p.weather', radiation='radiation')
     shaded_weather = system(ShadedWeather, weather='p.weather', radiation='radiation')
 
     # Calculating transpiration and photosynthesis with stomatal controlled by leaf water potential LeafWP Y
     #TODO: use self.p.nitrogen.leaf_content, leaf_width, ET_supply
-    sunlit = system(GasExchange, name='Sunlit', weather='sunlit_weather')
-    shaded = system(GasExchange, name='Shaded', weather='shaded_weather')
+    sunlit = system(GasExchange, soil='plant.soil', name='Sunlit', weather='sunlit_weather')
+    shaded = system(GasExchange, soil='plant.soil', name='Shaded', weather='shaded_weather')
 
     #tau = 0.50 # atmospheric transmittance, to be implemented as a variable => done
 
@@ -52,7 +53,7 @@ class Photosynthesis(Trait):
         return self.p.soil.WP_leaf
 
     @derive(alias='ET_supply')
-    def evapotranspiration_supply(self):
+    def evapotranspiration_supply(self, LAI):
         #TODO common handling logic for zero LAI
         try:
             return self.p.water.supply * self.p.planting_density / 3600 / 18.01 / LAI
@@ -80,11 +81,11 @@ class Photosynthesis(Trait):
 
     @derive
     def sunlit_irradiance(self):
-        return self.radiation.irradiance_Q_sunlit()
+        return self.radiation.irradiance_Q_sunlit
 
     @derive
     def shaded_irradiance(self):
-        return self.radiation.irradiance_Q_shaded()
+        return self.radiation.irradiance_Q_shaded
 
     @derive
     def gross_array(self):

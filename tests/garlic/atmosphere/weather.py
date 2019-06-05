@@ -1,5 +1,5 @@
 from cropbox.system import System
-from cropbox.statevar import derive, drive, parameter, system
+from cropbox.statevar import constant, derive, drive, parameter, system
 
 from numpy import exp
 import pandas as pd
@@ -44,7 +44,9 @@ class Weather(System):
 
     @constant(alias='df')
     def dataframe(self):
-        return pd.read_csv(self.filename)
+        #FIXME: use real file
+        #return pd.read_csv(self.filename)
+        return pd.DataFrame()
 
     @derive
     def key(self):
@@ -52,37 +54,39 @@ class Weather(System):
 
     @derive
     def store(self):
-        return self.df.loc[self.key]
+        #FIXME: use actual dataframe
+        #return self.df.loc[self.key]
+        return {'PFD': 1500, 'CO2': 400, 'RH': 0.6, 'T_air': 25, 'wind': 2.0, 'P_air': 100}
 
     @drive
     def PFD(self):
-        return 1500 # umol m-2 s-1
-        #return self.store
+        #return 1500 # umol m-2 s-1
+        return self.store
 
     @drive
     def CO2(self):
-        return 400 # ppm
-        #return self.store
+        #return 400 # ppm
+        return self.store
 
     @drive
     def RH(self):
-        return 0.6 # 0~1
-        #return self.store
+        #return 0.6 # 0~1
+        return self.store
 
     @drive
     def T_air(self):
-        return 25 # C
-        #return self.store
+        #return 25 # C
+        return self.store
 
     @drive
     def wind(self):
-        return 2.0 # meters s-1
-        #return self.store
+        #return 2.0 # meters s-1
+        return self.store
 
     @drive
     def P_air(self):
-        return 100 # kPa
-        #return self.store
+        #return 100 # kPa
+        return self.store
 
     @derive
     def VPD(self, T_air, RH): return self.vp.deficit(T_air, RH)

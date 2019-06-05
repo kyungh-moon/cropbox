@@ -1,5 +1,7 @@
 from cropbox.system import System
-from cropbox.statevar import accumulate, derive, difference, drive, optimize, parameter, proxy, statevar, system
+from cropbox.statevar import accumulate, constant, derive, difference, drive, optimize, parameter, proxy, statevar, system
+
+from ..rhizosphere.soil import Soil
 
 import numpy as np
 import scipy.optimize
