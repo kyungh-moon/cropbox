@@ -17,15 +17,14 @@ from cropbox.context import instance
 from cropbox.system import System
 from cropbox.statevar import constant, derive, drive, parameter, system
 
+from .weather import Weather
+
 from numpy import pi, sin, cos, tan, arcsin, arccos, radians, degrees, log, exp
 
 class Location(System):
     latitude = parameter(36)
     longitude = parameter(128)
     altitude = parameter(20)
-
-class Weather(System):
-    photosynthetic_active_radiation = parameter(1000, alias='PAR')
 
 class Sun(System):
     # conversion factor from W/m2 to PFD (umol m-2 s-1) for PAR waveband (median 550 nm of 400-700 nm) of solar radiation,
@@ -61,7 +60,8 @@ class Sun(System):
     longitude = drive('location', alias='long') # leave it as in degrees, used only once for solar noon calculation
     altitude = drive('location', alias='alt') # unit='m'
 
-    photosynthetic_active_radiation = drive('weather', alias='PAR') # unit='umol m-2 s-1'
+    #TODO: fix inconsistent naming of PAR vs. PFD
+    photosynthetic_active_radiation = drive('weather', alias='PAR', key='PFD') # unit='umol m-2 s-1'
     transmissivity = parameter(0.5, alias='tau') # atmospheric transmissivity, Goudriaan and van Laar (1994) p 30
 
     #####################
@@ -233,7 +233,7 @@ class Sun(System):
 
     @derive
     # Campbell and Norman's global solar radiation, this approach is used here
-    #TODO rename to insolation?
+    #TODO rename to insolation? (W/m2)
     def solar_radiation(self, elevation_angle, day, SC):
         t_s = max(0, radians(elevation_angle))
         g = 2*pi*(day - 10) / 365
@@ -318,7 +318,7 @@ class Sun(System):
                 return 0.625 - 0.25*tau
         return goudriaan(transmissivity)
 
-    # PARtot: total PAR (umol m-2 s-1) on horizontal surface
+    # PARtot: total PAR (umol m-2 s-1) on horizontal surface (PPFD)
     @derive(alias='PARtot')
     def photosynthetic_active_radiation_total(self, PAR):
         if self.PAR is not None:
