@@ -8,6 +8,7 @@
 from cropbox.system import System
 from cropbox.statevar import derive, flag, parameter, system
 
+from ..atmosphere.weather import Weather
 from .germination import Germination
 from .emergence import Emergence
 from .leafinitiation import LeafInitiationWithStorage
@@ -16,15 +17,6 @@ from .floralinitiation import FloralInitiation
 from .bulbing import Bulbing
 from .scape import Bulbiling, Flowering, Scape, ScapeAppearance, ScapeRemoval
 from .death import Death
-
-#TODO make common Weather class
-class Weather(System):
-    @parameter
-    def T_air(self): return 25 # C
-
-    #FIXME is day_length part of Weather?
-    @parameter
-    def day_length(self): return 12 # hours
 
 #TODO make common Soil class
 class Soil(System):

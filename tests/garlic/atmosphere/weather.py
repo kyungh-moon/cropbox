@@ -56,7 +56,7 @@ class Weather(System):
     def store(self):
         #FIXME: use actual dataframe
         #return self.df.loc[self.key]
-        return {'PFD': 1500, 'CO2': 400, 'RH': 0.6, 'T_air': 25, 'wind': 2.0, 'P_air': 100}
+        return {'PFD': 1500, 'CO2': 400, 'RH': 0.6, 'T_air': 25, 'wind': 2.0, 'P_air': 100, 'day_length': 12}
 
     @drive(alias='PFD', key='PFD')
     def photosynthetic_photon_flux_density(self):
@@ -86,6 +86,12 @@ class Weather(System):
     @drive
     def P_air(self):
         #return 100 # kPa
+        return self.store
+
+    #TODO implement day length calculation
+    @drive
+    def day_length(self):
+        #return 12 # hours
         return self.store
 
     @derive
