@@ -127,9 +127,14 @@ class parameter(proxy):
         return v
 
 class drive(derive):
+    def __init__(self, f=None, *, key=None, **kwargs):
+        self._drive_key = key
+        super().__init__(f, **kwargs)
+
     def compute(self, obj):
         d = super().compute(obj) # i.e. return df.loc[t]
-        return d[self.__name__]
+        k = self._drive_key if self._drive_key else self.__name__
+        return d[k]
 
 class flag(derive):
     def __init__(self, f=None, prob=1, **kwargs):

@@ -274,6 +274,15 @@ def test_drive_with_dict():
     c.advance()
     assert c.time == 3 and s.a == 30
 
+def test_drive_with_key():
+    class S(System):
+        @drive(key='b')
+        def a(self):
+            return {'b': 1}
+    s = instance(S)
+    c = s.context
+    assert s.a == 1
+
 def test_drive_with_dataframe():
     import pandas as pd
     class S(System):
