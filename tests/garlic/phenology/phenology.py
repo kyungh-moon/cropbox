@@ -9,6 +9,7 @@ from cropbox.system import System
 from cropbox.statevar import derive, flag, parameter, system
 
 from ..atmosphere.weather import Weather
+from ..rhizosphere.soil import Soil
 from .germination import Germination
 from .emergence import Emergence
 from .leafinitiation import LeafInitiationWithStorage
@@ -17,11 +18,6 @@ from .floralinitiation import FloralInitiation
 from .bulbing import Bulbing
 from .scape import Bulbiling, Flowering, Scape, ScapeAppearance, ScapeRemoval
 from .death import Death
-
-#TODO make common Soil class
-class Soil(System):
-    @parameter
-    def T_soil(self): return 10 # C
 
 #TODO make a common class to be shared by Garlic and MAIZSIM
 class Phenology(System):
