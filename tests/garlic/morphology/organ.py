@@ -1,5 +1,5 @@
 from cropbox.system import System
-from cropbox.statevar import accumulate, derive, drive, system
+from cropbox.statevar import accumulate, derive, drive, parameter, system
 from cropbox.util import growing_degree_days
 
 class Organ(System):
@@ -36,6 +36,9 @@ class Organ(System):
     #     #FIXME isn't it just the amount of carbohydrate?
     #     #return self._carbohydrate / Weight.CH2O * Weight.C / Weight.C_to_CH2O_ratio
     #     return self._carbohydrate
+    @derive
+    def mass(self):
+        return self.carbohydrate
 
     # #TODO remove set_mass() and directly access carbohydrate
     # def set_mass(self, mass):
@@ -67,7 +70,7 @@ class Organ(System):
 
     #TODO to be overridden
     @derive
-    def self.imported_carbohydrate(self):
+    def imported_carbohydrate(self):
         return 0
 
     @derive

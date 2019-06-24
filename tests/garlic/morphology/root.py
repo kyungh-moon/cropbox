@@ -10,4 +10,5 @@ class Root(Organ):
 
     @derive
     def mass(self):
-        return self.leaf.mass #+ self.sheath.mass
+        #FIXME root biomass
+        return 0

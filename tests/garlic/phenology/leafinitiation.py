@@ -7,7 +7,7 @@ class LeafInitiation(Stage):
     def initial_leaves(self):
         return 0
 
-    @parameter(alias='R_max')
+    @parameter(alias='R_max', unit='1/day')
     def maximum_leaf_initiation_rate(self):
         return 0.20
 
@@ -34,7 +34,7 @@ class LeafInitiation(Stage):
         return int(self.initial_leaves + self.rate)
 
 class LeafInitiationWithStorage(LeafInitiation):
-    @parameter(alias='SD')
+    @parameter(alias='SD', unit='day')
     def storage_days(self):
         pass
 

@@ -1,12 +1,14 @@
-from cropbox.system import System
 from cropbox.statevar import constant, derive, system
 
-class NodalUnit(System):
-    plant = system()
+from .organ import Organ
+from .leaf import Leaf
+from .sheath import Sheath
+
+class NodalUnit(Organ):
     rank = constant()
-    leaf = system()
-    #sheath = system()
+    leaf = system(Leaf, plant='self.plant', nodal_unit='self')
+    sheath = system(Sheath, plant='self.plant', nodal_unit='self')
 
     @derive
     def mass(self):
-        return self.leaf.mass #+ self.sheath.mass
+        return self.leaf.mass + self.sheath.mass

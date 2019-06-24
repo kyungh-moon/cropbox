@@ -39,9 +39,10 @@ class Area(Trait):
         return sum([nu.leaf.potential_area_increase for nu in self.p.nodal_units])
 
     # calculate relative area increases for leaves now that they are updated
-    @derive
-    def relative_leaf_increase(self):
-        return sum([nu.leaf.relative_area_increase for nu in self.p.nodal_units])
+    #TODO remove if unnecessary
+    # @derive
+    # def relative_leaf_increase(self):
+    #     return sum([nu.leaf.relative_area_increase for nu in self.p.nodal_units])
 
     #FIXME it doesn't seem to be 'actual' dropped leaf area
     # calculated dropped leaf area YY

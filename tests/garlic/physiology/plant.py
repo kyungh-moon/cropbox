@@ -47,7 +47,7 @@ class Plant(System):
     @produce(target='nodal_units')
     def initiate_primordia(self):
         if len(self.nodal_units) == 0:
-            return [(NodalUnit, {'rank': i+1}) for i in range(self.primordia)]
+            return [(NodalUnit, {'plant': self, 'rank': i+1}) for i in range(self.primordia)]
 
     @produce(target='root')
     def initiate_root(self):
@@ -63,7 +63,7 @@ class Plant(System):
                 try:
                     self.nodal_units[i]
                 except IndexError:
-                    return (NodalUnit, {'rank': i+1})
+                    return (NodalUnit, {'plant': self, 'rank': i+1})
                 else:
                     return None
             return [f(i) for i in range(self.pheno.leaves_initiated)]

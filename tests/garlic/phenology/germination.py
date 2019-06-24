@@ -3,7 +3,7 @@ from cropbox.statevar import accumulate, drive, derive, flag, parameter, system
 from cropbox.util import beta_thermal_func
 
 class Germination(Stage):
-    @parameter(alias='R_max')
+    @parameter(alias='R_max', unit='1/day')
     def maximum_germination_rate(self):
         return 0.45
 

@@ -1,11 +1,16 @@
-from cropbox.system import System
 from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, parameter, system
 from cropbox.util import beta_thermal_func, growing_degree_days, q10_thermal_func
 
+from .organ import Organ
+
 from numpy import clip, exp, sqrt
 
-class Leaf(System):
-    rank = constant(None)
+class Leaf(Organ):
+    nodal_unit = system()
+
+    @derive
+    def rank(self):
+        return self.nodal_unit.rank
 
     # cm dd-1 Fournier and Andrieu 1998 Pg239.
     # This is the "potential" elongation rate with no water stress Yang
@@ -79,13 +84,13 @@ class Leaf(System):
         return self.maximum_length * self.maximum_width * self.area_ratio
 
     @derive
-    def area_from_length(self, length):
+    def area_from_length(self, l):
         #HACK ensure zero area for zero length
-        if length == 0:
+        if l == 0:
             return 0
         else:
             # for garlic, see JH's thesis
-            return 0.639945 + 0.954957*length + 0.005920*length**2
+            return 0.639945 + 0.954957*l + 0.005920*l**2
 
     @derive
     def area_increase_from_length(self, length):
@@ -304,22 +309,23 @@ class Leaf(System):
         #TODO water and carbon effects are not multiplicative?
         return min(water_effect, carbon_effect) * self.temperature_effect * self.area_from_length(self.length)
 
-    @property
-    def actual_area_increase(self):
-        #FIXME area increase tracking should be done by some gobal state tracking manager
-        raise NotImplementedError("actual_area_increase")
-
-    @property
-    def relative_area_increase(self):
-        #HACK meaning changed from 'relative to other leaves' (spatial) to 'relative to previous state' (temporal)
-        # adapted from CPlant::calcPerLeafRelativeAreaIncrease()
-        #return self.potential_area_increase / self.nodal_unit.plant.area.potential_leaf_increase
-        da = self.actual_area_increase
-        a = self.area - da
-        if a > 0:
-            return da / a
-        else:
-            return 0
+    #TODO remove if unnecessary
+    # @property
+    # def actual_area_increase(self):
+    #     #FIXME area increase tracking should be done by some gobal state tracking manager
+    #     raise NotImplementedError("actual_area_increase")
+    #
+    # @property
+    # def relative_area_increase(self):
+    #     #HACK meaning changed from 'relative to other leaves' (spatial) to 'relative to previous state' (temporal)
+    #     # adapted from CPlant::calcPerLeafRelativeAreaIncrease()
+    #     #return self.potential_area_increase / self.nodal_unit.plant.area.potential_leaf_increase
+    #     da = self.actual_area_increase
+    #     a = self.area - da
+    #     if a > 0:
+    #         return da / a
+    #     else:
+    #         return 0
 
     @accumulate
     def stay_green_water_stress_duration(self, scale=0.5, threshold=-4.0):
@@ -419,9 +425,10 @@ class Leaf(System):
     def nitrogen(self):
         #TODO is this default value needed?
         # no N stress
-        #return 3.0
+        return 3.0
         #TODO remove self.p.* referencing
-        return self.p.nitrogen.leaf_content
+        #FIXME enable Nitrogen trait
+        #return self.p.nitrogen.leaf_content
 
     ##########
     # States #

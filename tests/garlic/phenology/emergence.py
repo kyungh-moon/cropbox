@@ -3,7 +3,7 @@ from cropbox.statevar import accumulate, drive, derive, flag, parameter, system
 from cropbox.util import beta_thermal_func
 
 class Emergence(Stage):
-    @parameter(alias='R_max')
+    @parameter(alias='R_max', unit='1/day')
     def maximum_emergence_rate(self):
         #HACK: can't use self.pheno.leaf_appearance.maximum_leaf_tip_appearance_rate due to recursion
         return 0.20
