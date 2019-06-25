@@ -45,16 +45,51 @@ class Accumulate(Track):
     def reset(self, t):
         super().reset(t)
         self._rate = None
+        self._values = {}
 
     def store(self, v):
         if self._rate is not None:
-            self._value += self._rate * self.timer.dt
+            if self._regime == '':
+                try:
+                    self._value = self._original_value
+                    breakpoint()
+                    del self._original_value
+                except:
+                    pass
+                self._value += self._rate * self.timer.dt
+            else:
+                #breakpoint()
+                try:
+                    self._original_value
+                except:
+                    self._original_value = self._value
+                else:
+                    self._value = self._original_value
+                self._value += self._rate * self.timer.dt
+
+        T0 = list(self._rates.keys())
+        T1 = T0[1:] + [self.timer.t]
+        DT = T1 - T0
+        v = 0
+        for dt, r in zip(DT, self._rates.values()):
+            v += r * dt
+        self._value2 = v
+
         #self._rate = v()
 
     def poststore(self, v):
         def f():
             self._rate = v()
-        return f
+            self._rates[self.timer.t] = self._rate
+        if self._regime == '':
+            return f
+        else:
+            return None
+
+    @property
+    def value(self):
+        #return self._value
+        return self._value2
 
 class Difference(Accumulate):
     def store(self, v):
