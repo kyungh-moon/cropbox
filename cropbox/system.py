@@ -34,8 +34,6 @@ class TrackableMeta(type):
 class Trackable(metaclass=TrackableMeta):
     def __init__(self, **kwargs):
         self._kwargs = kwargs
-        # force update here to ensure all trackables get initialized
-        self.update()
 
     def __getattr__(self, name):
         if name == 'self':

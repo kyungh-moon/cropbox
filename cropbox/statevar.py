@@ -34,6 +34,10 @@ class system(var):
             s = []
         elif isinstance(cls, type):
             s = cls(context=obj.context, **{k: obj[v] for k, v in self._kwargs.items()})
+            #HACK: ensure data(obj) contains s before updates which may encounter cyclic dependency
+            #FIXME: redundant set() call in init()
+            self.set(obj, s)
+            s.update()
         else:
             s = cls
         return s
