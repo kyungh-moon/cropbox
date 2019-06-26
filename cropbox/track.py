@@ -44,20 +44,33 @@ class Accumulate(Track):
     def reset(self, t):
         super().reset(t)
         self._rates = {}
+        self._value_cache = {}
 
     def store(self, v):
-        T0 = list(self._rates.keys())
-        T1 = T0[1:] + [self.timer.t]
-        dT = [t1 - t0 for t0, t1 in zip(T0, T1)]
         v = self._initial_value
-        for dt, r in zip(dT, self._rates.values()):
+        R = self._rates
+        T0 = list(R.keys())
+        for t in reversed(T0):
+            if t in self._value_cache:
+                v = self._value_cache[t]
+                R = {k: R[k] for k in R if k >= t}
+                T0 = list(R.keys())
+                break
+        t = self.timer.t
+        T1 = T0[1:] + [t]
+        dT = [t1 - t0 for t0, t1 in zip(T0, T1)]
+        for dt, r in zip(dT, R.values()):
             if r is not None:
                 v += r * dt
         self._value = v
+        self._value_cache[t] = v
 
     def poststore(self, v):
+        t = self.timer.t
         def f():
-            self._rates[self.timer.t] = v()
+            self._rates[t] = v()
+            V = self._value_cache
+            self._value_cache = {k: V[k] for k in V if k == t}
         if self._regime == '':
             return f
         else:
