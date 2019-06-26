@@ -317,7 +317,7 @@ class Sun(System):
                 return 0.625 - 0.25*tau
         return goudriaan(transmissivity)
 
-    # PARtot: total PAR (umol m-2 s-1) on horizontal surface (PPFD)
+    # PARtot: total PAR (umol m-2 s-1) on horizontal surface (PFD)
     @derive(alias='PARtot')
     def photosynthetic_active_radiation_total(self, PAR):
         if self.PAR is not None:

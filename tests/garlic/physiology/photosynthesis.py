@@ -13,12 +13,12 @@ import numpy as np
 class SunlitWeather(Weather):
     weather = systemproxy()
     radiation = system()
-    photon_flux_density = derive('radiation.irradiance_Q_sunlit', alias='PFD')
+    photosynthetic_photon_flux_density = derive('radiation.irradiance_Q_sunlit', alias='PPFD')
 
 class ShadedWeather(Weather):
     weather = systemproxy()
     radiation = system()
-    photon_flux_density = derive('radiation.irradiance_Q_shaded', alias='PFD')
+    photosynthetic_photon_flux_density = derive('radiation.irradiance_Q_shaded', alias='PPFD')
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 class Photosynthesis(Trait):

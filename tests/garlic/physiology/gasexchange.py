@@ -324,7 +324,7 @@ class PhotosyntheticLeaf(System):
         scatt = 0.15 # leaf reflectance + transmittance
         f = 0.15 # spectral correction
 
-        Ia = self.weather.PFD * (1 - scatt) # absorbed irradiance
+        Ia = self.weather.PPFD * (1 - scatt) # absorbed irradiance
         I2 = Ia * (1 - f) / 2 # useful light absorbed by PSII
         return I2
 
@@ -366,7 +366,7 @@ class PhotosyntheticLeaf(System):
     ):
         T_air = w.T_air
         Tk = T_air + 273.15
-        PFD = w.PFD
+        PFD = w.PPFD
         P_air = w.P_air
         Jw = self.ET_supply
 

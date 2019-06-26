@@ -42,7 +42,7 @@ class Weather(System):
         #return {'SolRad': 1500, 'CO2': 400, 'RH': 0.6, 'T_air': 25, 'wind': 2.0, 'P_air': 100}
 
     @drive(alias='PFD', key='SolRad')
-    def photosynthetic_photon_flux_density(self):
+    def photon_flux_density(self):
         #return 1500 # umol m-2 s-1
         return self.store
 
