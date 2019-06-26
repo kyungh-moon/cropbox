@@ -8,7 +8,7 @@ class Scape(Stage):
         #HACK use LTAR
         return self.pheno.leaf_appearance.maximum_leaf_tip_appearance_rate
 
-    @accumulate
+    @accumulate(unit='')
     def rate(self, R_max, T, T_opt, T_ceil):
         return R_max * beta_thermal_func(T, T_opt, T_ceil)
 

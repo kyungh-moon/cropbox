@@ -7,7 +7,7 @@ class Germination(Stage):
     def maximum_germination_rate(self):
         return 0.45
 
-    @accumulate
+    @accumulate(unit='')
     def rate(self, R_max, T, T_opt, T_ceil):
         #FIXME prevent extra accumulation after it's `over`
         if self.ing:

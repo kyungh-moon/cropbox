@@ -16,7 +16,7 @@ class Emergence(Stage):
     def begin_from_emergence(self):
         return False
 
-    @accumulate
+    @accumulate(unit='')
     def rate(self, R_max, T, T_opt, T_ceil):
         return R_max * beta_thermal_func(T, T_opt, T_ceil)
 

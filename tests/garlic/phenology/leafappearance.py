@@ -7,7 +7,7 @@ class LeafAppearance(Stage):
     def maximum_leaf_tip_appearance_rate(self):
         return 0.20
 
-    @accumulate
+    @accumulate(unit='')
     def rate(self, R_max, T, T_opt, T_ceil):
         return R_max * beta_thermal_func(T, T_opt, T_ceil)
 
