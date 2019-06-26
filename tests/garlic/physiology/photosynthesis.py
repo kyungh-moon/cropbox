@@ -1,4 +1,5 @@
-from cropbox.statevar import constant, derive, parameter, system
+from cropbox.statevar import constant, derive, parameter, system, systemproxy
+from cropbox.system import System
 
 from .trait import Trait
 from .gasexchange import GasExchange
@@ -10,12 +11,12 @@ from ..atmosphere.weather import Weather
 import numpy as np
 
 class SunlitWeather(Weather):
-    weather = system(proxy=True)
+    weather = systemproxy()
     radiation = system()
     photon_flux_density = derive('radiation.irradiance_Q_sunlit', alias='PFD')
 
 class ShadedWeather(Weather):
-    weather = system(proxy=True)
+    weather = systemproxy()
     radiation = system()
     photon_flux_density = derive('radiation.irradiance_Q_shaded', alias='PFD')
 
