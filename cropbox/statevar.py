@@ -172,6 +172,9 @@ class produce(derive):
                 v = obj[self._target_var]
                 if isinstance(v, list):
                     v.append(s)
+                elif v is None:
+                    #HACK: replace empty placeholder with just initialized System object
+                    obj._trackable[self._target_var].set(obj, s)
                 else:
                     raise NotImplementedError()
             obj.context.queue(f, self._priority_lvl)
