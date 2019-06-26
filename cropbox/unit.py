@@ -21,6 +21,8 @@ class Unit:
         Q = self.registry.Quantity
         if isinstance(v, Q):
             return v.to(unit)
+        elif callable(v):
+            return lambda x: Q(v(x), unit)
         else:
             return Q(v, unit)
 
