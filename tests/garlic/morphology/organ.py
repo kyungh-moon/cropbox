@@ -79,3 +79,8 @@ class Organ(System):
         # Ka: growth respiration
         # Rm: maintenance respiration
         return 1 - (Ka + Rm)
+
+    #TODO to be overridden
+    @derive
+    def imported_nitrogen(self):
+        return 0

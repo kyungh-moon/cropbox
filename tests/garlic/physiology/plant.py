@@ -7,6 +7,7 @@ from ..phenology.phenology import Phenology
 from ..physiology.photosynthesis import Photosynthesis
 
 from ..morphology.nodalunit import NodalUnit
+from ..morphology.root import Root
 
 from .mass import Mass
 from .area import Area
@@ -54,7 +55,7 @@ class Plant(System):
         if not self.root:
             if self.pheno.emerging:
                 #TODO import_carbohydrate(self.soil.total_root_weight)
-                return (Root, {})
+                return (Root, {'plant': self})
 
     @produce(target='nodal_units')
     def initiate_leaves(self):
