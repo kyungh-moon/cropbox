@@ -4,10 +4,18 @@ from .phenology.phenology import Phenology
 from .physiology.plant import Plant
 
 import datetime
-config={'Clock': {
-    'unit': 'day',
-    'start_datetime': datetime.datetime(2019, 1, 1),
-}}
+import os
+
+config={
+    'Clock': {
+        'unit': 'day',
+        'start_datetime': datetime.datetime(2007, 10, 1),
+    },
+    'Weather': {
+        'filename': os.path.dirname(__file__) + '/data/2007.wea',
+        'timezone': 'Asia/Seoul',
+    }
+}
 
 p = instance(Phenology, config)
 for i in range(10):
