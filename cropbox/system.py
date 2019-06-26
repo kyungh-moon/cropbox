@@ -50,7 +50,7 @@ class Trackable(metaclass=TrackableMeta):
             else:
                 return v.__get__(o, type(o))
         else:
-            raise AttributeError(f"{self} has no trackable '{name}'.")
+            raise AttributeError(f"{self!r} has no trackable '{name}'.")
 
     def update(self):
         [v.get(self) for v in self._trackable.values()]

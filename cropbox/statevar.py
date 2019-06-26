@@ -78,11 +78,11 @@ class statevar(var):
             tr = super().get(obj)
             if self.trace.is_stacked(self):
                 if self._cyclic_flg:
-                    print(f'{self} @ {obj} stacked -- return {tr._value}')
+                    print(f'{self!r} @ {obj} stacked -- return {tr._value}')
                     return tr.value
                 else:
                     #TODO: implement own exception
-                    raise RecursionError(f'{self} @ {obj} stacked -- {self.trace.stack}')
+                    raise RecursionError(f'{self!r} @ {obj} stacked -- {self.trace.stack}')
             # support custom timestamp (i.e. elongation age instead of calendar time)
             t = self.time(obj)
             # lazy evaluation preventing redundant computation
