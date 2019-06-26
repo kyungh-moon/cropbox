@@ -38,6 +38,10 @@ class Weather(System):
     def vapor_pressure(self):
         return VaporPressure
 
+    @system(weather='self')
+    def sun(self):
+        return Sun
+
     @parameter
     def filename(self):
         return ''

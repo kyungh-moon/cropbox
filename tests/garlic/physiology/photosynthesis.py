@@ -22,8 +22,7 @@ class ShadedWeather(Weather):
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 class Photosynthesis(Trait):
-    sun = system(Sun) #, PAR='p.weather.PFD') #FIXME: use external Weather object
-    radiation = system(Radiation, sun='sun', LAI='LAI', LAF='LAF')
+    radiation = system(Radiation, sun='p.weather.sun', LAI='LAI', LAF='LAF')
 
     sunlit_weather = system(SunlitWeather, weather='p.weather', radiation='radiation')
     shaded_weather = system(ShadedWeather, weather='p.weather', radiation='radiation')

@@ -17,7 +17,7 @@ class FloralInitiation(Stage):
         # solstice = w.time.tz.localize(datetime.datetime(w.time.year, 6, 21))
         # # no MAX_LEAF_NO implied unlike original model
         # return w.time <= solstice and w.day_length >= self.critical_photoperiod
-        return w.day_length >= self.critical_photoperiod
+        return w.sun.day_length >= self.critical_photoperiod
 
     # #FIXME postprocess similar to @produce?
     # def finish(self):

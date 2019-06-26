@@ -17,8 +17,6 @@ from cropbox.context import instance
 from cropbox.system import System
 from cropbox.statevar import constant, derive, drive, parameter, system
 
-from .weather import Weather
-
 from numpy import pi, sin, cos, tan, arcsin, arccos, radians, degrees, log, exp
 
 class Location(System):
@@ -37,8 +35,9 @@ class Sun(System):
     #FIXME better to be 1361 or 1362 W/m-2?
     SOLAR_CONSTANT = parameter(1370.0, alias='SC')
 
+    #TODO make Location external
     location = system(Location)
-    weather = system(Weather)
+    weather = system()
 
     # @derive time? -- takes account different Julian day conventions (03-01 vs. 01-01)
     @derive(alias='t', init=None)
