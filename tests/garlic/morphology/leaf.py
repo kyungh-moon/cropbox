@@ -20,11 +20,11 @@ class Leaf(Organ):
 
     # max elongation rate (cm per day) at optipmal temperature
     # (Topt: 31C with Tbase = 9.8C using 0.564 cm/dd rate from Fournier 1998 paper above
-    @parameter(alias='LER')
+    @parameter(alias='LER', unit='cm/day')
     def maximum_elongation_rate(self):
         return 12.0
 
-    @parameter(alias='LM_min')
+    @parameter(alias='LM_min', unit='cm')
     def minimum_length_of_longest_leaf(self):
         return 60.0
 
@@ -49,7 +49,7 @@ class Leaf(Organ):
     def stay_green(self):
         return 3.5
 
-    @parameter
+    @parameter(unit='cm/day')
     def aging_rate(self):
         return self.maximum_elongation_rate
 
@@ -67,24 +67,25 @@ class Leaf(Organ):
     def extra_leaves(self):
         return self.p.pheno.leaves_potential - self.p.pheno.leaves_generic
 
-    @derive(alias='maximum_length')
+    @derive(alias='maximum_length', unit='cm')
     def maximum_length_of_longest_leaf(self, LM_min, extra_leaves, k=0):
         # no length adjustment necessary for garlic, unlike MAIZE (KY, 2016-10-12)
         #k = 0 # 24.0
         return sqrt(LM_min**2 + k * extra_leaves)
 
-    @derive
+    @derive(unit='cm')
     def maximum_width(self):
         # Fournier and Andrieu(1998) Pg242 YY
         return self.maximum_length * self.length_to_width_ratio
 
-    @derive
+    @derive(unit='cm^2')
     def maximum_area(self):
         # daughtry and hollinger (1984) Fournier and Andrieu(1998) Pg242 YY
         return self.maximum_length * self.maximum_width * self.area_ratio
 
-    @derive
+    @derive(unit='cm^2')
     def area_from_length(self, l):
+        l = l.to('cm').magnitude
         #HACK ensure zero area for zero length
         if l == 0:
             return 0
@@ -92,10 +93,11 @@ class Leaf(Organ):
             # for garlic, see JH's thesis
             return 0.639945 + 0.954957*l + 0.005920*l**2
 
-    @derive
+    @derive(unit='cm^2')
     def area_increase_from_length(self, length):
+        l = length.to('cm').magnitude
         # for garlic, see JH's thesis
-        return 0.954957 + 2*0.005920*length
+        return 0.954957 + 2*0.005920*l
 
     #TODO better name, shared by growth_duration and pontential_area
     #TODO should be a plant parameter not leaf (?)
@@ -112,7 +114,7 @@ class Leaf(Organ):
         scale = rank / n_m - 1
         return exp(a * scale**2 + b * scale**3)
 
-    @derive
+    @derive(unit='cm')
     def potential_length(self):
         # for MAIZSIM
         #return self.maximum_length * self.rank_effect(weight=0.5)
@@ -133,7 +135,7 @@ class Leaf(Organ):
     # the unit of k is cm^2 (Fournier and Andrieu 1998 Pg239). YY
     # L_max is the length of the largest leaf when grown at T_peak. Here we assume LM_min is determined at growing Topt with minmal (generic) leaf no, SK 8/2011
     # If this routine runs before TI, totalLeaves = genericLeafNo, and needs to be run with each update until TI and total leaves are finalized, SK
-    @derive
+    @derive(unit='day')
     def growth_duration(self):
         # shortest possible linear phase duration in physiological time (days instead of GDD) modified
         days = self.potential_length / self.maximum_elongation_rate
@@ -151,7 +153,7 @@ class Leaf(Organ):
         # Fig 4 of Birch et al. (1998)
         return clip(exp(-1.17 + 0.047 * potential_leaves), 0.5, 1.0)
 
-    @derive
+    @derive(unit='cm^2')
     def potential_area(self):
         # for MAIZSIM
         # equa 6. Fournier and Andrieu(1998) multiplied by Birch et al. (1998) leaf no effect
@@ -165,11 +167,11 @@ class Leaf(Organ):
     def green_ratio(self):
         return 1 - self.senescence_ratio
 
-    @derive
+    @derive(unit='cm^2')
     def green_area(self):
         return self.green_ratio * self.area
 
-    @accumulate
+    @accumulate(unit='day')
     def elongation_age(self): #TODO add td in the args
         #TODO implement Parent and Tardieu (2011, 2012) approach for leaf elongation in response to T and VPD, and normalized at 20C, SK, Nov 2012
         # elongAge indicates where it is now along the elongation stage or duration.
@@ -187,7 +189,9 @@ class Leaf(Organ):
     #TODO move to common module (i.e. Organ?)
     def _beta_growth(self, t, c_m, t_e, t_m=None, t_b=0, delta=1):
         #FIXME clipping necessary?
-        t = clip(t, 0., t_e)
+        #t = clip(t, 0., t_e)
+        if not 0 <= t <= t_e:
+            breakpoint()
         t_m = t_e / 2 if t_m is None else t_m
         t_et = t_e - t
         t_em = t_e - t_m
@@ -195,7 +199,7 @@ class Leaf(Organ):
         t_mb = t_m - t_b
         return c_m * ((t_et / t_em) * (t_tb / t_mb)**(t_mb / t_em))**delta
 
-    @derive
+    @derive(unit='cm/day')
     def potential_elongation_rate(self):
         if self.growing:
             #TODO proper integration with scipy.integrate
@@ -228,7 +232,7 @@ class Leaf(Organ):
         #FIXME garlic model does not actually use tempeature effect on final leaf size calculation
         return 1.0 # for garlic
 
-    @derive
+    @derive(unit='cm^2/day')
     def potential_expansion_rate(self):
         t = self.elongation_age
         t_e = self.growth_duration # 1.5 * w_max / c_m
@@ -245,7 +249,7 @@ class Leaf(Organ):
         #FIXME dt here is physiological time, whereas timestep multiplied in potential_area_increase is chronological time
         return c_m * r # dw/dt
 
-    @derive
+    @derive(unit='cm^2')
     def potential_area_increase(self):
         ##area = max(0, water_effect * T_effect * self.potential_area * (1 + (t_e - self.elongation_age) / (t_e - t_m)) * (self.elongation_age / t_e)**(t_e / (t_e - t_m)))
         #maximum_expansion_rate = T_effect * self.potential_area * (2*t_e - t_m) / (t_e * (t_e - t_m)) * (t_m / t_e)**(t_m / (t_e - t_m))
@@ -287,17 +291,17 @@ class Leaf(Organ):
     def carbon_effect(self):
         return 1.0
 
-    @accumulate(time='elongation_age')
+    @accumulate(time='elongation_age', unit='cm')
     def length(self):
         #TODO: incorporate stress effects as done in actual_area_increase()
         return self.potential_elongation_rate
 
-    @difference(time='elongation_age')
+    @difference(time='elongation_age', unit='cm')
     def actual_length_increase(self):
         return self.potential_elongation_rate
 
     # actual area
-    @derive
+    @derive(unit='cm^2')
     def area(self):
         # See Kim et al. (2012) Agro J. for more information on how this relationship has been derermined basned on multiple studies and is applicable across environments
         water_effect = self.water_potential_effect(-0.8657)
@@ -341,7 +345,7 @@ class Leaf(Organ):
         #nitrogen_index = max(0, (2 / (1 + exp(-2.9 * (self.g_content - 0.25))) - 1))
         return max(0, self.stay_green * self.growth_duration - self.stay_green_water_stress_duration)
 
-    @accumulate
+    @accumulate(unit='day')
     def active_age(self):
         # Assumes physiological time for senescence is the same as that for growth though this may be adjusted by stayGreen trait
         # a peaked fn like beta fn not used here because aging should accelerate with increasing T not slowing down at very high T like growth,
@@ -353,19 +357,19 @@ class Leaf(Organ):
             #TODO only for MAIZSIM
             return q10_thermal_func(T=self.p.pheno.temperature, T_opt=self.p.pheno.optimal_temperature)
 
-    @accumulate
+    @accumulate(unit='day')
     def senescence_water_stress_duration(self, scale=0.5, threshold=-4.0):
         if self.aging:
             # if scale is 0.5, one day of severe water stress at predawn shortens one half day of agingDuration
             return scale * (1 - self.water_potential_effect(threshold))
 
-    @derive
+    @derive(unit='day')
     def senescence_duration(self):
         # end of growth period, time to maturity
         return max(0, self.growth_duration - self.senescence_water_stress_duration)
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
-    @accumulate
+    @accumulate(unit='day')
     def senescence_age(self):
         #TODO support clipping with @rate option or sub-decorator (i.e. @active_age.clip)
         #FIXME no need to check here, as it will be compared against duration later anyways
@@ -394,14 +398,14 @@ class Leaf(Organ):
             r = self.aging_rate * self.senescence_age / self.length
         return clip(r, 0., 1.)
 
-    @derive
+    @derive(unit='cm^2')
     def senescent_area(self):
         # Leaf senescence accelerates with drought and heat. see http://www.agry.purdue.edu/ext/corn/news/timeless/TopLeafDeath.html
         # rate = self._growth_rate(self.senescence_age, self.senescence_duration)
         # return rate * self.timestep * self.area
         return self.senescence_ratio * self.area
 
-    @derive
+    @derive(unit='cm^2 / g')
     def specific_leaf_area(self):
         # temporary for now - it should vary by age. Value comes from some of Soo's work
         #return 200.0
