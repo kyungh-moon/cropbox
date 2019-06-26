@@ -51,7 +51,8 @@ class Accumulate(Track):
         dT = [t1 - t0 for t0, t1 in zip(T0, T1)]
         v = self._initial_value
         for dt, r in zip(dT, self._rates.values()):
-            v += r * dt
+            if r is not None:
+                v += r * dt
         self._value = v
 
     def poststore(self, v):
