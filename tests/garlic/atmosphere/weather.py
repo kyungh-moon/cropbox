@@ -47,7 +47,7 @@ class Weather(System):
         return self.store
 
     #TODO make CO2 parameter?
-    @parameter(unit='umol/mol')
+    @parameter(unit='umol/mol CO2')
     #@drive
     def CO2(self):
         return 400 # ppm

@@ -6,12 +6,13 @@ class Unit:
         r.default_format = '~P'
         #r.setup_matplotlib()
         r.define('percent = 0.01*count')
-        r.define('Carbon = [carbon]')
-        r.define('Nitrogen = [nitrogen]')
-        r.define('H2O = [h2o]')
-        r.define('CO2 = [co2]')
-        r.define('Quanta = [quanta]')
-        r.define('Electron = [electron]')
+        r.define('Carbon = []')
+        r.define('Nitrogen = []')
+        r.define('H2O = []')
+        r.define('CO2 = []')
+        r.define('O2 = []')
+        r.define('Quanta = []')
+        r.define('Electron = []')
         self.registry = r
 
     def __call__(self, v, unit=None):

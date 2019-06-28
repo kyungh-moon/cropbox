@@ -56,17 +56,16 @@ class C4(System):
     # self.lambda_l = 1.0e-12
     # self.K_max = 6.67e-3 # max. xylem conductance (mol m-2 s-1 MPa-1) from root to leaf, Dewar (2002)
 
-    gbs = parameter(0.003) # bundle sheath conductance to CO2, mol m-2 s-1
+    gbs = parameter(0.003, unit='mol/m^2/s CO2') # bundle sheath conductance to CO2, mol m-2 s-1
     # gi = parameter(1.0) # conductance to CO2 from intercelluar to mesophyle, mol m-2 s-1, assumed
 
     # Arrhenius equation
     @derive(alias='T_dep')
-    def temperature_dependence_rate(self, Ea, T, Tb=25):
-        R = 8.314 # universal gas constant (J K-1 mol-1)
-        K = 273.15
+    def temperature_dependence_rate(self, Ea, T, Tb=U(25, 'degC')):
+        R = U(8.314, 'J/K/mol') # universal gas constant (J K-1 mol-1)
         #HACK handle too low temperature values during optimization
-        Tk = max(0, T + K)
-        Tbk = max(0, Tb + K)
+        Tk = max(U(0, 'degK'), T.to('degK'))
+        Tbk = max(U(0, 'degK'), Tb.to('degK'))
         try:
             return np.exp(Ea * (T - Tb) / (Tbk * R * Tk))
         except ZeroDivisionError:
@@ -78,21 +77,25 @@ class C4(System):
 
     # Rd25: Values in Kim (2006) are for 31C, and the values here are normalized for 25C. SK
     @derive(alias='Rd')
-    def dark_respiration(self, T_dep, Rd25=2, Ear=39800):
+    def dark_respiration(self, T_dep, Rd25=U(2, 'umol/m^2/s O2'), Ear=U(39800, 'J/mol')):
         return Rd25 * T_dep(Ear)
 
     @derive
     def Rm(self, Rd):
         return 0.5 * Rd
 
-    @derive(alias='Jmax')
-    def maximum_electron_transport_rate(self, T, T_dep, N_dep, Jm25=300, Eaj=32800, Sj=702.6, Hj=220000):
-        R = 8.314
+    @derive(alias='Jmax', unit='umol/m^2/s Electron')
+    def maximum_electron_transport_rate(self, T, T_dep, N_dep,
+        Jm25=U(300, 'umol/m^2/s Electron'),
+        Eaj=U(32800, 'J/mol'),
+        Sj=U(702.6, 'J/mol/degK'),
+        Hj=U(220000, 'J/mol')
+    ):
+        R = U(8.314, 'J/K/mol')
 
-        Tb = 25
-        K = 273.15
-        Tk = T + K
-        Tbk = Tb + K
+        Tb = U(25, 'degC')
+        Tk = T.to('degK')
+        Tbk = Tb.to('degK')
 
         r = Jm25 * N_dep \
                  * T_dep(Eaj) \
@@ -100,50 +103,50 @@ class C4(System):
                  / (1 + np.exp((Sj*Tk  - Hj) / (R*Tk)))
         return max(0, r)
 
-    @parameter
+    @parameter(unit='mbar')
     def Om(self):
         # mesophyll O2 partial pressure
         O = 210 # gas units are mbar
         return O
 
     # Kp25: Michaelis constant for PEP caboxylase for CO2
-    @derive
-    def Kp(self, Kp25=80):
+    @derive(unit='ubar')
+    def Kp(self, Kp25=U(80, 'ubar')):
         return Kp25 # T dependence yet to be determined
 
     # Kc25: Michaelis constant of rubisco for CO2 of C4 plants (2.5 times that of tobacco), ubar, Von Caemmerer 2000
-    @derive
-    def Kc(self, T_dep, Kc25=650, Eac=59400):
+    @derive(unit='ubar')
+    def Kc(self, T_dep, Kc25=U(650, 'ubar'), Eac=U(59400, 'J/mol')):
         return Kc25 * T_dep(Eac)
 
     # Ko25: Michaelis constant of rubisco for O2 (2.5 times C3), mbar
-    @derive
-    def Ko(self, T_dep, Ko25=450, Eao=36000):
+    @derive(unit='mbar')
+    def Ko(self, T_dep, Ko25=U(450, 'mbar'), Eao=U(36000, 'J/mol')):
         return Ko25 * T_dep(Eao)
 
-    @derive
+    @derive(unit='ubar')
     def Km(self, Kc, Om, Ko):
         # effective M-M constant for Kc in the presence of O2
         return Kc * (1 + Om / Ko)
 
-    @derive
-    def Vpmax(self, N_dep, T_dep, Vpm25=70, EaVp=75100):
+    @derive(unit='umol/m^2/s CO2')
+    def Vpmax(self, N_dep, T_dep, Vpm25=U(70, 'umol/m^2/s CO2'), EaVp=U(75100, 'J/mol')):
         return Vpm25 * N_dep * T_dep(EaVp)
 
-    @derive
+    @derive(unit='umol/m^2/s CO2')
     def Vp(self, Vpmax, Cm, Kp):
         # PEP carboxylation rate, that is the rate of C4 acid generation
-        Vp = (Cm * Vpmax) / (Cm + Kp)
-        Vpr = 80 # PEP regeneration limited Vp, value adopted from vC book
-        Vp = np.clip(Vp, 0, Vpr)
+        Vp = (Cm * Vpmax) / (Cm + Kp / U(1, 'atm'))
+        Vpr = U(80, 'umol/m^2/s CO2') # PEP regeneration limited Vp, value adopted from vC book
+        Vp = np.clip(Vp, U(0, 'umol/m^2/s CO2'), Vpr)
         return Vp
 
     # EaVc: Sage (2002) JXB
-    @derive
-    def Vcmax(self, N_dep, T_dep, Vcm25=50, EaVc=55900):
+    @derive(unit='umol/m^2/s CO2')
+    def Vcmax(self, N_dep, T_dep, Vcm25=U(50, 'umol/m^2/s CO2'), EaVc=U(55900, 'J/mol')):
         return Vcm25 * N_dep * T_dep(EaVc)
 
-    @derive(alias='Ac')
+    @derive(alias='Ac', unit='umol/m^2/s CO2')
     def enzyme_limited_photosynthesis_rate(self, Vp, gbs, Cm, Rm, Vcmax, Rd):
         # Enzyme limited A (Rubisco or PEP carboxylation)
         Ac1 = Vp + gbs*Cm - Rm
@@ -156,7 +159,7 @@ class C4(System):
     # Light and electron transport limited A mediated by J
     # theta: sharpness of transition from light limitation to light saturation
     # x: Partitioning factor of J, yield maximal J at this value
-    @derive(alias='Aj')
+    @derive(alias='Aj', unit='umol/m^2/s CO2')
     def transport_limited_photosynthesis_rate(self, T, Jmax, Rd, Rm, I2, gbs, Cm, theta=0.5, x=0.4):
         J = quadratic_solve_lower(theta, -(I2+Jmax), I2*Jmax)
         #print(f'Jmax = {Jmax}, J = {J}')
@@ -165,7 +168,7 @@ class C4(System):
         Aj = min(Aj1, Aj2)
         return Aj
 
-    @derive(alias='A_net')
+    @derive(alias='A_net', unit='umol/m^2/s CO2')
     def net_photosynthesis(self, Ac, Aj, beta=0.99):
         # smooting the transition between Ac and Aj
         A_net = ((Ac+Aj) - ((Ac+Aj)**2 - 4*beta*Ac*Aj)**0.5) / (2*beta)
@@ -175,15 +178,15 @@ class C4(System):
     #FIXME: currently not used variables
 
     # alpha: fraction of PSII activity in the bundle sheath cell, very low for NADP-ME types
-    @derive(alias='Os')
+    @derive(alias='Os', unit='mbar')
     def bundle_sheath_o2(self, A_net, gbs, Om, alpha=0.0001):
-        return alpha * A_net / (0.047*gbs) + Om # Bundle sheath O2 partial pressure, mbar
+        return alpha * A_net / (0.047*gbs) * U(1, 'atm') + Om # Bundle sheath O2 partial pressure, mbar
 
-    @derive(alias='Cbs')
+    @derive(alias='Cbs', unit='ubar')
     def bundle_sheath_co2(self, A_net, Vp, Cm, Rm, gbs):
         return Cm + (Vp - A_net - Rm) / gbs # Bundle sheath CO2 partial pressure, ubar
 
-    @derive
+    @derive(unit='ubar')
     def gamma(self, Rd, Km, Vcmax, Os):
         # half the reciprocal of rubisco specificity, to account for O2 dependence of CO2 comp point,
         # note that this become the same as that in C3 model when multiplied by [O2]
