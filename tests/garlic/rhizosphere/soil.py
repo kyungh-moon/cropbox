@@ -3,16 +3,16 @@ from cropbox.system import System
 
 #TODO implement proper soil module
 class Soil(System):
-    @parameter
+    @parameter(unit='degC')
     def T_soil(self):
         return 10 # C
 
     # pressure - leaf water potential MPa...
-    @parameter
+    @parameter(unit='MPa')
     def WP_leaf(self):
         return 0
 
-    @parameter
+    @parameter(unit='g')
     def total_root_weight(self):
         return 0
 

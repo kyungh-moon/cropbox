@@ -6,18 +6,18 @@ class Organ(System):
     plant = system(alias='p')
 
     # organ temperature, C
-    temperature = drive('p.pheno', alias='T')
+    temperature = drive('p.pheno', alias='T', unit='degC')
 
     # glucose, MW = 180.18 / 6 = 30.03 g
-    @accumulate(alias='C')
+    @accumulate(alias='C', unit='g CH2O')
     def carbohydrate(self):
         return self.imported_carbohydrate # * self.respiration_adjustment
 
     # nitrogen content, mg
-    nitrogen = accumulate('imported_nitrogen', alias='N')
+    nitrogen = accumulate('imported_nitrogen', alias='N', unit='g Nitrogen')
 
     # physiological age accounting for temperature effect (in reference to endGrowth and lifeSpan, days)
-    @accumulate
+    @accumulate(unit='day')
     def physiological_age(self, T):
         #HACK: tracking should happen after plant emergence (due to implementation of original beginFromEmergence)
         if self.p.pheno.emerged:
@@ -36,7 +36,8 @@ class Organ(System):
     #     #FIXME isn't it just the amount of carbohydrate?
     #     #return self._carbohydrate / Weight.CH2O * Weight.C / Weight.C_to_CH2O_ratio
     #     return self._carbohydrate
-    @derive
+    #FIXME need unit conversion from CH2O?
+    @derive(unit='g CH2O')
     def mass(self):
         return self.carbohydrate
 
@@ -46,33 +47,34 @@ class Organ(System):
     #     self._carbohydrate = mass
 
     # physiological days to reach the end of growth (both cell division and expansion) at optimal temperature, days
-    @parameter
+    @parameter(unit='day')
     def growth_duration(self):
         return 10
 
     # life expectancy of an organ in days at optimal temperature (fastest growing temp), days
     #FIXME not used
-    @parameter
+    @parameter(unit='day')
     def longevity(self):
         return 50
 
     # carbon allocation to roots or leaves for time increment
     #FIXME not used
-    @derive
+    @derive(unit='g/hr CH2O')
     def potential_carbohydrate_increment(self):
         return 0
 
     # carbon allocation to roots or leaves for time increment  gr C for roots, gr carbo dt-1
     #FIXME not used
-    @derive
+    @derive(unit='g/hr CH2O')
     def actual_carbohydrate_increment(self):
         return 0
 
     #TODO to be overridden
-    @derive
+    @derive(unit='g/hr CH2O')
     def imported_carbohydrate(self):
         return 0
 
+    #TODO think about unit
     @derive
     def respiration_adjustment(self, Ka=0.1, Rm=0.02):
         # this needs to be worked on, currently not used at all
@@ -81,6 +83,6 @@ class Organ(System):
         return 1 - (Ka + Rm)
 
     #TODO to be overridden
-    @derive
+    @derive(unit='g/hr Nitrogen')
     def imported_nitrogen(self):
         return 0

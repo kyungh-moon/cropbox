@@ -76,15 +76,15 @@ class Radiation(System):
 
     # Forward from Sun
 
-    @derive
+    @derive(unit='deg')
     def current_zenith_angle(self):
         return self.sun.zenith_angle
 
-    @derive(alias='I0_dr')
+    @derive(alias='I0_dr', unit='umol/m^2/s Quanta')
     def directional_photosynthetic_radiation(self):
         return self.sun.directional_photosynthetic_radiation
 
-    @derive(alias='I0_df')
+    @derive(alias='I0_df', unit='umol/m^2/s Quanta')
     def diffusive_photosynthetic_radiation(self):
         return self.sun.diffusive_photosynthetic_radiation
 
@@ -93,10 +93,10 @@ class Radiation(System):
     #TODO better name?
     @derive
     def leaf_angle_coeff(self, zenith_angle):
-        elevation_angle = 90 - zenith_angle
+        elevation_angle = U(90, 'deg') - zenith_angle
         #FIXME need to prevent zero like sin_beta / cot_beta?
-        a = radians(elevation_angle)
-        t = radians(zenith_angle)
+        a = elevation_angle.to('rad')
+        t = zenith_angle.to('rad')
         # leaf angle distribution parameter
         x = self.leaf_angle_factor
         return {
@@ -122,7 +122,7 @@ class Radiation(System):
         return self.projection_ratio_at(current_zenith_angle)
 
     # diffused light ratio to ambient, itegrated over all incident angles from -90 to 90
-    @constant
+    @constant(unit='rad')
     def _angles(self):
         return array([(pi/4) * (g + 1) for g in GAUSS3])
 
@@ -210,7 +210,7 @@ class Radiation(System):
     #######################
 
     # I_lb: dePury (1997) eqn A3
-    @derive(alias='I_lb')
+    @derive(alias='I_lb', unit='umol/m^2/s Quanta')
     def irradiance_lb(self, L):
         I0_dr = self.sun.directional_photosynthetic_radiation
         rho_cb = self.canopy_reflectivity_uniform_leaf
@@ -218,7 +218,7 @@ class Radiation(System):
         return I0_dr * (1 - rho_cb) * Kb1 * exp(-Kb1 * L)
 
     # I_ld: dePury (1997) eqn A5
-    @derive(alias='I_ld')
+    @derive(alias='I_ld', unit='umol/m^2/s Quanta')
     def irradiance_ld(self, L):
         I0_df = self.sun.diffusive_photosynthetic_radiation
         rho_cb = self.canopy_reflectivity_uniform_leaf
@@ -226,12 +226,12 @@ class Radiation(System):
         return I0_df * (1 - rho_cb) * Kd1 * exp(-Kd1 * L)
 
     # I_l: dePury (1997) eqn A5
-    @derive(alias='I_l')
+    @derive(alias='I_l', unit='umol/m^2/s Quanta')
     def irradiance_l(self, L):
         return self.irradiance_lb(L) + self.irradiance_ld(L)
 
     # I_lbSun: dePury (1997) eqn A5
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_l_sunlit(self, L):
         I0_dr = self.sun.directional_photosynthetic_radiation
         s = self.scattering
@@ -241,12 +241,12 @@ class Radiation(System):
         return I_l_sunlit
 
     # I_lSH: dePury (1997) eqn A5
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_l_shaded(self, L):
         return self.irradiance_ld(L) + self.irradiance_lbs(L)
 
     # I_lbs: dePury (1997) eqn A5
-    @derive(alias='I_lbs')
+    @derive(alias='I_lbs', unit='umol/m^2/s Quanta')
     def irradiance_lbs(self, L):
         I0_dr = self.sun.directional_photosynthetic_radiation
         rho_cb = self.canopy_reflectivity_uniform_leaf
@@ -257,7 +257,7 @@ class Radiation(System):
 
     # I0tot: total irradiance at the top of the canopy,
     # passed over from either observed PAR or TSolar or TIrradiance
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_I0_tot(self):
         I0_dr = self.sun.directional_photosynthetic_radiation
         I0_df = self.sun.diffusive_photosynthetic_radiation
@@ -270,7 +270,7 @@ class Radiation(System):
     # I_tot, I_sun, I_shade: absorved irradiance integrated over LAI per ground area
 
     # I_c: Total irradiance absorbed by the canopy, de Pury and Farquhar (1997)
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def canopy_irradiance(self, rho_cb, I0_dr, I0_df, Kb1, Kd1, LAI):
         #I_c = self.canopy_sunlit_irradiance + self.canopy_shaded_irradiance
         def I(I0, K):
@@ -280,7 +280,7 @@ class Radiation(System):
 
     # I_cSun: The irradiance absorbed by the sunlit fraction, de Pury and Farquhar (1997)
     # should this be the same os Qsl? 03/02/08 SK
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def canopy_sunlit_irradiance(self, s, rho_cb, rho_cd, I0_dr, I0_df, Kb, Kb1, Kd1, LAI):
         I_c_sunlit = \
             I0_dr * (1 - s) * (1 - exp(-Kb * LAI)) + \
@@ -289,7 +289,7 @@ class Radiation(System):
         return I_c_sunlit
 
     # I_cSh: The irradiance absorbed by the shaded fraction, de Pury and Farquhar (1997)
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def canopy_shaded_irradiance(self):
         I_c = self.canopy_irradiance
         I_c_sunlit = self.canopy_sunlit_irradiance
@@ -309,7 +309,7 @@ class Radiation(System):
     #     return self._shaded_Q
 
     # Qtot: total irradiance (dir + dif) at depth L, simple empirical approach
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_tot(self, L):
         I0_tot = self.irradiance_I0_tot
         s = self.scattering
@@ -319,7 +319,7 @@ class Radiation(System):
         return Q_tot
 
     # Qbt: total beam radiation at depth L
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_bt(self, L):
         I0_dr = self.sun.directional_photosynthetic_radiation
         s = self.scattering
@@ -328,7 +328,7 @@ class Radiation(System):
         return Q_bt
 
     # net diffuse flux at depth of L within canopy
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_d(self, L):
         I0_df = self.sun.diffusive_photosynthetic_radiation
         s = self.scattering
@@ -338,7 +338,7 @@ class Radiation(System):
 
     # weighted average absorved diffuse flux over depth of L within canopy
     # accounting for exponential decay, Campbell p261
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_dm(self, LAI):
         if LAI > 0:
             # Integral Qd / Integral L
@@ -351,7 +351,7 @@ class Radiation(System):
         return Q_dm
 
     # unintercepted beam (direct beam) flux at depth of L within canopy
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradinace_Q_b(self, L):
         I0_dr = self.sun.directional_photosynthetic_radiation
         Kb = self.projection_ratio
@@ -359,29 +359,29 @@ class Radiation(System):
         return Q_b
 
     # mean flux density on sunlit leaves
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_sunlit(self, I0_dr, Kb):
         return I0_dr * Kb + self.irradiance_Q_shaded
 
     # flux density on sunlit leaves at delpth L
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_sunlit_at(self, L, *, I0_dr, Kb):
         return I0_dr * Kb + self.irradiance_Q_shaded(L)
 
     # mean flux density on shaded leaves over LAI
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_shaded(self):
         # It does not include soil reflection
         return self.irradiance_Q_dm + self.irradiance_Q_scm
 
     # diffuse flux density on shaded leaves at depth L
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_shaded_at(self, L):
         # It does not include soil reflection
         return self.irradiance_Q_d(L) + self.irradiance_Q_sc(L)
 
     # weighted average of Soil reflectance over canopy accounting for exponential decay
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_soilm(self, LAI):
         if LAI > 0:
             # Integral Qd / Integral L
@@ -395,7 +395,7 @@ class Radiation(System):
         return Q_soilm
 
     # weighted average scattered radiation within canopy
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_scm(self, LAI):
         if LAI > 0:
             # Integral Qd / Integral L
@@ -422,7 +422,7 @@ class Radiation(System):
         return Q_scm
 
     # scattered radiation at depth L in the canopy
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_sc(self, L):
         Q_bt = self.irradiance_Q_bt(L)
         Q_b = self.irradiance_Q_b(L)
@@ -430,7 +430,7 @@ class Radiation(System):
         return Q_bt - Q_b
 
     # total PFD at the soil sufrace under the canopy
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def irradiance_Q_soil(self, LAI):
         return self.irradiance_Q_tot(LAI)
 

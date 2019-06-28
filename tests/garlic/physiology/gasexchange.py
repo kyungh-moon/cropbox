@@ -269,7 +269,7 @@ class Stomata(System):
         return gs
 
     @derive(alias='m')
-    def leafp_effect(self, LWP='leaf.soil.WP_leaf', sf=2.3, phyf=-2.0):
+    def leafp_effect(self, LWP='leaf.soil.WP_leaf', sf=U(2.3, '1/MPa'), phyf=U(-2.0, 'MPa')):
         return (1 + np.exp(sf * phyf)) / (1 + np.exp(sf * (phyf - LWP)))
 
     @derive(alias='gv', unit='mmol/m^2/s H2O')
@@ -352,15 +352,15 @@ class PhotosyntheticLeaf(System):
         #             return A_net1
         return (A_net1 - A_net0)**2
 
-    @derive(alias='Rd')
+    @derive(alias='Rd', unit='umol/m^2/s O2')
     def dark_respiration(self):
         return self.photosynthesis.dark_respiration
 
-    @derive(alias='A_gross')
+    @derive(alias='A_gross', unit='umol/m^2/s CO2')
     def gross_photosynthesis(self):
         return clip(self.A_net + self.Rd, lower=0) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
 
-    @derive(alias='gs')
+    @derive(alias='gs', unit='umol/m^2/s H2O')
     def stomatal_conductance(self):
         return self.stomata.stomatal_conductance
 
@@ -416,7 +416,7 @@ class PhotosyntheticLeaf(System):
     # def temperature(self):
     #     return (self.temperature - self.new_temperature)**2
 
-    @derive(alias='ET')
+    @derive(alias='ET', unit='umol/m^2/s H2O')
     def evapotranspiration(self, vp='weather.vp'):
         gv = self.stomata.total_conductance_h2o
         ea = vp.ambient(self.weather.T_air, self.weather.RH)

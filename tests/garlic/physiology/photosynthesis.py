@@ -52,19 +52,23 @@ class Photosynthesis(Trait):
         #TODO how do we get LeafWP and ET_supply?
         return self.p.soil.WP_leaf
 
-    @derive(alias='ET_supply')
+    @derive(alias='ET_supply', unit='mol/m^2/s H2O')
     def evapotranspiration_supply(self, LAI):
         #TODO common handling logic for zero LAI
         try:
-            return self.p.water.supply * self.p.planting_density / 3600 / 18.01 / LAI
+            #FIXME check unit conversion (w.r.t p.water.supply)
+            # ? * (1/m^2) / (3600s/hour) / (g/umol) / (cm^2/m^2) = mol/m^2/s H2O
+            # ? * (1/m^2) * (hour/3600s) * (umol/g) * (m^2/cm^2) = mol/m^2/s H2O
+            # ?(g / hour) * (hour/3600s) * (umol/g) / cm^2
+            return self.p.water.supply * self.p.planting_density / 3600 / Weight.H2O / LAI
         except ZeroDivisionError:
             return 0
 
-    @derive
+    @derive(unit='cm^2 / m^2')
     def sunlit_leaf_area_index(self):
         return self.radiation.sunlit_leaf_area_index
 
-    @derive
+    @derive(unit='cm^2 / m^2')
     def shaded_leaf_area_index(self):
         return self.radiation.shaded_leaf_area_index
 
@@ -72,11 +76,11 @@ class Photosynthesis(Trait):
     def _weighted(self, array):
         return self.sunlit_leaf_area_index * array[0] + self.shaded_leaf_area_index * array[1]
 
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def sunlit_irradiance(self):
         return self.radiation.irradiance_Q_sunlit
 
-    @derive
+    @derive(unit='umol/m^2/s Quanta')
     def shaded_irradiance(self):
         return self.radiation.irradiance_Q_shaded
 
@@ -123,12 +127,12 @@ class Photosynthesis(Trait):
     # in the following we convert to g C plant-1 per hour
     # photosynthesis_gross is umol CO2 m-2 leaf s-1
 
-    @derive
+    @derive(unit='umol/m^2/s CO2')
     def net_CO2_umol_per_m2_s(self):
         # grams CO2 per plant per hour
         return self._weighted(self.net_array)
 
-    @derive
+    @derive(unit='umol/m^2/s H2O')
     def transpiration_H2O_mol_per_m2_s(self):
         #TODO need to save this?
         # when outputting the previous step transpiration is compared to the current step's water uptake
@@ -138,6 +142,7 @@ class Photosynthesis(Trait):
         return self._weighted(self.evapotranspiration_array)
 
     # final values
+    #TODO check final units
 
     @derive
     def assimilation(self):

@@ -18,7 +18,7 @@ class Nitrogen(Trait):
     #     self.cumulative_demand = 0
     #     self.cumulative_soil_uptake = 0
 
-    @derive
+    @derive(unit='g Nitrogen')
     def pool_from_shoot(self, frac=0.063):
         shoot_mass = self.p.mass.shoot
         if shoot_mass * self.p.planting_density <= 100: # g m-2
@@ -34,17 +34,17 @@ class Nitrogen(Trait):
             #return pool?
             raise NotImplementedError()
 
-    @derive
+    @derive(unit='g Nitrogen')
     def initial_pool(self, frac=0.034):
         # assume nitrogen concentration at the beginning is 3.4% of the total weight of the seed
         return frac * self.p.mass.initial_seed # 0.275
 
-    @derive(init='initial_pool')
+    @derive(init='initial_pool', unit='g Nitrogen')
     def pool(self):
         return self.pool_from_shoot + self.uptake_from_soil
 
     #TODO for 2DSOIL interface
-    @derive
+    @derive(unit='g Nitrogen')
     def uptake_from_soil(self):
         raise NotImplementedError()
 
@@ -77,19 +77,19 @@ class Nitrogen(Trait):
         return max(0, fraction)
 
     #TODO rename to `leaves`?
-    @derive
+    @derive(unit='g Nitrogen')
     def leaf(self):
         # calculate total nitrogen amount in the leaves YY units are grams N in all the leaves
         return self.leaf_fraction * self.pool
 
     #TODO rename to `unit_leaf`?
     # Calculate leaf nitrogen content of per unit area
-    @derive
+    @derive(unit='g / cm^2 Nitrogen')
     def leaf_content(self):
         # defining leaf nitrogen content this way, we did not consider the difference in leaf nitrogen content
         # of sunlit and shaded leaf yet YY
         #SK 8/22/10: set avg greenleaf N content before update in g/m2
         try:
-            return self.leaf / (self.p.area.green_leaf / (100**2))
+            return self.leaf / self.p.area.green_leaf
         except:
             return 0

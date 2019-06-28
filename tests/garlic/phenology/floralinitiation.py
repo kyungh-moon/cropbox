@@ -2,7 +2,7 @@ from cropbox.stage import Stage
 from cropbox.statevar import flag, parameter
 
 class FloralInitiation(Stage):
-    @parameter(alias='critPPD')
+    @parameter(alias='critPPD', unit='hr')
     def critical_photoperiod(self):
         return 12
 
