@@ -137,44 +137,30 @@ class Photosynthesis(Trait):
         #transpiration = sunlit.ET * max(0, sunlit_LAI) + shaded.ET * max(0, shaded_LAI)
         return self._weighted(self.evapotranspiration_array)
 
-    #TODO consolidate unit conversions somewhere else
-
-    @constant
-    def _mol_per_umol(self):
-        return 1 / 1e6
-
-    @derive
-    def _plant_per_m2(self):
-        return 1 / self.p.planting_density
-
-    @derive
-    def _min_step_per_sec(self):
-        return self.context.interval
-
     # final values
 
     @derive
     def assimilation(self):
         # grams CO2 per plant per hour
-        return self.gross_CO2_umol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.CO2
+        return self.gross_CO2_umol_per_m2_s / self.p.planting_density * self.context.interval * Weight.CO2
 
     @derive
     def gross(self):
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
-        return self.gross_CO2_umol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.CH2O
+        return self.gross_CO2_umol_per_m2_s / self.p.planting_density * self.context.interval * Weight.CH2O
 
     @derive
     def net(self):
         # grams carbo per plant per hour
         #FIXME check unit conversion between C/CO2 to CH2O
-        return self.net_CO2_umol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.CH2O
+        return self.net_CO2_umol_per_m2_s / self.p.planting_density * self.context.interval * Weight.CH2O
 
     @derive
     def transpiration(self):
         # Units of Transpiration from sunlit->ET are mol m-2 (leaf area) s-1
         # Calculation of transpiration from ET involves the conversion to gr per plant per hour
-        return self.transpiration_H2O_mol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.H2O
+        return self.transpiration_H2O_mol_per_m2_s / self.p.planting_density * self.context.interval * Weight.H2O
 
     #FIXME: no sense to weight two temperature values here
     # @derive
