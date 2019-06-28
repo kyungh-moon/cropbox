@@ -273,9 +273,9 @@ class Radiation(System):
     @derive
     def canopy_irradiance(self, rho_cb, I0_dr, I0_df, Kb1, Kd1, LAI):
         #I_c = self.canopy_sunlit_irradiance + self.canopy_shaded_irradiance
-        I0 = array([I0_dr, I0_df])
-        K1 = array([Kb1, Kd1])
-        I_tot = ((1 - rho_cb) * I0 * (1 - exp(-K1 * LAI))).sum()
+        def I(I0, K):
+            return ((1 - rho_cb) * I0 * (1 - exp(-K * LAI))).sum()
+        I_tot = I(I0_dr, Kb1) + I(I0_df, Kd1)
         return I_tot
 
     # I_cSun: The irradiance absorbed by the sunlit fraction, de Pury and Farquhar (1997)

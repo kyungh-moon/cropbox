@@ -83,9 +83,8 @@ class Leaf(Organ):
         # daughtry and hollinger (1984) Fournier and Andrieu(1998) Pg242 YY
         return self.maximum_length * self.maximum_width * self.area_ratio
 
-    @derive(unit='cm^2')
+    @derive(unit='cm^2', nounit='l')
     def area_from_length(self, l):
-        l = l.to('cm').magnitude
         #HACK ensure zero area for zero length
         if l == 0:
             return 0
@@ -93,11 +92,10 @@ class Leaf(Organ):
             # for garlic, see JH's thesis
             return 0.639945 + 0.954957*l + 0.005920*l**2
 
-    @derive(unit='cm^2')
+    @derive(unit='cm^2', nounit='length')
     def area_increase_from_length(self, length):
-        l = length.to('cm').magnitude
         # for garlic, see JH's thesis
-        return 0.954957 + 2*0.005920*l
+        return 0.954957 + 2*0.005920*length
 
     #TODO better name, shared by growth_duration and pontential_area
     #TODO should be a plant parameter not leaf (?)

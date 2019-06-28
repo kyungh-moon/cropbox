@@ -5,6 +5,13 @@ class Unit:
         r = pint.UnitRegistry(autoconvert_offset_to_baseunit=True)
         r.default_format = '~P'
         #r.setup_matplotlib()
+        r.define('percent = 0.01*count')
+        r.define('Carbon = [carbon]')
+        r.define('Nitrogen = [nitrogen]')
+        r.define('H2O = [h2o]')
+        r.define('CO2 = [co2]')
+        r.define('Quanta = [quanta]')
+        r.define('Electron = [electron]')
         self.registry = r
 
     def __call__(self, v, unit=None):
@@ -22,7 +29,7 @@ class Unit:
         if isinstance(v, Q):
             return v.to(unit)
         elif callable(v):
-            return lambda x: Q(v(x), unit)
+            return lambda *a, **k: U(v(*a, **k), unit)
         else:
             return Q(v, unit)
 
@@ -31,5 +38,14 @@ class Unit:
             return v.units
         except AttributeError:
             return None
+
+    def magnitude(self, v, unit=None):
+        Q = self.registry.Quantity
+        if isinstance(v, Q):
+            if unit:
+                v = v.to(unit)
+            return v.magnitude
+        else:
+            return v
 
 U = Unit()

@@ -1,6 +1,9 @@
+from .unit import U
+
 def growing_degree_days(T, T_base, T_opt=None, T_max=None):
     if T is None:
         return 0
+    T = U.magnitude(T, 'degC')
     if T_opt is not None:
         T = min(T, T_opt)
     if T_max is not None:
@@ -10,6 +13,7 @@ def growing_degree_days(T, T_base, T_opt=None, T_max=None):
 def beta_thermal_func(T, T_opt, T_max, T_min=0, beta=1):
     if T is None:
         return 0
+    T = U.magnitude(T, 'degC')
     if not T_min < T < T_max:
         return 0
     if not T_min < T_opt < T_max:
@@ -25,4 +29,5 @@ def beta_thermal_func(T, T_opt, T_max, T_min=0, beta=1):
 def q10_thermal_func(T, T_opt, Q10=2.0):
     if T is None:
         return 0
+    T = U.magnitude(T, 'degC')
     return Q10 ** ((T - T_opt) / 10)

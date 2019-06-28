@@ -1,5 +1,6 @@
 from cropbox.system import System
 from cropbox.statevar import accumulate, constant, derive, difference, drive, optimize, parameter, proxy, statevar, system
+from cropbox.unit import U
 
 from ..rhizosphere.soil import Soil
 
@@ -27,17 +28,17 @@ class C4(System):
     #TODO: more robust interface to connect Systems (i.e. type check, automatic prop defines)
     leaf = system()
 
-    @derive(alias='Cm')
+    @derive(alias='Cm', unit='umol/mol CO2')
     def co2_mesophyll(self):
         Cm = self.leaf.co2_mesophyll
-        return np.clip(Cm, 0, Cm)
+        return np.clip(Cm, U(0, 'umol/mol CO2'), Cm)
 
-    @derive(alias='I2')
+    @derive(alias='I2', unit='umol/m^2/s Quanta')
     def light(self):
         I2 = self.leaf.light
-        return np.clip(I2, 0, I2)
+        return np.clip(I2, U(0, 'umol/m^2/s Quanta'), I2)
 
-    @drive(alias='T')
+    @drive(alias='T', unit='degC')
     def temperature(self):
         return self.leaf
 
@@ -197,16 +198,24 @@ class Stomata(System):
         return System
 
     # Ball-Berry model parameters from Miner and Bauerle 2017, used to be 0.04 and 4.0, respectively (2018-09-04: KDY)
-    g0 = parameter(0.017)
+    g0 = parameter(0.017, unit='mmol/m^2/s H2O')
     g1 = parameter(4.53)
 
     A_net = proxy('leaf.A_net')
     CO2 = proxy('leaf.weather.CO2')
     RH = proxy('leaf.weather.RH')
 
-    @derive(alias='gb')
+    @parameter(alias='drb', unit='H2O/CO2')
+    def diffusivity_ratio_boundary_layer(self):
+        return 1.37
+
+    @parameter(alias='dra', unit='H2O/CO2')
+    def diffusivity_ratio_air(self):
+        return 1.6
+
+    @derive(alias='gb', unit='mol/m^2/s H2O', nounit='lw,ww')
     # def update_boundary_layer(self, wind):
-    def boundary_layer_conductance(self, l='leaf', w='leaf.weather'):
+    def boundary_layer_conductance(self, lw='leaf.width', ww='leaf.weather.wind'):
         # maize is an amphistomatous species, assume 1:1 (adaxial:abaxial) ratio.
         #sr = 1.0
         # switchgrass adaxial : abaxial (Awada 2002)
@@ -215,10 +224,10 @@ class Stomata(System):
         ratio = (sr + 1)**2 / (sr**2 + 1)
 
         # characteristic dimension of a leaf, leaf width in m
-        d = l.width * 0.72
+        d = lw * 0.72
 
         #return 1.42 # total BLC (both sides) for LI6400 leaf chamber
-        gb = 1.4 * 0.147 * (max(0.1, w.wind) / d)**0.5 * ratio
+        gb = 1.4 * 0.147 * (max(0.1, ww) / d)**0.5 * ratio
         #gb = (1.4 * 1.1 * 6.62 * (wind / d)**0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
         # 6.62 is for laminar forced convection of air over flat plates on projected area basis
@@ -230,15 +239,15 @@ class Stomata(System):
     # stomatal conductance for water vapor in mol m-2 s-1
     # gamma: 10.0 for C4 maize
     #FIXME T_leaf not used
-    @derive(alias='gs', init='g0')
+    @derive(alias='gs', init='g0', unit='mol/m^2/s H2O')
     # def update_stomata(self, LWP, CO2, A_net, RH, T_leaf):
     #def stomatal_conductance(self, g0, g1, gb, m, A_net='leaf.A_net', CO2='leaf.weather.CO2', RH='leaf.weather.RH', gamma=10):
-    def stomatal_conductance(self, g0, g1, gb, m, A_net, CO2, RH, gamma=10):
-        Cs = CO2 - (1.37 * A_net / gb) # surface CO2 in mole fraction
+    def stomatal_conductance(self, g0, g1, gb, m, A_net, CO2, RH, drb, gamma=U(10, 'umol/mol')):
+        Cs = CO2 - (drb * A_net / gb) # surface CO2 in mole fraction
         Cs = max(Cs, gamma)
 
         a = m * g1 * A_net / Cs
-        b = g0 + gb - (m * g1 * A_net / Cs)
+        b = g0 + gb - a
         c = (-RH * gb) - g0
         #hs = max(np.roots([a, b, c]))
         #hs = scipy.optimize.brentq(lambda x: np.polyval([a, b, c], x), 0, 1)
@@ -260,17 +269,17 @@ class Stomata(System):
     def leafp_effect(self, LWP='leaf.soil.WP_leaf', sf=2.3, phyf=-2.0):
         return (1 + np.exp(sf * phyf)) / (1 + np.exp(sf * (phyf - LWP)))
 
-    @derive(alias='gv')
+    @derive(alias='gv', unit='mmol/m^2/s H2O')
     def total_conductance_h2o(self, gs, gb):
         return gs * gb / (gs + gb)
 
     @derive(alias='rbc')
-    def boundary_layer_resistance_co2(self, gb):
-        return 1.37 / gb
+    def boundary_layer_resistance_co2(self, gb, drb):
+        return drb / gb
 
     @derive(alias='rsc')
-    def stomatal_resistance_co2(self, gs):
-        return 1.6 / gs
+    def stomatal_resistance_co2(self, gs, dra):
+        return dra / gs
 
     @derive(alias='rvc')
     def total_resistance_co2(self, rbc, rsc):
@@ -300,25 +309,25 @@ class PhotosyntheticLeaf(System):
     nitrogen = parameter(2.0)
 
     # geometry
-    width = parameter(10 / 100) # meters
+    width = parameter(10 / 100, unit='m') # meters
 
     # soil?
-    ET_supply = parameter(0)
+    ET_supply = parameter(0, unit='mol/m^2/s H2O') # actual water uptake rate (mol H2O m-2 s-1)
 
     # dynamic properties
 
     # mesophyll CO2 partial pressure, ubar, one may use the same value as Ci assuming infinite mesohpyle conductance
-    @derive(alias='Cm,Ci')
+    @derive(alias='Cm,Ci', unit='umol/mol CO2')
     def co2_mesophyll(self, A_net, w='weather', rvc='stomata.rvc'):
-        P = w.P_air / 100
+        P = w.P_air / U(100, 'kPa')
         Ca = w.CO2 * P # conversion to partial pressure
         Cm = Ca - A_net * rvc * P
         #print(f"+ Cm = {Cm}, Ca = {Ca}, A_net = {A_net}, gs = {self.stomata.gs}, gb = {self.stomata.gb}, rvc = {rvc}, P = {P}")
-        return np.clip(Cm, 0, 2*Ca)
+        return np.clip(Cm, U(0, 'umol/mol CO2'), 2*Ca)
         #return Cm
 
     #FIXME is it right place? maybe need coordination with geometry object in the future
-    @derive(alias='I2')
+    @derive(alias='I2', unit='umol/m^2/s Quanta')
     def light(self):
         #FIXME make scatt global parameter?
         scatt = 0.15 # leaf reflectance + transmittance
@@ -328,7 +337,7 @@ class PhotosyntheticLeaf(System):
         I2 = Ia * (1 - f) / 2 # useful light absorbed by PSII
         return I2
 
-    @optimize(alias='A_net')
+    @optimize(alias='A_net', unit='umol/m^2/s CO2')
     def net_photosynthesis(self):
         #I2 = self.light
         A_net0 = self.A_net
@@ -353,19 +362,18 @@ class PhotosyntheticLeaf(System):
         return self.stomata.stomatal_conductance
 
     #TODO: use @optimize
-    @derive
+    @derive(unit='delta_degC')
     def temperature_adjustment(self, w='weather', s='stomata',
         # see Campbell and Norman (1998) pp 224-225
         # because Stefan-Boltzman constant is for unit surface area by denifition,
         # all terms including sbc are multilplied by 2 (i.e., gr, thermal radiation)
-        lamda=44000, # KJ mole-1 at 25oC
-        psc=6.66e-4,
-        Cp=29.3, # thermodynamic psychrometer constant and specific heat of air (J mol-1 C-1)
+        lamda=U(44.0, 'kJ/mol'), # KJ mole-1 at 25oC
+        Cp=U(29.3, 'J/mol/degC'), # thermodynamic psychrometer constant and specific heat of air (J mol-1 C-1)
         epsilon=0.97,
-        sbc=5.6697e-8,
+        sbc=U(5.6697e-8, 'J/m^2/s/degK^4'), # Stefan-Boltzmann constant (W m-2 K-4)
     ):
         T_air = w.T_air
-        Tk = T_air + 273.15
+        Tk = T_air.to('degK')
         PFD = w.PPFD
         P_air = w.P_air
         Jw = self.ET_supply
@@ -375,9 +383,10 @@ class PhotosyntheticLeaf(System):
         gr = 4 * epsilon * sbc * Tk**3 / Cp * 2 # radiative conductance, 2 account for both sides
         ghr = gha + gr
         thermal_air = epsilon * sbc * Tk**4 * 2 # emitted thermal radiation
+        psc = Cp / lamda # psychrometric constant (C-1)
         psc1 = psc * ghr / gv # apparent psychrometer constant
 
-        PAR = PFD / 4.55
+        PAR = U(PFD.to('umol/m^2/s Quanta').magnitude / 4.55, 'J/m^2/s') # W m-2
         # If total solar radiation unavailable, assume NIR the same energy as PAR waveband
         NIR = PAR
         scatt = 0.15
@@ -387,12 +396,13 @@ class PhotosyntheticLeaf(System):
 
         # debug dt I commented out the changes that yang made for leaf temperature for a test. I don't think they work
         if Jw == 0:
+            # (R_abs - thermal_air - lamda * gv * w.VPD / P_air) / (Cp * ghr + lamda * w.saturation_slope * gv) # eqn 14.6a
             # eqn 14.6b linearized form using first order approximation of Taylor series
-            return (psc1 / (w.VPD_slope + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - w.VPD / (psc1 * P_air))
+            return (psc1 / (w.saturation_slope + psc1)) * ((R_abs - thermal_air) / (ghr * Cp) - w.VPD / (psc1 * P_air))
         else:
             return (R_abs - thermal_air - lamda * Jw) / (Cp * ghr)
 
-    @derive(alias='T')
+    @derive(alias='T', unit='degC')
     def temperature(self):
         T_air = self.weather.T_air
         T_leaf = T_air + self.temperature_adjustment

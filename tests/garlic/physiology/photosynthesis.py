@@ -13,12 +13,12 @@ import numpy as np
 class SunlitWeather(Weather):
     weather = systemproxy()
     radiation = system()
-    photosynthetic_photon_flux_density = derive('radiation.irradiance_Q_sunlit', alias='PPFD')
+    photosynthetic_photon_flux_density = derive('radiation.irradiance_Q_sunlit', alias='PPFD', unit='umol/m^2/s Quanta')
 
 class ShadedWeather(Weather):
     weather = systemproxy()
     radiation = system()
-    photosynthetic_photon_flux_density = derive('radiation.irradiance_Q_shaded', alias='PPFD')
+    photosynthetic_photon_flux_density = derive('radiation.irradiance_Q_shaded', alias='PPFD', unit='umol/m^2/s Quanta')
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 class Photosynthesis(Trait):
@@ -39,7 +39,7 @@ class Photosynthesis(Trait):
         # leaf angle factor for corn leaves, Campbell and Norman (1998)
         return 1.37
 
-    @parameter
+    @parameter(unit='cm')
     def leaf_width(self):
         return 5.0 # to be calculated when implemented for individal leaves
 

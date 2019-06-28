@@ -31,6 +31,34 @@ def test_unit():
     s = instance(S)
     assert s.a == U(2, 'm') and s.b == U(1, 's') and s.c == U(2, 'm/s')
 
+def test_nounit():
+    class S(System):
+        @derive(unit='m')
+        def a(self):
+            return 1
+        @derive(nounit='a')
+        def b(self, a):
+            return a
+    s = instance(S)
+    assert isinstance(s.a, U.registry.Quantity)
+    assert s.a == U(1, 'm')
+    assert not isinstance(s.b, U.registry.Quantity)
+    assert s.b == 1
+
+def test_nounit_with_alias():
+    class S(System):
+        @derive(alias='aa', unit='m')
+        def a(self):
+            return 1
+        @derive(alias='bb', nounit='aa')
+        def b(self, aa):
+            return aa
+    s = instance(S)
+    assert isinstance(s.aa, U.registry.Quantity)
+    assert s.aa == U(1, 'm')
+    assert not isinstance(s.bb, U.registry.Quantity)
+    assert s.bb == 1
+
 def test_parameter():
     class S(System):
         a = parameter(1, unit='m')

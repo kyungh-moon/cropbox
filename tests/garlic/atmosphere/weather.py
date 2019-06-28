@@ -41,35 +41,35 @@ class Weather(System):
         return self.df.loc[self.key]
         #return {'SolRad': 1500, 'CO2': 400, 'RH': 0.6, 'T_air': 25, 'wind': 2.0, 'P_air': 100}
 
-    @drive(alias='PFD', key='SolRad')
+    @drive(alias='PFD', key='SolRad', unit='umol/m^2/s Quanta')
     def photon_flux_density(self):
         #return 1500 # umol m-2 s-1
         return self.store
 
     #TODO make CO2 parameter?
-    @parameter
+    @parameter(unit='umol/mol')
     #@drive
     def CO2(self):
         return 400 # ppm
         #return self.store
 
-    @drive(key='RH')
+    @drive(key='RH', unit='percent')
     def RH(self):
         #return 0.6 # 0~1
         return self.store
 
-    @drive(key='Tair')
+    @drive(key='Tair', unit='degC')
     def T_air(self):
         #return 25 # C
         return self.store
 
-    @drive(key='Wind')
+    @drive(key='Wind', unit='m/s')
     def wind(self):
         #return 2.0 # meters s-1
         return self.store
 
     #TODO make P_air parameter?
-    @parameter
+    @parameter(unit='kPa')
     #@drive
     def P_air(self):
         return 100 # kPa
@@ -79,7 +79,7 @@ class Weather(System):
     def VPD(self, T_air, RH): return self.vp.deficit(T_air, RH)
 
     @derive
-    def VPD_slope(self, T_air, P_air): return self.vp.curve_slope(T_air, P_air)
+    def saturation_slope(self, T_air, P_air): return self.vp.saturation_slope(T_air, P_air)
 
     def __str__(self):
         w = self

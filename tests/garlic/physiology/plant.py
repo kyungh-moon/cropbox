@@ -41,7 +41,7 @@ class Plant(System):
     nodal_units = system([])
 
     #TODO find a better place?
-    @parameter # unit (m-2)
+    @parameter(unit='1/m^2')
     def planting_density(self):
         return 55
 

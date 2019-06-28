@@ -3,8 +3,9 @@ from .unit import U
 import inspect
 
 class var:
-    def __init__(self, f=None, *, unit=None, alias=None, **kwargs):
+    def __init__(self, f=None, *, unit=None, nounit=None, alias=None, **kwargs):
         self._unit_var = unit
+        self._nounit_lst = nounit.split(',') if nounit else []
         self._alias_lst = alias.split(',') if alias else []
         self._kwargs = kwargs
         self.__call__(f)
@@ -71,7 +72,7 @@ class var:
     def compute(self, obj):
         fun = self._wrapped_fun
         ps = inspect.signature(fun).parameters
-        def resolve(k, p, i):
+        def resolve_arg(k, p, i):
             if i == 0:
                 return (k, obj)
             a = obj.option(fun, k)
@@ -85,7 +86,13 @@ class var:
                 return (k, obj[k])
             else:
                 return None
-        params = dict(filter(None, [resolve(*t, i) for i, t in enumerate(ps.items())]))
+        params = [resolve_arg(*t, i) for i, t in enumerate(ps.items())]
+        params = filter(None, params)
+        def resolve_unit(k, v):
+            if k in self._nounit_lst:
+                v = U.magnitude(v)
+            return v
+        params = {k: resolve_unit(k, v) for k, v in params}
         if len(ps) == len(params):
             return fun(**params)
         else:
@@ -93,5 +100,7 @@ class var:
                 p = params.copy()
                 p.update(kwargs)
                 q = dict(zip([k for k in ps if k not in p], args))
-                return fun(**p, **q)
+                a = dict(**p, **q)
+                a = {k: resolve_unit(k, v) for k, v in a.items()}
+                return fun(**a)
             return f

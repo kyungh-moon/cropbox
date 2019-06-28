@@ -48,14 +48,14 @@ class systemproxy(system):
 class statevar(var):
     trace = Trace()
 
-    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, alias=None, cyclic=False, priority=Priority.DEFAULT, breakpoint=False):
+    def __init__(self, f=None, *, track, time='context.time', init=0, unit=None, nounit=None, alias=None, cyclic=False, priority=Priority.DEFAULT, breakpoint=False):
         self._track_cls = track
         self._time_var = time
         self._init_var = init
         self._cyclic_flg = cyclic
         self._priority_lvl = priority
         self._breakpoint_flg = breakpoint
-        super().__init__(f, unit=unit, alias=alias)
+        super().__init__(f, unit=unit, nounit=nounit, alias=alias)
 
     def time(self, obj):
         return obj[self._time_var]

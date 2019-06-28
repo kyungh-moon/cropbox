@@ -17,10 +17,10 @@ config={
     }
 }
 
-p = instance(Phenology, config)
-for i in range(30):
-    print(f't = {p.context.time}, rate = {p.germination.rate}, over = {p.germination.over}')
-    p.context.advance()
+# p = instance(Phenology, config)
+# for i in range(30):
+#     print(f't = {p.context.time}, rate = {p.germination.rate}, over = {p.germination.over}')
+#     p.context.advance()
 
 p = instance(Plant, config)
 for i in range(300):
