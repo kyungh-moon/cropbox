@@ -69,15 +69,8 @@ class Photosynthesis(Trait):
         return self.radiation.shaded_leaf_area_index
 
     @derive
-    def leaf_area_index_array(self):
-        return np.array([
-            self.sunlit_leaf_area_index,
-            self.shaded_leaf_area_index,
-        ])
-
-    @derive
     def _weighted(self, array):
-        return self.leaf_area_index_array.dot(array)
+        return self.sunlit_leaf_area_index * array[0] + self.shaded_leaf_area_index * array[1]
 
     @derive
     def sunlit_irradiance(self):
@@ -89,40 +82,40 @@ class Photosynthesis(Trait):
 
     @derive
     def gross_array(self):
-        return np.array([
+        return (
             self.sunlit.A_gross,
             self.shaded.A_gross,
-        ])
+        )
 
     @derive
     def net_array(self):
-        return np.array([
+        return (
             self.sunlit.A_net,
             self.shaded.A_net,
-        ])
+        )
 
     @derive
     def evapotranspiration_array(self):
-        return np.array([
+        return (
             self.sunlit.ET,
             self.shaded.ET,
-        ])
+        )
 
-    @derive
-    def temperature_array(self):
-        return np.array([
-            self.sunlit.T_leaf,
-            self.shaded.T_leaf,
-        ])
+    # @derive
+    # def temperature_array(self):
+    #     return (
+    #         self.sunlit.T_leaf,
+    #         self.shaded.T_leaf,
+    #     )
 
     @derive
     def conductance_array(self):
-        return np.array([
+        return (
             self.sunlit.gs,
             self.shaded.gs,
-        ])
+        )
 
-    @derive
+    @derive(unit='umol/m^2/s CO2')
     def gross_CO2_umol_per_m2_s(self):
         return self._weighted(self.gross_array)
 
@@ -156,59 +149,37 @@ class Photosynthesis(Trait):
 
     @derive
     def _min_step_per_sec(self):
-        #FIXME: proper use of context.interval and unit
-        return 60 * 60 # self.p.initials.timestep
+        return self.context.interval
 
     # final values
 
     @derive
     def assimilation(self):
         # grams CO2 per plant per hour
-        return np.prod([
-            self.gross_CO2_umol_per_m2_s,
-            self._mol_per_umol,
-            self._plant_per_m2,
-            self._min_step_per_sec,
-            Weight.CO2,
-        ])
+        return self.gross_CO2_umol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.CO2
 
     @derive
     def gross(self):
         # grams carbo per plant per hour
-        return np.prod([
-            self.gross_CO2_umol_per_m2_s,
-            self._mol_per_umol,
-            self._plant_per_m2,
-            self._min_step_per_sec,
-            Weight.CH2O,
-        ])
+        #FIXME check unit conversion between C/CO2 to CH2O
+        return self.gross_CO2_umol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.CH2O
 
     @derive
     def net(self):
         # grams carbo per plant per hour
-        return np.prod([
-            self.net_CO2_umol_per_m2_s,
-            self._mol_per_umol,
-            self._plant_per_m2,
-            self._min_step_per_sec,
-            Weight.CH2O,
-        ])
+        #FIXME check unit conversion between C/CO2 to CH2O
+        return self.net_CO2_umol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.CH2O
 
     @derive
     def transpiration(self):
         # Units of Transpiration from sunlit->ET are mol m-2 (leaf area) s-1
         # Calculation of transpiration from ET involves the conversion to gr per plant per hour
-        #FIXME _min_step_per_sec used instead of fixed 3600 = 60 * 60
-        return np.prod([
-            self.transpiration_H2O_mol_per_m2_s,
-            self._plant_per_m2,
-            self._min_step_per_sec,
-            Weight.H2O,
-        ])
+        return self.transpiration_H2O_mol_per_m2_s * self._plant_per_m2 * self.context.interval * Weight.H2O
 
-    @derive
-    def temperature(self):
-        return self._weighted(self.temperature_array)
+    #FIXME: no sense to weight two temperature values here
+    # @derive
+    # def temperature(self):
+    #     return self._weighted(self.temperature_array)
 
     @derive
     def vapor_pressure_deficit(self):
@@ -218,7 +189,7 @@ class Photosynthesis(Trait):
     @derive
     def conductance(self):
         #HACK ensure 0 when one if LAI is 0, i.e., night
-        if (self.leaf_area_index_array == 0).any():
+        if self.sunlit_leaf_area_index == 0 or self.shaded_leaf_area_index == 0:
             return 0
         try:
             # average stomatal conductance Yang

@@ -11,6 +11,7 @@ class Unit:
         r.define('H2O = []')
         r.define('CO2 = []')
         r.define('O2 = []')
+        r.define('CH2O = []')
         r.define('Quanta = []')
         r.define('Electron = []')
         self.registry = r
