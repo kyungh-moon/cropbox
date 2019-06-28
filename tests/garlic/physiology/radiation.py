@@ -144,8 +144,6 @@ class Radiation(System):
     # Kd: K for diffuse light, the same literature as above
     @derive(alias='Kd')
     def diffusion_ratio(self, LAI):
-        if LAI == 0:
-            return 0
         angles = self._angles
         coeffs = array([self.leaf_angle_coeff(a) for a in angles])
         F = self._F(exp(-coeffs * LAI), angles)
