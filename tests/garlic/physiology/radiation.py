@@ -445,10 +445,14 @@ class Radiation(System):
     # Leaf Area Index #
     ###################
 
+    @constant(unit='deg')
+    def sunlit_minimum_elevation_angle(self):
+        return 5
+
     # sunlit LAI assuming closed canopy; thus not accurate for row or isolated canopy
-    @derive
+    @derive(unit='cm^2 / m^2')
     def sunlit_leaf_area_index(self):
-        if self.sun.elevation_angle <= 5:
+        if self.sun.elevation_angle <= self.sunlit_minimum_elevation_angle:
             return 0
         else:
             Kb = self.projection_ratio
@@ -456,14 +460,14 @@ class Radiation(System):
             return (1 - exp(-Kb * LAI)) / Kb
 
     # shaded LAI assuming closed canopy
-    @derive
+    @derive(unit='cm^2 / m^2')
     def shaded_leaf_area_index(self):
         return self.leaf_area_index - self.sunlit_leaf_area_index
 
     # sunlit fraction of current layer
     @derive
     def sunlit_fraction(self, L):
-        if self.sun.elevation_angle <= 5:
+        if self.sun.elevation_angle <= self.sunlit_minimum_elevation_angle:
             return 0
         else:
             Kb = self.projection_ratio
