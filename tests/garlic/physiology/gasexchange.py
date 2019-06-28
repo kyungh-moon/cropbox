@@ -1,6 +1,6 @@
 from cropbox.system import System
 from cropbox.statevar import accumulate, constant, derive, difference, drive, optimize, parameter, proxy, statevar, system
-from cropbox.unit import U
+from cropbox.unit import U, clip
 
 from ..rhizosphere.soil import Soil
 
@@ -31,12 +31,12 @@ class C4(System):
     @derive(alias='Cm', unit='umol/mol CO2')
     def co2_mesophyll(self):
         Cm = self.leaf.co2_mesophyll
-        return np.clip(Cm, U(0, 'umol/mol CO2'), Cm)
+        return clip(Cm, lower=0)
 
     @derive(alias='I2', unit='umol/m^2/s Quanta')
     def light(self):
         I2 = self.leaf.light
-        return np.clip(I2, U(0, 'umol/m^2/s Quanta'), I2)
+        return clip(I2, lower=0)
 
     @drive(alias='T', unit='degC')
     def temperature(self):
@@ -138,7 +138,7 @@ class C4(System):
         # PEP carboxylation rate, that is the rate of C4 acid generation
         Vp = (Cm * Vpmax) / (Cm + Kp / U(1, 'atm'))
         Vpr = U(80, 'umol/m^2/s CO2') # PEP regeneration limited Vp, value adopted from vC book
-        Vp = np.clip(Vp, U(0, 'umol/m^2/s CO2'), Vpr)
+        Vp = clip(Vp, 0, Vpr)
         return Vp
 
     # EaVc: Sage (2002) JXB
@@ -230,7 +230,7 @@ class Stomata(System):
         d = lw * 0.72
 
         #return 1.42 # total BLC (both sides) for LI6400 leaf chamber
-        gb = 1.4 * 0.147 * (max(0.1, ww) / d)**0.5 * ratio
+        gb = 1.4 * 0.147 * (clip(ww, lower=0.1) / d)**0.5 * ratio
         #gb = (1.4 * 1.1 * 6.62 * (wind / d)**0.5 * (P_air / (R * (273.15 + T_air)))) # this is an alternative form including a multiplier for conversion from mm s-1 to mol m-2 s-1
         # 1.1 is the factor to convert from heat conductance to water vapor conductance, an avarage between still air and laminar flow (see Table 3.2, HG Jones 2014)
         # 6.62 is for laminar forced convection of air over flat plates on projected area basis
@@ -256,7 +256,7 @@ class Stomata(System):
         #hs = scipy.optimize.brentq(lambda x: np.polyval([a, b, c], x), 0, 1)
         #hs = scipy.optimize.fsolve(lambda x: np.polyval([a, b, c], x), 0)
         hs = quadratic_solve_upper(a, b, c)
-        #hs = np.clip(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize
+        #hs = clip(hs, 0.1, 1.0) # preventing bifurcation: used to be (0.3, 1.0) for C4 maize
 
         #FIXME unused?
         #T_leaf = l.temperature
@@ -326,7 +326,7 @@ class PhotosyntheticLeaf(System):
         Ca = w.CO2 * P # conversion to partial pressure
         Cm = Ca - A_net * rvc * P
         #print(f"+ Cm = {Cm}, Ca = {Ca}, A_net = {A_net}, gs = {self.stomata.gs}, gb = {self.stomata.gb}, rvc = {rvc}, P = {P}")
-        return np.clip(Cm, U(0, 'umol/mol CO2'), 2*Ca)
+        return clip(Cm, 0, 2*Ca)
         #return Cm
 
     #FIXME is it right place? maybe need coordination with geometry object in the future

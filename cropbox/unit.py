@@ -50,3 +50,10 @@ class Unit:
             return v
 
 U = Unit()
+
+def clip(v, lower=None, upper=None):
+    if lower is not None:
+        v = max(v, lower)
+    if upper is not None:
+        v = min(v, upper)
+    return v

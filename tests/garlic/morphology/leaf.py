@@ -1,9 +1,10 @@
 from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, parameter, system
 from cropbox.util import beta_thermal_func, growing_degree_days, q10_thermal_func
+from cropbox.unit import U, clip
 
 from .organ import Organ
 
-from numpy import clip, exp, sqrt
+from numpy import exp, sqrt
 
 class Leaf(Organ):
     nodal_unit = system()
