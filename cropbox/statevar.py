@@ -1,5 +1,6 @@
 from .trace import Trace
 from .track import Track, Accumulate, Difference, Flip, Preserve
+from .unit import U
 from .var import var
 
 #HACK: to implement @optimize, need better way of controlling this
@@ -203,9 +204,11 @@ class optimize(derive):
             #print(f'@optimize: {x} ({regime})')
             with self.trace(self, obj, regime=regime):
                 tr._value = x
-                return super(optimize, self).compute(obj)
-        l = obj[self._lower_var]
-        u = obj[self._upper_var]
+                nx = super(optimize, self).compute(obj)
+                #HACK: do not convert to _unit_var as cost() may not be the same unit (i.e. squared error)
+                return U.magnitude(nx)
+        l = U.magnitude(obj[self._lower_var], self._unit_var)
+        u = U.magnitude(obj[self._upper_var], self._unit_var)
         #FIXME: minimize_scalar(method='brent/bounded') doesn't work with (l, r) bracket/bounds
         if None in (l, u):
             v = float(scipy.optimize.minimize_scalar(cost).x)

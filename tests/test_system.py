@@ -1,6 +1,7 @@
 from cropbox.system import System
 from cropbox.context import instance
 from cropbox.statevar import accumulate, constant, derive, difference, drive, flag, flip, optimize, parameter, produce, statevar, system, systemproxy
+from cropbox.unit import U
 
 import pytest
 
@@ -419,6 +420,21 @@ def test_optimize():
     s = instance(S)
     assert s.x == 1
     assert s.a == s.b == 2
+
+def test_optimize_with_unit():
+    class S(System):
+        @derive(unit='m')
+        def a(self):
+            return 2*self.x
+        @derive(unit='m')
+        def b(self):
+            return self.x + U(1, 'm')
+        @optimize(lower=U(0, 'm'), upper=U(2, 'm'), unit='m')
+        def x(self):
+            return self.a - self.b
+    s = instance(S)
+    assert s.x == U(1, 'm')
+    assert s.a == s.b == U(2, 'm')
 
 def test_clock():
     class S(System):
