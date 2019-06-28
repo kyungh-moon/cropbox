@@ -1,4 +1,5 @@
 import pint
+import numpy as np
 
 class Unit:
     def __init__(self):
@@ -61,3 +62,11 @@ def clip(v, lower=None, upper=None, unit=None):
     if upper is not None:
         v = min(U(v, unit), U(upper, unit))
     return v
+
+#TODO: replace with `Q.from_list()` when new version of pint gets released
+def array(a, unit=None, **kwargs):
+    if unit is None:
+        v = a[0]
+        if isinstance(v, U.registry.Quantity):
+            unit = v.units
+    return U(np.array([U.magnitude(v, unit) for v in a]), unit)
