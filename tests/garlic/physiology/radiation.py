@@ -274,13 +274,14 @@ class Radiation(System):
     ########
 
     # I_tot, I_sun, I_shade: absorved irradiance integrated over LAI per ground area
+    #FIXME: not used, but seems producing very low values, need to check equations
 
     # I_c: Total irradiance absorbed by the canopy, de Pury and Farquhar (1997)
     @derive(unit='umol/m^2/s Quanta')
     def canopy_irradiance(self, rho_cb, I0_dr, I0_df, Kb1, Kd1, LAI):
         #I_c = self.canopy_sunlit_irradiance + self.canopy_shaded_irradiance
         def I(I0, K):
-            return ((1 - rho_cb) * I0 * (1 - exp(-K * LAI))).sum()
+            return (1 - rho_cb) * I0 * (1 - exp(-K * LAI))
         I_tot = I(I0_dr, Kb1) + I(I0_df, Kd1)
         return I_tot
 
