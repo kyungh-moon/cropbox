@@ -52,9 +52,12 @@ class Unit:
 
 U = Unit()
 
-def clip(v, lower=None, upper=None):
+def clip(v, lower=None, upper=None, unit=None):
+    if unit is None:
+        if isinstance(v, U.registry.Quantity):
+            unit = v.units
     if lower is not None:
-        v = max(v, lower)
+        v = max(U(v, unit), U(lower, unit))
     if upper is not None:
-        v = min(v, upper)
+        v = min(U(v, unit), U(upper, unit))
     return v
