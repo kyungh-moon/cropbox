@@ -6,9 +6,10 @@
 # Rose bent canopy: Height1=Upright canopy, Height2 = bent portion height, 10/16/02 S.Kim
 
 from cropbox.system import System
-from cropbox.statevar import constant, derive, parameter, system
+from cropbox.statevar import constant, derive, drive, parameter, system
+from cropbox.unit import U, array
 
-from numpy import pi, sin, cos, tan, radians, log, exp, sqrt, array
+from numpy import pi, sin, cos, tan, log, exp, sqrt
 from enum import Enum
 
 # abscissas
@@ -44,10 +45,13 @@ class WaveBand(Enum):
 class Radiation(System):
     sun = system()
 
+    #FIXME: chance to remove ref here? only LAI is used
+    photosynthesis = system()
+
     # cumulative LAI at the layer
-    @parameter(alias='LAI')
+    @drive(alias='LAI', unit='cm^2 / m^2')
     def leaf_area_index(self):
-        return 0
+        return self.photosynthesis
 
     @parameter
     def leaf_angle(self):
@@ -56,7 +60,11 @@ class Radiation(System):
     # ratio of horizontal to vertical axis of an ellipsoid
     @parameter(alias='LAF')
     def leaf_angle_factor(self):
-        return 1
+        #return 1
+        # leaf angle factor for corn leaves, Campbell and Norman (1998)
+        #return 1.37
+        # leaf angle factor for garlic canopy, from Rizzalli et al. (2002),  X factor in Campbell and Norman (1998)
+        return 0.7
 
     @parameter
     def wave_band(self):

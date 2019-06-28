@@ -22,7 +22,8 @@ class ShadedWeather(Weather):
 
 #TODO rename to CarbonAssimilation or so? could be consistently named as CarbonPartition, CarbonAllocation...
 class Photosynthesis(Trait):
-    radiation = system(Radiation, sun='p.weather.sun', LAI='LAI', LAF='LAF')
+    #FIXME remove dep to Photosynthesis
+    radiation = system(Radiation, sun='p.weather.sun', photosynthesis='self')
 
     sunlit_weather = system(SunlitWeather, weather='p.weather', radiation='radiation')
     shaded_weather = system(ShadedWeather, weather='p.weather', radiation='radiation')
@@ -32,16 +33,11 @@ class Photosynthesis(Trait):
     sunlit = system(GasExchange, soil='plant.soil', name='Sunlit', weather='sunlit_weather')
     shaded = system(GasExchange, soil='plant.soil', name='Shaded', weather='shaded_weather')
 
-    #tau = 0.50 # atmospheric transmittance, to be implemented as a variable => done
-
-    @parameter(alias='LAF')
-    def leaf_angle_factor(self):
-        # leaf angle factor for corn leaves, Campbell and Norman (1998)
-        return 1.37
-
     @parameter(unit='cm')
     def leaf_width(self):
-        return 5.0 # to be calculated when implemented for individal leaves
+        # to be calculated when implemented for individal leaves
+        #return 5.0 # for maize
+        return 1.5 # for garlic
 
     @derive(alias='LAI')
     def leaf_area_index(self):
