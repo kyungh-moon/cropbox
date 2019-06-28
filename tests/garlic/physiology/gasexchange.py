@@ -64,8 +64,8 @@ class C4(System):
     def temperature_dependence_rate(self, Ea, T, Tb=U(25, 'degC')):
         R = U(8.314, 'J/K/mol') # universal gas constant (J K-1 mol-1)
         #HACK handle too low temperature values during optimization
-        Tk = max(U(0, 'degK'), T.to('degK'))
-        Tbk = max(U(0, 'degK'), Tb.to('degK'))
+        Tk = clip(T, lower=0, unit='degK')
+        Tbk = clip(Tb, lower=0, unit='degK')
         try:
             return np.exp(Ea * (T - Tb) / (Tbk * R * Tk))
         except ZeroDivisionError:
@@ -101,7 +101,7 @@ class C4(System):
                  * T_dep(Eaj) \
                  * (1 + np.exp((Sj*Tbk - Hj) / (R*Tbk))) \
                  / (1 + np.exp((Sj*Tk  - Hj) / (R*Tk)))
-        return max(0, r)
+        return clip(r, lower=0)
 
     @parameter(unit='mbar')
     def Om(self):
@@ -247,7 +247,7 @@ class Stomata(System):
     #def stomatal_conductance(self, g0, g1, gb, m, A_net='leaf.A_net', CO2='leaf.weather.CO2', RH='leaf.weather.RH', gamma=10):
     def stomatal_conductance(self, g0, g1, gb, m, A_net, CO2, RH, drb, gamma=U(10, 'umol/mol')):
         Cs = CO2 - (drb * A_net / gb) # surface CO2 in mole fraction
-        Cs = max(Cs, gamma)
+        Cs = clip(Cs, lower=gamma)
 
         a = m * g1 * A_net / Cs
         b = g0 + gb - a
@@ -265,7 +265,7 @@ class Stomata(System):
         #Ds = w.vp.deficit(T_leaf, hs)
 
         gs = g0 + (g1 * m * (A_net * hs / Cs))
-        gs = max(gs, g0)
+        gs = clip(gs, lower=g0)
         return gs
 
     @derive(alias='m')
@@ -358,7 +358,7 @@ class PhotosyntheticLeaf(System):
 
     @derive(alias='A_gross')
     def gross_photosynthesis(self):
-        return max(0, self.A_net + self.Rd) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
+        return clip(self.A_net + self.Rd, lower=0) # gets negative when PFD = 0, Rd needs to be examined, 10/25/04, SK
 
     @derive(alias='gs')
     def stomatal_conductance(self):
@@ -422,7 +422,7 @@ class PhotosyntheticLeaf(System):
         ea = vp.ambient(self.weather.T_air, self.weather.RH)
         es_leaf = vp.saturation(self.temperature)
         ET = gv * ((es_leaf - ea) / self.weather.P_air) / (1 - (es_leaf + ea) / self.weather.P_air)
-        return max(0, ET) # 04/27/2011 dt took out the 1000 everything is moles now
+        return clip(ET, lower=0) # 04/27/2011 dt took out the 1000 everything is moles now
 
 
 #FIXME initialize weather and leaf more nicely, handling None case for properties

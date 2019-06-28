@@ -145,7 +145,7 @@ class Leaf(Organ):
     def phase1_delay(self, rank):
         # not used in MAIZSIM because LTAR is used to initiate leaf growth.
         # Fournier's value : -5.16+1.94*rank;equa 11 Fournier and Andrieu(1998) YY, This is in plastochron unit
-        return max(0, -5.16 + 1.94 * rank)
+        return clip(-5.16 + 1.94 * rank, lower=0)
 
     @derive
     def leaf_number_effect(self, potential_leaves):
@@ -221,7 +221,7 @@ class Leaf(Organ):
 
         T_ratio = (T_grow - T_base) / (T_peak - T_base)
         # final leaf size is adjusted by growth temperature determining cell size during elongation
-        return max(0, T_ratio * exp(1 - T_ratio))
+        return clip(T_ratio * exp(1 - T_ratio), lower=0)
 
     @derive
     def temperature_effect(self):
@@ -235,7 +235,7 @@ class Leaf(Organ):
     def potential_expansion_rate(self):
         t = self.elongation_age
         t_e = self.growth_duration # 1.5 * w_max / c_m
-        t = min(t, t_e)
+        t = clip(t, upper=t_e)
         #FIXME can we introduce new w_max here when w_max in t_e (growth duration) supposed to be potential length?
         w_max = self.potential_area
         # c_m from Eq. 9, r (= dw/dt / c_m) from Eq. 7 of Yin (2003)
@@ -277,7 +277,8 @@ class Leaf(Organ):
         # sensitivity = 1.92, LeafWPhalf = -1.86, the sensitivity parameter may be raised by 0.3 to 0.5 to make it less sensitivy at high LWP, SK
         s_f = 0.4258 # 0.5
         psi_f = -1.4251 # -1.0
-        return min(1.0, (1 + exp(s_f * psi_f)) / (1 + exp(s_f * (psi_f - (psi_predawn - psi_th)))))
+        e = (1 + exp(s_f * psi_f)) / (1 + exp(s_f * (psi_f - (psi_predawn - psi_th))))
+        return clip(e, upper=1.0)
 
     @derive
     def water_potential_effect(self, threshold):
@@ -342,7 +343,7 @@ class Leaf(Organ):
     def stay_green_duration(self):
         # SK 8/20/10: as in Sinclair and Horie, 1989 Crop sciences, N availability index scaled between 0 and 1 based on
         #nitrogen_index = max(0, (2 / (1 + exp(-2.9 * (self.g_content - 0.25))) - 1))
-        return max(0, self.stay_green * self.growth_duration - self.stay_green_water_stress_duration)
+        return clip(self.stay_green * self.growth_duration - self.stay_green_water_stress_duration, lower=0)
 
     @accumulate(unit='day')
     def active_age(self):
@@ -365,7 +366,7 @@ class Leaf(Organ):
     @derive(unit='day')
     def senescence_duration(self):
         # end of growth period, time to maturity
-        return max(0, self.growth_duration - self.senescence_water_stress_duration)
+        return clip(self.growth_duration - self.senescence_water_stress_duration, lower=0)
 
     #TODO active_age and senescence_age could share a tracker with separate intervals
     @accumulate(unit='day')
