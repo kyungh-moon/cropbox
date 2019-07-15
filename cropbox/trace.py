@@ -1,5 +1,7 @@
 import networkx as nx
 
+from .logger import logger
+
 class Trace:
     def __init__(self):
         self.reset()
@@ -71,14 +73,14 @@ class Trace:
         s = self.indent
         #self.stack.append(v)
         self.push(v, regime=r)
-        #print(f'{s}> {v.__name__} ({r}) - {self._stack}')
+        logger.trace(f'{s*2}> {v.__name__} ({r}) - {self._stack}')
         return self
 
     def __exit__(self, *excs):
         #v = self.stack.pop()
         v = self.pop()
         s = self.indent
-        #print(f'{s}< {v.__name__} - {self._stack}')
+        #logger.trace(f'{s}< {v.__name__} - {self._stack}')
 
     def is_stacked(self, var):
         return len([v for v in self.stack if v is var]) > 1

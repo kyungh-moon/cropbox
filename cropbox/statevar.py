@@ -2,6 +2,7 @@ from .trace import Trace
 from .track import Track, Accumulate, Difference, Flip, Preserve
 from .unit import U
 from .var import var
+from .logger import logger
 
 #HACK: to implement @optimize, need better way of controlling this
 #TODO: probably need a full dependency graph between variables to push updates downwards
@@ -79,7 +80,7 @@ class statevar(var):
             tr = super().get(obj)
             if self.trace.is_stacked(self):
                 if self._cyclic_flg:
-                    #print(f'{self!r} @ {obj} stacked -- return {tr._value}')
+                    logger.trace(f'{self!r} @ {obj} stacked -- return {tr._value}')
                     return tr.value
                 else:
                     #TODO: implement own exception
@@ -201,7 +202,7 @@ class optimize(derive):
             nonlocal i
             regime = f'optimize-{obj.__class__.__name__}-{self.__name__}-{i}'
             i += 1
-            #print(f'@optimize: {x} ({regime})')
+            logger.debug(f'@optimize: {x} ({regime})')
             with self.trace(self, obj, regime=regime):
                 tr._value = x
                 nx = super(optimize, self).compute(obj)

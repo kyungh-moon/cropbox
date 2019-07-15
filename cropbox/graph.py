@@ -7,17 +7,18 @@ import re
 import textwrap
 
 from .statevar import drive, flag, statevar, system
+from .logger import logger
 
 def plot(root):
     g = nx.DiGraph()
     S = root.collect(exclude_self=False)
 
     def add_node(i, name, alias, cls, system):
-        #print(f'id = {i}, name = {name}, alias = {alias}, cls = {cls}, system = {system}')
+        logger.trace(f'id = {i}, name = {name}, alias = {alias}, cls = {cls}, system = {system}')
         g.add_node(i, name=name, alias=alias, cls=cls, system=system)
 
     def add_edge(si, di, alias, rel):
-        #print(f'sid = {si}, did = {di}, alias = {alias}, rel = {rel}')
+        logger.trace(f'sid = {si}, did = {di}, alias = {alias}, rel = {rel}')
         g.add_edge(si, di, rel=rel)
 
     def trackable(s, dn):
