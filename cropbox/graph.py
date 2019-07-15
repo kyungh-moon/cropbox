@@ -6,7 +6,7 @@ import networkx as nx
 import re
 import textwrap
 
-from cropbox.statevar import drive, flag, statevar, system
+from .statevar import drive, flag, statevar, system
 
 def plot(root):
     g = nx.DiGraph()
