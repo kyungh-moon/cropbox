@@ -559,7 +559,7 @@ def test_plot(tmp_path):
         def b(self):
             return self.a
     #FIXME: graph should be automatically reset
-    statevar.trace.reset()
+    statevar.trace.reset(build_graph=True)
     s = instance(S)
     g = statevar.trace.graph
     import matplotlib.pyplot as plt

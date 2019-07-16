@@ -6,10 +6,12 @@ class Trace:
     def __init__(self):
         self.reset()
 
-    def reset(self):
+    def reset(self, build_graph=False):
         self._stack = []
         self._regime = ['']
-        self.graph = nx.DiGraph()
+        self.build_graph = build_graph
+        if self.build_graph:
+            self.graph = nx.DiGraph()
 
     @property
     def stack(self):
@@ -62,14 +64,16 @@ class Trace:
         del self._mem
         try:
             s = self.stack[-1]
-            #FIXME: graph should be reset for every update
-            self.graph.add_edge(s.__name__, v.__name__)
+            if self.build_graph:
+                #FIXME: graph should be reset for every update
+                self.graph.add_edge(s.__name__, v.__name__)
         except:
             pass
-        #TODO: give each System object a name
-        #TODO: check dupliate?
-        self.graph.add_node(o.__class__.__name__, type='Class', group='')
-        self.graph.add_node(v.__name__, type=v.__class__.__name__, group=o.__class__.__name__)
+        if self.build_graph:
+            #TODO: give each System object a name
+            #TODO: check dupliate?
+            self.graph.add_node(o.__class__.__name__, type='Class', group='')
+            self.graph.add_node(v.__name__, type=v.__class__.__name__, group=o.__class__.__name__)
         s = self.indent
         #self.stack.append(v)
         self.push(v, regime=r)
