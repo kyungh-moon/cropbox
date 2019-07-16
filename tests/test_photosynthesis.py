@@ -641,7 +641,8 @@ config = ''
 # VaporPressure.c = 243.04 # C
 # """
 
-ge = instance(GasExchange, config)
+def test_photosynthesis(tmp_path):
+    ge = instance(GasExchange, config)
 
-from cropbox.graph import plot
-plot(ge)
+    from cropbox.graph import write
+    write(ge, tmp_path/'gasexchange.json')

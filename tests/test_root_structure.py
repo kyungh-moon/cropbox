@@ -6,7 +6,7 @@ import random
 import trimesh
 import numpy as np
 
-def test_root_structure():
+def test_root_structure(tmp_path):
     class R(System):
         @derive
         def elongation_rate(self):
@@ -88,5 +88,5 @@ def test_root_structure():
     [c.advance() for t in T]
     r.render()
 
-    from cropbox.graph import plot
-    plot(r)
+    from cropbox.graph import write
+    write(r, tmp_path/'root.json')

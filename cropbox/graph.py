@@ -9,7 +9,7 @@ import textwrap
 from .statevar import drive, flag, statevar, system
 from .logger import logger
 
-def plot(root):
+def write(root, filename):
     g = nx.DiGraph()
     S = root.collect(exclude_self=False)
 
@@ -129,7 +129,7 @@ def plot(root):
                 Visitor(kw).visit(m)
     [visit(s) for s in S]
 
-    #nx.write_graphml(g, tmp_path/'cy.graphml')
+    #nx.write_graphml(g, f'{filename}.graphml')
     cy = {
         'elements': {
             'nodes': [],
@@ -155,7 +155,6 @@ def plot(root):
                 'target': e[1],
             }
         })
-    #with open(tmp_path/'graph.json', 'w') as f:
-    with open('tests/graph.json', 'w') as f:
+    with open(filename, 'w') as f:
         import json
         f.write(json.dumps(cy))
