@@ -77,13 +77,15 @@ class Accumulate(Track):
             return None
 
 class Difference(Accumulate):
-    def store(self, v):
-        try:
-            k = list(self._rates.keys())[-1]
-            self._rates = {k: self._rates[k]}
-        except IndexError:
-            pass
-        super().store(v)
+    def poststore(self, v):
+        t = self.timer.t
+        def f():
+            self._rates = {t: v()}
+            self._value_cache = {}
+        if self._regime == '':
+            return f
+        else:
+            return None
 
 class Flip(Track):
     def reset(self, t):
