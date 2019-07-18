@@ -2,6 +2,19 @@ import networkx as nx
 
 from .logger import logger
 
+class Graph:
+    def __init__(self):
+        self._graph = nx.DiGraph()
+
+    def add(self, s, v, o):
+        if s:
+            #FIXME: graph should be reset for every update
+            self._graph.add_edge(s.__name__, v.__name__)
+        #TODO: give each System object a name
+        #TODO: check dupliate?
+        self._graph.add_node(o.__class__.__name__, type='Class', group='')
+        self._graph.add_node(v.__name__, type=v.__class__.__name__, group=o.__class__.__name__)
+
 class Trace:
     def __init__(self):
         self.reset()
@@ -9,9 +22,7 @@ class Trace:
     def reset(self, build_graph=False):
         self._stack = []
         self._regime = ['']
-        self.build_graph = build_graph
-        if self.build_graph:
-            self.graph = nx.DiGraph()
+        self.graph = Graph() if build_graph else None
 
     @property
     def stack(self):
@@ -33,7 +44,7 @@ class Trace:
                 return len(s)
             else:
                 return len(s) + n - 1
-        return count(self._stack) * ' '
+        return count(self._stack) * ' ' * 2
 
     @property
     def regime(self):
@@ -55,6 +66,12 @@ class Trace:
         clean()
         return v
 
+    def peek(self):
+        try:
+            return self.stack[-1]
+        except:
+            return None
+
     def __call__(self, var, obj, regime=None):
         self._mem = (var, obj, regime)
         return self
@@ -62,29 +79,16 @@ class Trace:
     def __enter__(self):
         v, o, r = self._mem
         del self._mem
-        try:
-            s = self.stack[-1]
-            if self.build_graph:
-                #FIXME: graph should be reset for every update
-                self.graph.add_edge(s.__name__, v.__name__)
-        except:
-            pass
-        if self.build_graph:
-            #TODO: give each System object a name
-            #TODO: check dupliate?
-            self.graph.add_node(o.__class__.__name__, type='Class', group='')
-            self.graph.add_node(v.__name__, type=v.__class__.__name__, group=o.__class__.__name__)
-        s = self.indent
-        #self.stack.append(v)
+        s = self.peek()
+        if self.graph:
+            self.graph.add(s, v, o)
         self.push(v, regime=r)
-        logger.trace(f'{s*2}> {v.__name__} ({r}) - {self._stack}')
+        logger.trace(f'{self.indent}> {v.__name__} ({r}) - {self._stack}')
         return self
 
     def __exit__(self, *excs):
-        #v = self.stack.pop()
         v = self.pop()
-        s = self.indent
-        #logger.trace(f'{s}< {v.__name__} - {self._stack}')
+        #logger.trace(f'{self.indent}< {v.__name__} - {self._stack}')
 
     def is_stacked(self, var):
         return len([v for v in self.stack if v is var]) > 1

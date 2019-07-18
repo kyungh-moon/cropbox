@@ -561,7 +561,7 @@ def test_plot(tmp_path):
     #FIXME: graph should be automatically reset
     statevar.trace.reset(build_graph=True)
     s = instance(S)
-    g = statevar.trace.graph
+    g = statevar.trace.graph._graph
     import matplotlib.pyplot as plt
     plt.figure(figsize=(12, 12))
     import networkx as nx
@@ -577,11 +577,11 @@ def test_cytoscape(tmp_path):
         def b(self):
             return self.a
     #FIXME: graph should be automatically reset
-    statevar.trace.reset()
+    statevar.trace.reset(build_graph=True)
     s = instance(S)
-    g = statevar.trace.graph
-    #import networkx as nx
-    #nx.write_graphml(g, tmp_path/'cy.graphml')
+    g = statevar.trace.graph._graph
+    import networkx as nx
+    nx.write_graphml(g, tmp_path/'cy.graphml')
     cy = {
         'elements': {
             'nodes': [],
