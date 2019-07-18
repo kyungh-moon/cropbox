@@ -7,15 +7,16 @@ import re
 import textwrap
 
 from .statevar import drive, flag, statevar, system
+from .unit import U
 from .logger import logger
 
 def write(root, filename=None):
     g = nx.DiGraph()
     S = root.collect(exclude_self=False)
 
-    def add_node(i, name, alias, value, cls, system):
-        logger.trace(f'id = {i}, name = {name}, alias = {alias}, value = {value}, cls = {cls}, system = {system}')
-        g.add_node(i, name=name, alias=alias, value=value, cls=cls, system=system)
+    def add_node(i, name, alias, value, unit, cls, system):
+        logger.trace(f'id = {i}, name = {name}, alias = {alias}, unit = {unit}, value = {value}, cls = {cls}, system = {system}')
+        g.add_node(i, name=name, alias=alias, value=value, unit=unit, cls=cls, system=system)
 
     def add_edge(si, di, alias, rel):
         if di is None:
@@ -45,20 +46,28 @@ def write(root, filename=None):
         t = trackable(s, dn) if dn else s
         return id(t) if t else None
 
-    def get_value(d):
-        v = d.value
-        if callable(v):
-            return None
-        elif isinstance(v, tuple):
-            # @produce
-            return None
+    def get_value_and_unit(s, n):
+        d = s[n]
+        v, u = (None, None)
+        if callable(d): pass # partial function
+        elif isinstance(d, tuple): pass # @produce
+        elif isinstance(d, U.registry.Quantity):
+            v = U.magnitude(d)
+            u = str(d.units)
         else:
-            return v
+            v = d
+        return (v, u)
+
+    def get_unit(s, n):
+        try:
+            return str(s[n].units)
+        except:
+            return None
 
     def visit(s):
         si = get_id(s)
         sn = s.__class__.__name__
-        add_node(si, name=sn, alias=None, value=None, cls='System', system=None)
+        add_node(si, name=sn, alias=None, value=None, unit=None, cls='System', system=None)
         for v in set(s._trackable.values()):
             n = v.__name__
             vcn = v.__class__.__name__
@@ -74,9 +83,8 @@ def write(root, filename=None):
             elif isinstance(v, statevar):
                 vd = v.data(s)[v]
                 vi = get_id(vd)
-                vv = get_value(vd)
-                #TODO handle unit
-                add_node(vi, name=n, alias=va, value=vv, cls=vcn, system=si)
+                vv, vu = get_value_and_unit(s, n)
+                add_node(vi, name=n, alias=va, value=vv, unit=vu, cls=vcn, system=si)
                 fun = v._wrapped_fun
                 ps = inspect.signature(fun).parameters
                 kw = {}
@@ -155,6 +163,7 @@ def write(root, filename=None):
                 'label': g.node[n]['name'],
                 'alias': g.node[n]['alias'],
                 'value': g.node[n]['value'],
+                'unit': g.node[n]['unit'],
                 'type': g.node[n]['cls'],
                 'parent': g.node[n]['system'],
             }
