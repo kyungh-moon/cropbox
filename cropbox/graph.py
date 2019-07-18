@@ -10,7 +10,7 @@ from .statevar import drive, flag, statevar, system
 from .unit import U
 from .logger import logger
 
-def write(root, filename=None):
+def transform(root):
     g = nx.DiGraph()
     S = root.collect(exclude_self=False)
 
@@ -148,8 +148,10 @@ def write(root, filename=None):
                             add_edge(vi, get_id(s, l), alias=va, rel='')
                 Visitor(kw).visit(m)
     [visit(s) for s in S]
-
     #nx.write_graphml(g, f'{filename}.graphml')
+    return g
+
+def write(g, filename):
     cy = {
         'elements': {
             'nodes': [],
@@ -177,8 +179,7 @@ def write(root, filename=None):
                 'target': e[1],
             }
         })
-    if filename:
-        with open(filename, 'w') as f:
-            import json
-            f.write(json.dumps(cy))
-    return g
+    with open(filename, 'w') as f:
+        import json
+        f.write(json.dumps(cy))
+    return cy

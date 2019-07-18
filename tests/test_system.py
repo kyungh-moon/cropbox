@@ -559,8 +559,9 @@ def test_graph(tmp_path):
         def b(self):
             return self.a
     s = instance(S)
-    from cropbox.graph import write
-    g = write(s, tmp_path/'graph.json')
+    from cropbox.graph import transform, write
+    g = transform(s)
+    write(g, tmp_path/'graph.json')
     import networkx as nx
     nx.draw_circular(g, with_labels=True)
     import matplotlib.pyplot as plt

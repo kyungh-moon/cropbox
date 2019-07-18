@@ -89,5 +89,5 @@ def test_root_structure(tmp_path):
     [c.advance() for t in T]
     r.render()
 
-    from cropbox.graph import write
-    write(r, tmp_path/'root.json')
+    from cropbox.graph import transform, write
+    write(transform(r), tmp_path/'root.json')
