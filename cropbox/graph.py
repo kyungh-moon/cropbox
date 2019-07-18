@@ -9,7 +9,7 @@ import textwrap
 from .statevar import drive, flag, statevar, system
 from .logger import logger
 
-def write(root, filename):
+def write(root, filename=None):
     g = nx.DiGraph()
     S = root.collect(exclude_self=False)
 
@@ -155,6 +155,8 @@ def write(root, filename):
                 'target': e[1],
             }
         })
-    with open(filename, 'w') as f:
-        import json
-        f.write(json.dumps(cy))
+    if filename:
+        with open(filename, 'w') as f:
+            import json
+            f.write(json.dumps(cy))
+    return g

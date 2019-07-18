@@ -1,28 +1,12 @@
-import networkx as nx
-
 from .logger import logger
-
-class Graph:
-    def __init__(self):
-        self._graph = nx.DiGraph()
-
-    def add(self, s, v, o):
-        if s:
-            #FIXME: graph should be reset for every update
-            self._graph.add_edge(s.__name__, v.__name__)
-        #TODO: give each System object a name
-        #TODO: check dupliate?
-        self._graph.add_node(o.__class__.__name__, type='Class', group='')
-        self._graph.add_node(v.__name__, type=v.__class__.__name__, group=o.__class__.__name__)
 
 class Trace:
     def __init__(self):
         self.reset()
 
-    def reset(self, build_graph=False):
+    def reset(self):
         self._stack = []
         self._regime = ['']
-        self.graph = Graph() if build_graph else None
 
     @property
     def stack(self):
@@ -80,8 +64,6 @@ class Trace:
         v, o, r = self._mem
         del self._mem
         s = self.peek()
-        if self.graph:
-            self.graph.add(s, v, o)
         self.push(v, regime=r)
         logger.trace(f'{self.indent}> {v.__name__} ({r}) - {self._stack}')
         return self
