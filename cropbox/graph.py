@@ -13,44 +13,52 @@ def write(root, filename=None):
     g = nx.DiGraph()
     S = root.collect(exclude_self=False)
 
-    def add_node(i, name, alias, cls, system):
-        logger.trace(f'id = {i}, name = {name}, alias = {alias}, cls = {cls}, system = {system}')
-        g.add_node(i, name=name, alias=alias, cls=cls, system=system)
+    def add_node(i, name, alias, value, cls, system):
+        logger.trace(f'id = {i}, name = {name}, alias = {alias}, value = {value}, cls = {cls}, system = {system}')
+        g.add_node(i, name=name, alias=alias, value=value, cls=cls, system=system)
 
     def add_edge(si, di, alias, rel):
+        if di is None:
+            return
         logger.trace(f'sid = {si}, did = {di}, alias = {alias}, rel = {rel}')
         g.add_edge(si, di, rel=rel)
 
     def trackable(s, dn):
-        if isinstance(dn, str):
+        if dn == 'self':
+            return None
+        elif isinstance(dn, str):
             dns = dn.split('.')
         elif isinstance(dn, list):
             dns = dn
         else:
             return None
-        if len(dns) > 1:
-            ss = reduce(lambda o, k: o[k], [s] + dns[:-1])
-        else:
-            ss = s
-        dn = dns[-1]
-        if dn == 'self':
-            return None
+        dnh, dnt = dns[:-1], dns[-1]
+        ss = reduce(lambda o, k: o[k], [s] + dnh)
         try:
-            d = ss._trackable[dn]
-            return ss._trackable_data[d]
+            tr = ss._trackable[dnt]
+            return ss._trackable_data[tr]
         except (AttributeError, KeyError):
             #HACK: assume arg supporting state variable
             return None
 
-    def add_edge2(si, s, dn, alias, rel):
-        t = trackable(s, dn)
-        if t is not None:
-            add_edge(si, id(t), alias=alias, rel=rel)
+    def get_id(s, dn=None):
+        t = trackable(s, dn) if dn else s
+        return id(t) if t else None
+
+    def get_value(d):
+        v = d.value
+        if callable(v):
+            return None
+        elif isinstance(v, tuple):
+            # @produce
+            return None
+        else:
+            return v
 
     def visit(s):
-        si = id(s)
+        si = get_id(s)
         sn = s.__class__.__name__
-        add_node(si, name=sn, alias=None, cls='System', system=None)
+        add_node(si, name=sn, alias=None, value=None, cls='System', system=None)
         for v in set(s._trackable.values()):
             n = v.__name__
             vcn = v.__class__.__name__
@@ -60,12 +68,15 @@ def write(root, filename=None):
                 if d is None:
                     continue
                 elif isinstance(d, list):
-                    [add_edge(si, id(dd), alias=va, rel=n) for dd in d]
+                    [add_edge(si, get_id(dd), alias=va, rel=n) for dd in d]
                 else:
-                    add_edge(si, id(d), alias=va, rel=n)
+                    add_edge(si, get_id(d), alias=va, rel=n)
             elif isinstance(v, statevar):
-                vi = id(s._trackable_data[v])
-                add_node(vi, name=n, alias=va, cls=vcn, system=si)
+                vd = v.data(s)[v]
+                vi = get_id(vd)
+                vv = get_value(vd)
+                #TODO handle unit
+                add_node(vi, name=n, alias=va, value=vv, cls=vcn, system=si)
                 fun = v._wrapped_fun
                 ps = inspect.signature(fun).parameters
                 kw = {}
@@ -77,29 +88,30 @@ def write(root, filename=None):
                     if trackable(s, dn):
                         kw[p.name] = dn
                     if type(dn) is not str:
-                        #TODO: record parameter values?
+                        #TODO: record function internal parameter values?
                         continue
-                    add_edge2(vi, s, dn, alias=va, rel='')
+                    add_edge(vi, get_id(s, dn), alias=va, rel='')
 
                 # support inline @drive
                 if isinstance(v, drive):
                     try:
                         dn = inspect.getclosurevars(fun).nonlocals['f']
-                        add_edge2(vi, s, [dn, n], alias=va, rel='')
+                        add_edge(vi, get_id(s, [dn, n]), alias=va, rel='')
                     except KeyError:
                         pass
 
                 # support `prob` var for @flag
                 if isinstance(v, flag):
                     if isinstance(v._prob_var, str):
-                        add_edge2(vi, s, v._prob_var, alias='', rel='prob')
+                        add_edge(vi, get_id(s, v._prob_var), alias='', rel='prob')
 
                 # support `init` var
                 if isinstance(v._init_var, str):
-                    add_edge2(vi, s, v._init_var, alias='', rel='init')
+                    add_edge(vi, get_id(s, v._init_var), alias='', rel='init')
+
                 # support `time` var
                 # if isinstance(v._time_var, str):
-                #     add_edge2(vi, s, v._time_var, alias='', rel='time')
+                #     add_edge(vi, get_id(s, v._time_var), alias='', rel='time')
 
                 src = inspect.getsource(fun)
                 src = textwrap.dedent(src)
@@ -125,7 +137,7 @@ def write(root, filename=None):
                         if l[0] in kw:
                             l[0] = kw[l[0]]
                         if trackable(s, l):
-                            add_edge2(vi, s, l, alias=va, rel='')
+                            add_edge(vi, get_id(s, l), alias=va, rel='')
                 Visitor(kw).visit(m)
     [visit(s) for s in S]
 
@@ -141,7 +153,8 @@ def write(root, filename=None):
             'data': {
                 'id': n,
                 'label': g.node[n]['name'],
-                #'alias': g.node[n]['alias'],
+                'alias': g.node[n]['alias'],
+                'value': g.node[n]['value'],
                 'type': g.node[n]['cls'],
                 'parent': g.node[n]['system'],
             }
