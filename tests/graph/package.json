@@ -1,0 +1,33 @@
+{
+  "name": "cropbox-graph-browser",
+  "version": "0.0.1",
+  "description": "cropbox graph browser",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "start:dev": "webpack-dev-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Kyungdahm Yun",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.5.5",
+    "@babel/plugin-transform-runtime": "^7.5.5",
+    "@babel/preset-env": "^7.5.5",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.6",
+    "html-webpack-plugin": "^3.2.0",
+    "webpack": "^4.36.1",
+    "webpack-cli": "^3.3.6",
+    "webpack-dev-server": "^3.7.2"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.5.5",
+    "cytoscape-cose-bilkent": "^4.0.0",
+    "cytoscape-fcose": "^1.0.0",
+    "react": "^16.8.6",
+    "react-cytoscapejs": "^1.1.0",
+    "react-dom": "^16.8.6"
+  }
+}
