@@ -644,5 +644,5 @@ config = ''
 def test_photosynthesis(tmp_path):
     ge = instance(GasExchange, config)
 
-    from cropbox.graph import transform, write
-    write(transform(ge), tmp_path/'gasexchange.json')
+    from cropbox.graph import collect, transform, write
+    write(transform(collect(ge)), tmp_path/'gasexchange.json')

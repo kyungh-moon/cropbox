@@ -10,9 +10,15 @@ from .statevar import drive, flag, statevar, system
 from .unit import U
 from .logger import logger
 
-def transform(root):
+def collect(root):
     g = nx.DiGraph()
-    S = root.collect(exclude_self=False)
+    c = root.context
+    g.graph = {
+        'tick': c.tick,
+        'time': c.time,
+        'timeunit': c.unit,
+        'datetime': c.datetime,
+    }
 
     def add_node(i, name, alias, value, unit, cls, system):
         logger.trace(f'id = {i}, name = {name}, alias = {alias}, unit = {unit}, value = {value}, cls = {cls}, system = {system}')
@@ -147,39 +153,50 @@ def transform(root):
                         if trackable(s, l):
                             add_edge(vi, get_id(s, l), alias=va, rel='')
                 Visitor(kw).visit(m)
+
+    S = root.collect(exclude_self=False)
     [visit(s) for s in S]
     #nx.write_graphml(g, f'{filename}.graphml')
     return g
 
-def write(g, filename):
-    cy = {
+def transform(g):
+    clock = {
+        'tick': g.graph['tick'],
+        'time': g.graph['time'],
+        'timeunit': g.graph['timeunit'],
+        'datetime': g.graph['datetime'],
+    }
+
+    nodes = [{
+        'data': {
+            'id': n,
+            'label': g.node[n]['name'],
+            'alias': g.node[n]['alias'],
+            'value': g.node[n]['value'],
+            'unit': g.node[n]['unit'],
+            'type': g.node[n]['cls'],
+            'parent': g.node[n]['system'],
+        }
+    } for n in g.nodes()]
+
+    edges = [{
+        'data': {
+            'id': f'{e[0]}__{e[1]}',
+            'label': g.edges[e]['rel'],
+            'source': e[0],
+            'target': e[1],
+        }
+    } for e in g.edges()]
+
+    return {
+        'clock': clock,
         'elements': {
-            'nodes': [],
-            'edges': [],
+            'nodes': nodes,
+            'edges': edges,
         }
     }
-    for n in g.nodes():
-        cy['elements']['nodes'].append({
-            'data': {
-                'id': n,
-                'label': g.node[n]['name'],
-                'alias': g.node[n]['alias'],
-                'value': g.node[n]['value'],
-                'unit': g.node[n]['unit'],
-                'type': g.node[n]['cls'],
-                'parent': g.node[n]['system'],
-            }
-        })
-    for e in g.edges():
-        cy['elements']['edges'].append({
-            'data': {
-                'id': f'{e[0]}__{e[1]}',
-                'label': g.edges[e]['rel'],
-                'source': e[0],
-                'target': e[1],
-            }
-        })
+
+def write(d, filename):
     with open(filename, 'w') as f:
         import json
-        f.write(json.dumps(cy))
-    return cy
+        f.write(json.dumps(d))

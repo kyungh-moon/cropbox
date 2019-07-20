@@ -2,6 +2,7 @@ from cropbox.system import System
 from cropbox.context import instance
 from cropbox.statevar import accumulate, constant, derive, flag, parameter, produce
 from cropbox.unit import U
+from cropbox.graph import collect, transform, write
 
 import random
 import trimesh
@@ -86,8 +87,9 @@ def test_root_structure(tmp_path):
     r = instance(R)
     c = r.context
     T = range(30)
-    [c.advance() for t in T]
+    d = []
+    for t in T:
+        c.advance()
+        d.append(transform(collect(r)))
     r.render()
-
-    from cropbox.graph import transform, write
-    write(transform(r), tmp_path/'root.json')
+    write(d, tmp_path/'root.json')
