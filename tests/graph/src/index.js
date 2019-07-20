@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 import CytoscapeComponent from 'react-cytoscapejs'
+import Defiant from 'defiant.js/src/defiant.js'
 
 import Cytoscape from 'cytoscape';
 import COSEBilkent from 'cytoscape-cose-bilkent';
@@ -31,7 +32,9 @@ class App extends React.Component {
     super(props)
 
     this.state = {
-      elements: [],
+      dataset: [],
+      snapshot: null,
+      tick: null,
       layout: {
         //name: 'fcose',
         name: 'cose-bilkent',
@@ -96,9 +99,26 @@ class App extends React.Component {
 
   async load() {
     let response = await fetch('graph.json')
-    let json = await response.json()
-    let elements = CytoscapeComponent.normalizeElements(json['elements'])
-    this.setState({elements})
+    let dataset = await response.json()
+    let snapshot = Defiant.getSnapshot(dataset)
+    this.setState({dataset, snapshot, tick: 1})
+  }
+
+  search(path, fallback=undefined) {
+    if (this.state.snapshot) {
+      let a = Defiant.search(this.state.snapshot, path)
+      if (a.length > 0) return a[0]
+    }
+    return (fallback !== undefined) ? fallback : null
+  }
+
+  elements(tick) {
+    let res = this.search(`//clock[tick=${tick}]/../elements`, [])
+    return CytoscapeComponent.normalizeElements(res)
+  }
+
+  get maxTick() {
+    return this.search('(//clock)[last()]/tick', 0)
   }
 
   handle(cy) {
@@ -106,8 +126,8 @@ class App extends React.Component {
   }
 
   render() {
-    const {elements, layout, style, stylesheet} = this.state
-    return <CytoscapeComponent cy={cy => this.handle(cy)} elements={elements} layout={layout} style={style} stylesheet={stylesheet} />
+    const {tick, layout, style, stylesheet} = this.state
+    return <CytoscapeComponent cy={cy => this.handle(cy)} elements={this.elements(tick)} layout={layout} style={style} stylesheet={stylesheet} />
   }
 }
 
